@@ -1,0 +1,21 @@
+import 'dotenv/config';
+
+export const env = {
+  MONGODB_URI: process.env.MONGODB_URI,
+  PORT: process.env.PORT,
+  HOSTNAME: process.env.HOSTNAME,
+  NODE_ENV: process.env.NODE_ENV,
+  SWAGGER_USER: process.env.SWAGGER_USER,
+  SWAGGER_PASSWORD: process.env.SWAGGER_PASSWORD,
+  CLIENT_URLS: process.env.CLIENT_URLS?.split(',') || [],
+  JWT_SECRET: process.env.JWT_SECRET,
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,
+  REFRESH_TOKEN_EXPIRES_IN: process.env.REFRESH_TOKEN_EXPIRES_IN,
+  REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET,
+  EMAIL_USER: process.env.EMAIL_USER,
+  EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+  RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
+  RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,
+}

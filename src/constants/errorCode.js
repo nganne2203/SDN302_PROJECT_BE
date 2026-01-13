@@ -1,0 +1,39 @@
+import { StatusCodes} from 'http-status-codes';
+
+export const ERROR_CODES = {
+  NOT_FOUND: {
+    code: 'NOT_FOUND',
+    statusCode: StatusCodes.NOT_FOUND,
+    message: 'The requested resource was not found.',
+  },
+
+  UNAUTHORIZED: {
+    code: 'UNAUTHORIZED',
+    statusCode: StatusCodes.UNAUTHORIZED,
+    message: 'You are not authorized to access this resource.',
+  },
+
+  FORBIDDEN: {
+    code: 'FORBIDDEN',
+    statusCode: StatusCodes.FORBIDDEN,
+    message: 'Access to this resource is forbidden.',
+  },
+
+  BAD_REQUEST: {
+    code: 'BAD_REQUEST',
+    statusCode: StatusCodes.BAD_REQUEST,
+    message: 'The request was invalid or cannot be served.',
+  },
+
+  INTERNAL_SERVER_ERROR: {
+    code: 'INTERNAL_SERVER_ERROR',
+    statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+    message: 'An unexpected error occurred on the server.',
+  },
+
+  VALIDATION_ERROR: {
+    code: 'VALIDATION_ERROR',
+    statusCode: StatusCodes.BAD_REQUEST,
+    message: 'There were validation errors with the request.',
+  }
+}
