@@ -4,7 +4,7 @@ import { corsOptions } from '#configs/cors.js';
 import { CONNECT_DB, CLOSE_DB } from '#configs/mongodb.js';
 import { env } from '#configs/environment.js';
 import existHook from 'async-exit-hook';
-import { errorHandlingMiddleware } from '#middlewares/errorHandlingMiddlware.js';
+import { errorHandlingMiddleware } from '#middlewares/errorHandlingMiddleware.js';
 import { ROUTES } from '#routes/index.js';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerHandlingMiddleware } from '#middlewares/swaggerHandlingMiddleware.js';
