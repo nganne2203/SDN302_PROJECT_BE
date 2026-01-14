@@ -35,5 +35,17 @@ export const ERROR_CODES = {
     code: 'VALIDATION_ERROR',
     statusCode: StatusCodes.BAD_REQUEST,
     message: 'There were validation errors with the request.',
+  },
+
+  RATE_LIMIT_EXCEEDED: {
+    code: 'RATE_LIMIT_EXCEEDED',
+    statusCode: StatusCodes.TOO_MANY_REQUESTS,
+    message: 'Rate limit exceeded. Please try again later.',
+  },
+
+  INVALID_REQUEST_DATA: {
+    code: 'INVALID_REQUEST_DATA',
+    statusCode: StatusCodes.BAD_REQUEST,
+    message: 'The request data is invalid.',
   }
 }
