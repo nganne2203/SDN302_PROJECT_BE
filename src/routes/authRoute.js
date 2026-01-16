@@ -9,6 +9,7 @@ import {
   LOGIN_FIELDS,
   REQUIRE_FIELD
 } from '#constants/userConstant.js'
+import { verifyRecaptchaMiddleware } from '#middlewares/verifyCaptchaMiddleware.js'
 
 const router = express.Router()
 
@@ -32,6 +33,7 @@ const router = express.Router()
  *               - phone
  *               - address
  *               - avatar
+ *               - captchaToken
  *             properties:
  *               fullname:
  *                 type: string
@@ -69,6 +71,9 @@ const router = express.Router()
  *                 type: string
  *                 format: url
  *                 example: 'http://example.com/avatar.jpg'
+ *               captchaToken:
+ *                 type: string
+ *                 example: '03AGdBq24...'
  *     responses:
  *       201:
  *         description: Register successfully
@@ -77,6 +82,7 @@ const router = express.Router()
  */
 router.post('/register',
   createRateLimiter,
+  verifyRecaptchaMiddleware,
   validationHandlingMiddleware(AUTH_VALIDATION.registerUser),
   sanitizeRequest(REGISTER_FIELDS, REQUIRE_FIELD),
   AUTH_CONTROLLER.register
@@ -97,6 +103,7 @@ router.post('/register',
  *             required:
  *               - email
  *               - password
+ *               - captchaToken
  *             properties:
  *               email:
  *                 type: string
@@ -104,12 +111,16 @@ router.post('/register',
  *               password:
  *                 type: string
  *                 example: Password@123
+ *               captchaToken:
+ *                 type: string
+ *                 example: '03AGdBq24...'
  *     responses:
  *       200:
  *         description: Login success
  */
 router.post('/login',
   createRateLimiter,
+  verifyRecaptchaMiddleware,
   validationHandlingMiddleware(AUTH_VALIDATION.loginUser),
   sanitizeRequest(LOGIN_FIELDS, LOGIN_FIELDS),
   AUTH_CONTROLLER.login

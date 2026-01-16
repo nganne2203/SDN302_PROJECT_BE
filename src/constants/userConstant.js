@@ -5,7 +5,8 @@ export const RoleEnum = {
 
 export const LOGIN_FIELDS = [
   'email',
-  'password'
+  'password',
+  'captchaToken'
 ]
 
 export const REGISTER_FIELDS = [
@@ -20,5 +21,6 @@ export const REGISTER_FIELDS = [
 export const REQUIRE_FIELD = [
   'fullname',
   'email',
-  'password'
+  'password',
+  'phone'
 ]

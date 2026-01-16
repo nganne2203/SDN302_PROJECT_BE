@@ -9,6 +9,7 @@ import { ROUTES } from '#routes/index.js'
 import swaggerUi from 'swagger-ui-express'
 import { swaggerHandlingMiddleware } from '#middlewares/swaggerHandlingMiddleware.js'
 import { swaggerSpec } from '#configs/swagger.js'
+import { initializeDefaultValue } from '#providers/dataInitial.js'
 
 const app = express()
 
@@ -65,6 +66,7 @@ if (env.BUILD_MODE !== 'prod') {
       await CONNECT_DB()
 
       // initialize other services here if needed
+      await initializeDefaultValue()
       START_SERVER()
     } catch (error) {
       // eslint-disable-next-line no-console

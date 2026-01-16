@@ -20,7 +20,8 @@ export const AUTH_VALIDATION = {
       ward: joi.string().required(),
       isDefault: joi.boolean().optional().default(false)
     }).optional(),
-    avatar: joi.string().uri().optional()
+    avatar: joi.string().uri().optional(),
+    captchaToken: joi.string().required()
   }),
   loginUser: joi.object({
     email: joi.string().email().required().pattern(EMAIL_REGEX),
