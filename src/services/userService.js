@@ -54,10 +54,11 @@ const getUserByEmail = async (email) => {
 }
 
 const assertEmailNotExists = async (email) => {
-  const user = await getUserByEmail(email)
+  const user = await USER_REPOSITORY.getUserByEmail(email)
   if (user) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Email đã được sử dụng'])
   }
+  return user
 }
 
 const createUserInternal = async ({
@@ -68,7 +69,8 @@ const createUserInternal = async ({
   role = RoleEnum.CUSTOMER,
   avatar = null,
   addresses = [],
-  createdBy = null
+  createdBy = null,
+  isEmailVerified = false
 }) => {
   await assertEmailNotExists(email)
   const hashedPassword = await BCRYPT_UTILS.hashPassword(password)
@@ -80,7 +82,8 @@ const createUserInternal = async ({
     role,
     avatar,
     addresses,
-    createdBy
+    createdBy,
+    isEmailVerified
   }
   const createdUser = await USER_REPOSITORY.createUser(newUser)
   return await getUserById(createdUser._id)
