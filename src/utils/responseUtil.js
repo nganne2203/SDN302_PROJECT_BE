@@ -7,6 +7,6 @@ export const responseSuccess = ({
     success: true,
     message,
     data,
-    pagination,
+    pagination
   }
 }

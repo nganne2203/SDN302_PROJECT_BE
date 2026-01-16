@@ -1,118 +1,118 @@
-import ApiError from '#utils/ApiError.js';
-import { ERROR_CODES } from '#constants/errorCode.js';
+import ApiError from '#utils/ApiError.js'
+import { ERROR_CODES } from '#constants/errorCode.js'
 
-const rateLimitStore = new Map();
+const rateLimitStore = new Map()
 
 setInterval(() => {
-  const now = Date.now();
+  const now = Date.now()
   for (const [key, value] of rateLimitStore.entries()) {
     if (value.resetTime < now) {
-      rateLimitStore.delete(key);
+      rateLimitStore.delete(key)
     }
   }
-}, 60000);
+}, 60000)
 
 export const createRateLimiter = (options = {}) => {
   const {
-    windowMs = 15 * 60 * 1000, 
+    windowMs = 15 * 60 * 1000,
     max = 100,
     message = 'Too many requests, please try again later',
     keyGenerator = (req) => req.ip || req.connection.remoteAddress || 'unknown',
     skipFailedRequests = false,
-    skipSuccessfulRequests = false,
-  } = options;
+    skipSuccessfulRequests = false
+  } = options
 
   return (req, res, next) => {
     try {
-      const key = keyGenerator(req);
-      const now = Date.now();
+      const key = keyGenerator(req)
+      const now = Date.now()
 
-      let record = rateLimitStore.get(key);
+      let record = rateLimitStore.get(key)
 
       if (!record || record.resetTime < now) {
         record = {
           count: 0,
-          resetTime: now + windowMs,
-        };
+          resetTime: now + windowMs
+        }
       }
 
-      record.count++;
-      rateLimitStore.set(key, record);
+      record.count++
+      rateLimitStore.set(key, record)
 
-      res.setHeader('X-RateLimit-Limit', max);
-      res.setHeader('X-RateLimit-Remaining', Math.max(0, max - record.count));
-      res.setHeader('X-RateLimit-Reset', Math.ceil(record.resetTime / 1000));
+      res.setHeader('X-RateLimit-Limit', max)
+      res.setHeader('X-RateLimit-Remaining', Math.max(0, max - record.count))
+      res.setHeader('X-RateLimit-Reset', Math.ceil(record.resetTime / 1000))
 
       if (record.count > max) {
-        const retryAfter = Math.ceil((record.resetTime - now) / 1000);
-        res.setHeader('Retry-After', retryAfter);
-        throw new ApiError(ERROR_CODES.RATE_LIMIT_EXCEEDED, [message]);
+        const retryAfter = Math.ceil((record.resetTime - now) / 1000)
+        res.setHeader('Retry-After', retryAfter)
+        throw new ApiError(ERROR_CODES.RATE_LIMIT_EXCEEDED, [message])
       }
 
       if (skipFailedRequests || skipSuccessfulRequests) {
         res.on('finish', () => {
-          const currentRecord = rateLimitStore.get(key);
+          const currentRecord = rateLimitStore.get(key)
           if (currentRecord) {
             if (skipFailedRequests && res.statusCode >= 400) {
-              currentRecord.count = Math.max(0, currentRecord.count - 1);
+              currentRecord.count = Math.max(0, currentRecord.count - 1)
             }
             if (skipSuccessfulRequests && res.statusCode < 400) {
-              currentRecord.count = Math.max(0, currentRecord.count - 1);
+              currentRecord.count = Math.max(0, currentRecord.count - 1)
             }
-            rateLimitStore.set(key, currentRecord);
+            rateLimitStore.set(key, currentRecord)
           }
-        });
+        })
       }
 
-      next();
+      next()
     } catch (error) {
-      next(error);
+      next(error)
     }
-  };
-};
+  }
+}
 
 export const authRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 10,
   message: 'Too many authentication attempts, please try again after 15 minutes',
-  keyGenerator: (req) => `auth:${req.ip || 'unknown'}`,
-});
+  keyGenerator: (req) => `auth:${req.ip || 'unknown'}`
+})
 
 export const apiRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: 'Too many requests, please try again later',
-});
+  message: 'Too many requests, please try again later'
+})
 
 export const readRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 500,
-  message: 'Too many requests, please try again later',
-});
+  message: 'Too many requests, please try again later'
+})
 
 export const sensitiveRateLimiter = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 3,
   message: 'Too many attempts, please try again after an hour',
-  keyGenerator: (req) => `sensitive:${req.ip || 'unknown'}:${req.user?.userId || 'anon'}`,
-});
+  keyGenerator: (req) => `sensitive:${req.ip || 'unknown'}:${req.user?.userId || 'anon'}`
+})
 
 export const userRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 200,
   message: 'Too many requests, please try again later',
-  keyGenerator: (req) => `user:${req.user?.userId || req.ip || 'unknown'}`,
-});
+  keyGenerator: (req) => `user:${req.user?.userId || req.ip || 'unknown'}`
+})
 
 export const guestRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 50,
   message: 'Too many requests, please try again later',
-  keyGenerator: (req) => `guest:${req.ip || 'unknown'}`,
-});
+  keyGenerator: (req) => `guest:${req.ip || 'unknown'}`
+})
 
 export const writeRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: 'Too many write requests, please try again later',
-});
+  message: 'Too many write requests, please try again later'
+})

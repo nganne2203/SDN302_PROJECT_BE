@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import 'dotenv/config'
 
 export const env = {
   MONGODB_URI: process.env.MONGODB_URI,
@@ -18,4 +18,5 @@ export const env = {
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
   RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,
+  OTP_EXPIRES_IN: process.env.OTP_EXPIRES_IN
 }
