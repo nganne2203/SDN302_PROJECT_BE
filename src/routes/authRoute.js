@@ -1,4 +1,5 @@
 import express from 'express'
+import passport from '#configs/passport.js'
 import { AUTH_CONTROLLER } from '#controllers/authController.js'
 import { createRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
 import { validationHandlingMiddleware } from '#middlewares/validationHandlingMiddleware.js'
@@ -124,6 +125,46 @@ router.post('/login',
   validationHandlingMiddleware(AUTH_VALIDATION.loginUser),
   sanitizeRequest(LOGIN_FIELDS, LOGIN_FIELDS),
   AUTH_CONTROLLER.login
+)
+
+/**
+ * @swagger
+ * /api/auth/google:
+ *   get:
+ *     summary: Initiate Google OAuth login
+ *     description: Redirects to Google OAuth consent screen
+ *     tags: [Auth]
+ *     responses:
+ *       302:
+ *         description: Redirect to Google OAuth
+ */
+router.get('/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+)
+
+/**
+ * @swagger
+ * /api/auth/google/callback:
+ *   get:
+ *     summary: Google OAuth callback
+ *     description: Handles the callback from Google OAuth
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: query
+ *         name: code
+ *         schema:
+ *           type: string
+ *         description: Authorization code from Google
+ *     responses:
+ *       302:
+ *         description: Redirect to frontend with tokens
+ */
+router.get('/google/callback',
+  passport.authenticate('google', {
+    session: false,
+    failureRedirect: '/auth/google/error'
+  }),
+  AUTH_CONTROLLER.googleCallback
 )
 
 export const AUTH_ROUTE = router

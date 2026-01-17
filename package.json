@@ -47,6 +47,8 @@
     "mongoose": "^8.0.0",
     "mongoose-paginate-v2": "^1.9.1",
     "nodemailer": "^7.0.12",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "rimraf": "^6.1.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"

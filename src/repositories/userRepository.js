@@ -6,6 +6,10 @@ const getUserByEmail = async (email, options = {}) => {
   return await userModel.findOne({ email }).select(projection)
 }
 
+const getUserByGoogleId = async (googleId) => {
+  return await userModel.findOne({ googleId }).select('-password')
+}
+
 const getUserById = async (id, options = {}) => {
   const { includePassword = false } = options
   const projection = includePassword ? '+password' : '-password'
@@ -53,6 +57,7 @@ const updateEmailVerificationStatusById = async (id, isEmailVerified, updatedBy 
 export const USER_REPOSITORY = {
   createUser,
   getUserByEmail,
+  getUserByGoogleId,
   getUserById,
   updateStatusById,
   updateUserById,
