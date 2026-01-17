@@ -1,13 +1,15 @@
 import mongoose from 'mongoose'
 import mongoosePaginate from 'mongoose-paginate-v2'
-import { RoleEnum } from '#constants/userConstant.js'
+import { RoleEnum, USER_PROVIDER } from '#constants/userConstant.js'
 
 const userSchema = new mongoose.Schema(
   {
     fullname: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     role: { type: String, enum: Object.values(RoleEnum), default: RoleEnum.CUSTOMER },
-    password: { type: String, required: true },
+    password: { type: String, default: null },
+    googleId: { type: String, default: null },
+    provider: { type: String, enum: Object.values(USER_PROVIDER), default: USER_PROVIDER.LOCAL },
     phone: { type: String, maxLength: 10 },
     addresses: [
       {

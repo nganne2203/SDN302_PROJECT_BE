@@ -3,6 +3,11 @@ export const RoleEnum = {
   ADMIN: 'admin'
 }
 
+export const USER_PROVIDER = {
+  LOCAL: 'local',
+  GOOGLE: 'google'
+}
+
 export const LOGIN_FIELDS = [
   'email',
   'password',

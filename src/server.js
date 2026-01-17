@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import passport from '#configs/passport.js'
 import { corsOptions } from '#configs/cors.js'
 import { CONNECT_DB, CLOSE_DB } from '#configs/mongodb.js'
 import { env } from '#configs/environment.js'
@@ -16,6 +17,9 @@ const app = express()
 app.use(express.json())
 
 app.use(cors(corsOptions))
+
+// Initialize passport
+app.use(passport.initialize())
 
 // set proxy trust if behind a proxy like Nginx
 app.set('trust proxy', 1)
@@ -45,7 +49,7 @@ app.use(errorHandlingMiddleware)
 
 // Start the server
 const START_SERVER = () => {
-  app.listen(env.APP_PORT, '0.0.0.0', () => {
+  app.listen(env.PORT, '0.0.0.0', () => {
     // eslint-disable-next-line no-console
     console.log(`Server in ${env.NODE_ENV} environment is running at ${env.PORT}`)
   })
