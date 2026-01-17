@@ -21,15 +21,13 @@ app.use(cors(corsOptions))
 app.set('trust proxy', 1)
 
 // configs swagger here if needed
-if (env.NODE_ENV !== 'prod') {
-  app.use('/api-docs', swaggerHandlingMiddleware, swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.9.0/swagger-ui.min.css',
-    customJs: [
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.9.0/swagger-ui-bundle.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.9.0/swagger-ui-standalone-preset.js'
-    ]
-  }))
-}
+app.use('/api-docs', swaggerHandlingMiddleware, swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.9.0/swagger-ui.min.css',
+  customJs: [
+    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.9.0/swagger-ui-bundle.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.9.0/swagger-ui-standalone-preset.js'
+  ]
+}))
 
 // Connect to MongoDB when the server starts
 app.use(async (req, res, next) => {
@@ -47,9 +45,9 @@ app.use(errorHandlingMiddleware)
 
 // Start the server
 const START_SERVER = () => {
-  app.listen(env.PORT, env.HOSTNAME, () => {
+  app.listen(env.APP_PORT, '0.0.0.0', () => {
     // eslint-disable-next-line no-console
-    console.log(`Server running at http://${env.HOSTNAME}:${env.PORT}/`)
+    console.log(`Server in ${env.NODE_ENV} environment is running at ${env.PORT}`)
   })
   // implement scheduled tasks here if needed
 
