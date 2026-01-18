@@ -71,7 +71,7 @@ const sendVerificationCode = async (to, code, type = 'login', expiresInMinutes =
         </div>
         <div class="footer">
           <p>Đây là email tự động. Vui lòng không trả lời email này.</p>
-          <p>&copy; ${new Date().getFullYear()} ${env.AUTHOR || 'E-learning'}. All rights reserved.</p>
+          <p>&copy; ${new Date().getFullYear()} ${env.AUTHOR || 'SDN302_Team'}. All rights reserved.</p>
         </div>
       </div>
     </body>
