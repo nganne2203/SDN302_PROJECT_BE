@@ -1,4 +1,4 @@
-import swaggerJSDoc from "swagger-jsdoc"
+import swaggerJSDoc from 'swagger-jsdoc'
 
 const options = {
   definition: {
@@ -6,7 +6,7 @@ const options = {
     info: {
       title: 'Phone Accessories API',
       version: '1.0.0',
-      description: 'API documentation for Phone Accessories application',
+      description: 'API documentation for Phone Accessories application'
     },
     servers: [],
     components: {
@@ -14,12 +14,12 @@ const options = {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
-          bearerFormat: 'JWT',
+          bearerFormat: 'JWT'
         }
       }
     }
   },
-  apis: ['./src/routes/*.js', './src/models/*.js'],
+  apis: ['./src/routes/*.js', './src/models/*.js']
 }
 
-export const swaggerSpec = swaggerJSDoc(options);
+export const swaggerSpec = swaggerJSDoc(options)

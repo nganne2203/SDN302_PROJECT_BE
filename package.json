@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "src/server.js",
   "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
   "imports": {
     "#configs/*": "./src/configs/*",
     "#constants/*": "./src/constants/*",
@@ -18,11 +21,14 @@
     "#validations/*": "./src/validations/*"
   },
   "scripts": {
-    "clean": "rimraf dist",
-    "build": "npm run clean && copyfiles -u 1 \"src/**/*\" dist",
-    "dev": "cross-env NODE_ENV=dev nodemon src/server.js",
+    "build": "rimraf dist && copyfiles -u 1 \"src/**/*\" dist",
+    "predev": "npm run build",
+    "dev": "cross-env NODE_ENV=dev concurrently \"copyfiles -u 1 src/**/* dist -w\" \"nodemon -q dist/server.js\"",
+    "prestart": "npm run build",
     "start": "cross-env NODE_ENV=prod node dist/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "author": "",
   "license": "ISC",
@@ -41,13 +47,18 @@
     "mongoose": "^8.0.0",
     "mongoose-paginate-v2": "^1.9.1",
     "nodemailer": "^7.0.12",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "rimraf": "^6.1.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "concurrently": "^9.2.1",
     "copyfiles": "^2.4.1",
+    "eslint": "^9.39.2",
+    "globals": "^17.0.0",
     "nodemon": "^3.1.11"
   }
 }

@@ -3,13 +3,13 @@ export const mapMongoosePagination = (result) => {
     currentPage: result.page,
     totalPages: result.totalPages,
     pageSize: result.limit,
-    totalItems: result.totalDocs,
+    totalItems: result.totalDocs
   }
 }
 
 export const normalizePaginationQuery = (query) => {
-  const page = Math.max(1, Number(query.page) || 1);
-  const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
+  const page = Math.max(1, Number(query.page) || 1)
+  const limit = Math.min(100, Math.max(1, Number(query.limit) || 10))
 
   return { page, limit }
 }
