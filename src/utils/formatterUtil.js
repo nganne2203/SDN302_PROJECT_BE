@@ -14,3 +14,10 @@ export const slugify = (value) => {
 export const escapeRegex = (string = '') => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
+
+export const maskEmail = (email) => {
+  const [localPart, domain] = email.split('@')
+  if (localPart.length <= 2) return `${localPart[0]}***@${domain}`
+
+  return `${localPart[0]}${localPart[1]}***@${domain}`
+}

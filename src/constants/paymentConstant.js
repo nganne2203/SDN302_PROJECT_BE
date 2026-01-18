@@ -6,7 +6,14 @@ export const PAYMENT_STATUS = {
   CANCELED: 'canceled'
 }
 
+export const PAYMENT_METHODS = {
+  COD: 'cod',
+  BANK_TRANSFER: 'bank_transfer',
+  VNPAY: 'vnpay'
+}
+
 export const PAYMENT_PROVIDERS = {
   COD: 'cod',
-  BANK_TRANSFER: 'bank_transfer'
+  BANK_TRANSFER: 'bank_transfer',
+  VNPAY: 'vnpay'
 }

@@ -11,13 +11,11 @@ const generatePasswordResetToken = () => {
 }
 
 const expiresInMinutes = () => {
-  const now = new Date()
   const minutes = parseTokenTTL(env.OTP_EXPIRES_IN)
-  now.setMinutes(now.getMinutes() + minutes)
-  return now
+  return new Date(Date.now() + minutes * 60 * 1000)
 }
 
-const OTP_EXPIRES_IN_MINUTES = env.OTP_EXPIRES_IN.replace(/\D/g, '')
+const OTP_EXPIRES_IN_MINUTES = parseInt(env.OTP_EXPIRES_IN.replace(/\D/g, ''), 10)
 
 export const GENERATE_UTILS = {
   generatePasswordResetToken,

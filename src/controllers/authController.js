@@ -48,8 +48,110 @@ const googleCallback = async (req, res, next) => {
   }
 }
 
+const verifyOtp = async (req, res, next) => {
+  try {
+    const requestInfo = {
+      ipAddress: req.ip || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent'] || ''
+    }
+
+    const result = await AUTH_SERVICE.verifyOtp(req.body, requestInfo)
+
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result?.data || null,
+      message: result?.message || 'Xác thực OTP thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const resendVerificationCode = async (req, res, next) => {
+  try {
+    const requestInfo = {
+      ipAddress: req.ip || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent'] || ''
+    }
+    const result = await AUTH_SERVICE.resendVerificationCode(req.body, requestInfo)
+
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: null,
+      message: result.message || 'Gửi lại mã xác thực thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const refreshToken = async (req, res, next) => {
+  try {
+    const requestInfo = {
+      ipAddress: req.ip || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent'] || ''
+    }
+    const result = await AUTH_SERVICE.refreshToken(req.body.refreshToken, requestInfo)
+
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: {
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken
+      },
+      message: 'Làm mới token thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const logout = async (req, res, next) => {
+  try {
+    const result = await AUTH_SERVICE.logout(req.body)
+
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: null,
+      message: result.message || 'Đăng xuất thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const logoutAll = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const result = await AUTH_SERVICE.logoutAll(userId)
+
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: null,
+      message: result.message || 'Đăng xuất khỏi tất cả thiết bị thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const getCurrentUser = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const result = await AUTH_SERVICE.getCurrentUser(userId)
+
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy thông tin người dùng thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const changePassword = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const result = await AUTH_SERVICE.changePassword(userId, req.body)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: null,
+      message: result.message || 'Đổi mật khẩu thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 export const AUTH_CONTROLLER = {
   register,
   login,
-  googleCallback
+  googleCallback,
+  verifyOtp,
+  resendVerificationCode,
+  refreshToken,
+  logout,
+  logoutAll,
+  getCurrentUser,
+  changePassword
 }

@@ -1,5 +1,5 @@
 export const VERIFY_TYPE = {
-  REGISTER: 'register',
+  LOGIN: 'login',
   VERIFY_EMAIL: 'verify_email',
   RESET_PASSWORD: 'reset_password',
   CHANGE_PASSWORD: 'change_password',
