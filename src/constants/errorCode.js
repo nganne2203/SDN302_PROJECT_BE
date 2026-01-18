@@ -59,5 +59,17 @@ export const ERROR_CODES = {
     code: 'EMAIL_NOT_VERIFIED',
     statusCode: StatusCodes.FORBIDDEN,
     message: 'Email address has not been verified.'
+  },
+
+  EMAIL_ALREADY_VERIFIED: {
+    code: 'EMAIL_ALREADY_VERIFIED',
+    statusCode: StatusCodes.BAD_REQUEST,
+    message: 'Email address is already verified.'
+  },
+
+  SERVER_ERROR: {
+    code: 'SERVER_ERROR',
+    statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+    message: 'A server error occurred.'
   }
 }

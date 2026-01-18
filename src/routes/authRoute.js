@@ -84,8 +84,8 @@ const router = express.Router()
 router.post('/register',
   createRateLimiter,
   verifyRecaptchaMiddleware,
-  validationHandlingMiddleware(AUTH_VALIDATION.registerUser),
   sanitizeRequest(REGISTER_FIELDS, REQUIRE_FIELD),
+  validationHandlingMiddleware(AUTH_VALIDATION.registerUser),
   AUTH_CONTROLLER.register
 )
 
@@ -122,8 +122,8 @@ router.post('/register',
 router.post('/login',
   createRateLimiter,
   verifyRecaptchaMiddleware,
-  validationHandlingMiddleware(AUTH_VALIDATION.loginUser),
   sanitizeRequest(LOGIN_FIELDS, LOGIN_FIELDS),
+  validationHandlingMiddleware(AUTH_VALIDATION.loginUser),
   AUTH_CONTROLLER.login
 )
 
@@ -165,6 +165,43 @@ router.get('/google/callback',
     failureRedirect: '/auth/google/error'
   }),
   AUTH_CONTROLLER.googleCallback
+)
+
+/**
+ * @swagger
+ * /api/auth/verify-otp:
+ *   post:
+ *     summary: Verify OTP
+ *     description: Handles OTP verification
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - code
+ *               - type
+ *             properties:
+ *               email:
+ *                type: string
+ *                example: string
+ *               code:
+ *                 type: string
+ *                 example: '123456'
+ *               type:
+ *                 type: string
+ *                 enum: [verify_email, reset_password, change_password, change_email, change_info]
+ *                 example: verify_email
+ *     responses:
+ *       200:
+ *         description: OTP verified successfully
+ */
+router.post('/verify-otp',
+  createRateLimiter,
+  AUTH_CONTROLLER.verifyOtp
 )
 
 export const AUTH_ROUTE = router

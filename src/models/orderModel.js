@@ -1,8 +1,10 @@
 import mongoose from 'mongoose'
 import { ORDER_STATUS } from '#constants/orderConstant.js'
+import { PAYMENT_METHODS } from '#constants/paymentConstant.js'
 
 const orderSchema = new mongoose.Schema(
   {
+    orderNumber: { type: String, required: true, unique: true },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     items: [
       {
@@ -21,11 +23,12 @@ const orderSchema = new mongoose.Schema(
     },
     orderStatus: { type: String, enum: Object.values(ORDER_STATUS), default: ORDER_STATUS.PENDING },
     totalAmount: { type: Number, required: true },
-    paymentMethod: { type: String, required: true },
+    paymentMethod: { type: String, enum: Object.values(PAYMENT_METHODS), required: true },
+    promotion: { type: mongoose.Schema.Types.ObjectId, ref: 'promotions' }, // Reference đến promotion được áp dụng
     discountCode: { type: String, default: '' },
     discountAmount: { type: Number, default: 0 },
-    trackingCode: { type: String, default: '' },
-    message: { type: String, default: '' },
+    cancelReason: { type: String, default: '' }, // Lý do hủy đơn
+    message: { type: String, default: '' }, // Ghi chú từ khách hàng
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users' }
   },

@@ -13,7 +13,7 @@ const verificationSchema = new mongoose.Schema(
     expiresAt: { type: Date, required: true },
     verifiedAt: { type: Date },
     attempts: { type: Number, default: 0 },
-    maxAttempt: { type: Number, default: 5 },
+    maxAttempts: { type: Number, default: 5 },
     verified: { type: Boolean, default: false },
     ipAddress: { type: String },
     userAgent: { type: String }
