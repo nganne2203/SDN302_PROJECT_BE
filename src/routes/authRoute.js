@@ -11,6 +11,7 @@ import {
   REQUIRE_FIELD
 } from '#constants/userConstant.js'
 import { verifyRecaptchaMiddleware } from '#middlewares/verifyCaptchaMiddleware.js'
+import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
 
 const router = express.Router()
 
@@ -204,4 +205,8 @@ router.post('/verify-otp',
   AUTH_CONTROLLER.verifyOtp
 )
 
+router.post('/change-password',
+  authorizationMiddleware,
+  AUTH_CONTROLLER.changePassword
+)
 export const AUTH_ROUTE = router

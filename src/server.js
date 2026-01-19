@@ -11,12 +11,21 @@ import swaggerUi from 'swagger-ui-express'
 import { swaggerHandlingMiddleware } from '#middlewares/swaggerHandlingMiddleware.js'
 import { swaggerSpec } from '#configs/swagger.js'
 import { initializeDefaultValue } from '#providers/dataInitial.js'
+import compression from 'compression'
 
 const app = express()
 
 app.use(express.json())
 
 app.use(cors(corsOptions))
+
+// compression middleware to gzip responses
+app.use(
+  compression({
+    level: 6,
+    threshold: 1024
+  })
+)
 
 // Initialize passport
 app.use(passport.initialize())

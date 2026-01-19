@@ -71,5 +71,11 @@ export const ERROR_CODES = {
     code: 'SERVER_ERROR',
     statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
     message: 'A server error occurred.'
+  },
+
+  TOKEN_EXPIRED: {
+    code: 'TOKEN_EXPIRED',
+    statusCode: StatusCodes.UNAUTHORIZED,
+    message: 'The provided token has expired.'
   }
 }
