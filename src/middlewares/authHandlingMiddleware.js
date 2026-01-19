@@ -18,8 +18,7 @@ export const authorizationMiddleware = async (req, res, next) => {
     req.user = {
       id: user._id.toString(),
       email: user.email,
-      role: user.role,
-      fullname: user.fullname
+      role: user.role
     }
 
     next()
