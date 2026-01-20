@@ -2,7 +2,7 @@ import { transporter } from '#configs/mail.js'
 import { env } from '#configs/environment.js'
 import { VERIFY_TYPE } from '#constants/verificationConstant.js'
 
-const sendVerificationCode = async (to, code, type = VERIFY_TYPE.REGISTER, expiresInMinutes = 10) => {
+const sendVerificationCode = async (to, code, type = VERIFY_TYPE.REGISTER, expiresInMinutes = 5) => {
   const subjects = {
     [VERIFY_TYPE.REGISTER]: 'Mã Xác Thực Đăng Ký',
     [VERIFY_TYPE.CHANGE_EMAIL]: 'Mã Xác Thực Thay Đổi Email',

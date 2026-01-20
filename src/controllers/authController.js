@@ -9,9 +9,7 @@ const register = async (req, res, next) => {
       userAgent: req.headers['user-agent'] || ''
     })
     res.status(StatusCodes.CREATED).json(responseSuccess({
-      data: {
-        user: result.user
-      },
+      data: result.user,
       message: result.message
     }))
   } catch (error) {
@@ -85,7 +83,7 @@ const refreshToken = async (req, res, next) => {
       ipAddress: req.ip || req.connection.remoteAddress,
       userAgent: req.headers['user-agent'] || ''
     }
-    const result = await AUTH_SERVICE.refreshToken(req.body.refreshToken, requestInfo)
+    const result = await AUTH_SERVICE.refreshToken(req.body, requestInfo)
 
     res.status(StatusCodes.OK).json(responseSuccess({
       data: {
@@ -143,6 +141,20 @@ const changePassword = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const resetPassword = async (req, res, next) => {
+  try {
+    const requestInfo = {
+      ipAddress: req.ip || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent'] || ''
+    }
+    const result = await AUTH_SERVICE.resetPassword(req.body, requestInfo)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: null,
+      message: result.message || 'Đặt lại mật khẩu thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 export const AUTH_CONTROLLER = {
   register,
   login,
@@ -153,5 +165,6 @@ export const AUTH_CONTROLLER = {
   logout,
   logoutAll,
   getCurrentUser,
-  changePassword
+  changePassword,
+  resetPassword
 }

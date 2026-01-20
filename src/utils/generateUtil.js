@@ -17,9 +17,24 @@ const expiresInMinutes = () => {
 
 const OTP_EXPIRES_IN_MINUTES = parseInt(env.OTP_EXPIRES_IN.replace(/\D/g, ''), 10)
 
+const extractFieldsFromJoi = (schema) => {
+  const description = schema.describe()
+  return Object.keys(description.keys || {})
+}
+
+const extractRequiredFieldsFromJoi = (schema) => {
+  const description = schema.describe()
+  return Object.entries(description.keys || {})
+  // eslint-disable-next-line no-unused-vars
+    .filter(([_, value]) => value.flags?.presence === 'required')
+    .map(([key]) => key)
+}
+
 export const GENERATE_UTILS = {
   generatePasswordResetToken,
   generateVerificationCode,
   expiresInMinutes,
-  OTP_EXPIRES_IN_MINUTES
+  OTP_EXPIRES_IN_MINUTES,
+  extractFieldsFromJoi,
+  extractRequiredFieldsFromJoi
 }

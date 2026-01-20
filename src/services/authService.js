@@ -52,15 +52,17 @@ const registerUser = async (userData, requestInfo = {}) => {
   if (existingUser) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Email đã được sử dụng'])
   }
+  const hashedPassword = await BCRYPT_UTILS.hashPassword(userData.password)
   const newUser = await USER_REPOSITORY.createUser({
     ...userData,
+    password: hashedPassword,
     role: RoleEnum.CUSTOMER
   })
 
   await VERIFICATION_REPOSITORY.deleteVerificationCodesByUserId(newUser._id, VERIFY_TYPE.VERIFY_EMAIL)
   const code = GENERATE_UTILS.generateVerificationCode()
   await VERIFICATION_REPOSITORY.createVerificationCode({
-    userId: newUser._id,
+    user: newUser._id,
     type: VERIFY_TYPE.VERIFY_EMAIL,
     code,
     expiresAt: GENERATE_UTILS.expiresInMinutes(),
@@ -246,7 +248,7 @@ const verifyOtp = async (data, requestInfo = {}) => {
 
   if (!user) throw new ApiError(ERROR_CODES.NOT_FOUND, ['Email không tồn tại'])
   if (!user.isActive) throw new ApiError(ERROR_CODES.ACCOUNT_DISABLED, ['Tài khoản của bạn đã bị vô hiệu hóa'])
-  const verifiCode = await VERIFICATION_REPOSITORY.findVerificationCode(user._id, type, code)
+  const verifiCode = await VERIFICATION_REPOSITORY.findVerificationCode(user._id, code, type)
 
   if (!verifiCode) {
     const lastestCode = await VERIFICATION_REPOSITORY.findLatestVerificationCode(user._id, type)
@@ -278,7 +280,7 @@ const resendVerificationCode = async (data, requestInfo = {}) => {
   await VERIFICATION_REPOSITORY.deleteVerificationCodesByUserId(user._id, type)
   const code = GENERATE_UTILS.generateVerificationCode()
   await VERIFICATION_REPOSITORY.createVerificationCode({
-    userId: user._id,
+    user: user._id,
     type,
     code,
     expiresAt: GENERATE_UTILS.expiresInMinutes(),
@@ -300,6 +302,9 @@ const refreshToken = async (data, requestInfo = {}) => {
   if (!existingToken) {
     throw new ApiError(ERROR_CODES.UNAUTHORIZED, ['Refresh token không hợp lệ'])
   }
+  if (existingToken.expiresAt < new Date()) {
+    throw new ApiError(ERROR_CODES.UNAUTHORIZED, ['Refresh token đã hết hạn'])
+  }
 
   let decoded
 
@@ -320,9 +325,17 @@ const refreshToken = async (data, requestInfo = {}) => {
       'Tài khoản của bạn đã bị vô hiệu hóa'
     ])
   }
+  if (
+    existingToken.ipAddress !== ipAddress ||
+    existingToken.userAgent !== userAgent
+  ) {
+    throw new ApiError(ERROR_CODES.UNAUTHORIZED, [
+      'Thiết bị không hợp lệ'
+    ])
+  }
 
-  await REFRESHTOKEN_REPOSITORY.revokeRefreshToken(refreshToken)
   const tokens = await createToken(user, ipAddress, userAgent)
+  await REFRESHTOKEN_REPOSITORY.revokeRefreshToken(refreshToken)
 
   return {
     ...tokens
@@ -361,8 +374,7 @@ const getCurrentUser = async (userId) => {
   }
 
   return {
-    ...user,
-    id: user._id.toString()
+    user
   }
 }
 
@@ -412,7 +424,7 @@ const resetPassword = async (data, requestInfo = {}) => {
   await VERIFICATION_REPOSITORY.deleteVerificationCodesByUserId(user._id, VERIFY_TYPE.RESET_PASSWORD)
   const code = GENERATE_UTILS.generateVerificationCode()
   await VERIFICATION_REPOSITORY.createVerificationCode({
-    userId: user._id,
+    user: user._id,
     type: VERIFY_TYPE.RESET_PASSWORD,
     code,
     expiresAt: GENERATE_UTILS.expiresInMinutes(),

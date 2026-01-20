@@ -11,9 +11,9 @@ const options = {
     servers: [],
     components: {
       securitySchemes: {
-        bearerAuth: {
+        BearerAuth: {
           type: 'http',
-          scheme: 'bearer',
+          scheme: 'Bearer',
           bearerFormat: 'JWT'
         }
       }
