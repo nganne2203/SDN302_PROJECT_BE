@@ -6,7 +6,8 @@ const userSchema = new mongoose.Schema(
   {
     fullname: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    role: { type: String, enum: Object.values(RoleEnum), default: RoleEnum.CUSTOMER },
+    role: { type: String, enum: [...Object.values(RoleEnum)], default: RoleEnum.CUSTOMER },
+    branch: { type: mongoose.Schema.Types.ObjectId, ref: 'branchs', default: null },
     password: { type: String, default: null },
     googleId: { type: String, default: null },
     provider: { type: String, enum: Object.values(USER_PROVIDER), default: USER_PROVIDER.LOCAL },
@@ -28,7 +29,8 @@ const userSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', default: null },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', default: null }
-  }, { timestamps: true, versionKey: false }
+  },
+  { timestamps: true, versionKey: false }
 )
 
 userSchema.plugin(mongoosePaginate)

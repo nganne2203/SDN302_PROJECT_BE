@@ -1,8 +1,10 @@
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
+import e from 'express'
 
 export const validationHandlingMiddleware = (schema) => {
   return async (req, res, next) => {
+    console.log('Validating request with schema:', schema)
     try {
       const validationErrors = []
 
@@ -36,8 +38,12 @@ export const validationHandlingMiddleware = (schema) => {
       if (validationErrors.length > 0) {
         throw new ApiError(ERROR_CODES.VALIDATION_ERROR, validationErrors)
       }
+      console.log('Validation successful', validationErrors)
 
       next()
-    } catch (error) { next(error) }
+    } catch (error) { 
+      console.error('Validation error:', error)
+      next(error) 
+    }
   }
 }
