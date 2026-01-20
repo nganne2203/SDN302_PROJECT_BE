@@ -127,6 +127,7 @@ router.post('/register',
  */
 router.post('/login',
   authRateLimiter,
+  verifyRecaptchaMiddleware,
   sanitizeRequest(LOGIN_FIELDS, LOGIN_FIELDS),
   validationHandlingMiddleware(AUTH_VALIDATION.loginUser),
   AUTH_CONTROLLER.login
@@ -352,7 +353,7 @@ router.post('/logout-all',
  *         description: Change password successful
  */
 router.post('/change-password',
-  authorizationMiddleware,
+  authRateLimiter,
   sanitizeRequest(CHANGE_PASSWORD_FIELDS, CHANGE_PASSWORD_FIELDS),
   validationHandlingMiddleware(AUTH_VALIDATION.changePassword),
   AUTH_CONTROLLER.changePassword

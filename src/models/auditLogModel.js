@@ -5,13 +5,6 @@ const auditLogSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'users', index: true },
 
-    type: {
-      type: String,
-      enum: ['request', 'response'],
-      required: true,
-      index: true
-    },
-
     method: { type: String, index: true },
     endpoint: { type: String, index: true },
 
@@ -22,18 +15,20 @@ const auditLogSchema = new mongoose.Schema(
     },
 
     response: {
-      status: { type: Number, index: true },
+      status: Number,
       body: mongoose.Schema.Types.Mixed
     },
 
-    ip: { type: String },
-    userAgent: { type: String },
+    ip: String,
+    userAgent: String,
 
-    duration: { type: Number },
-    message: { type: String, default: '' }
+    duration: Number,
+    error: {
+      message: String
+    }
   },
   {
-    timestamps: { createdAt: true, updatedAt: false },
+    timestamps: true,
     versionKey: false
   }
 )

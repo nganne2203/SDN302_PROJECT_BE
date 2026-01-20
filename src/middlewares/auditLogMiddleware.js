@@ -1,19 +1,23 @@
 import { AUDITLOG_REPOSITORY } from '#repositories/auditLogRepository.js'
 import sanitize from '#utils/sanitizeUtil.js'
+import { formatResponseForAuditLog } from '#utils/auditUtil.js'
 
 const auditLogMiddleware = async (req, res, next) => {
   const startTime = Date.now()
   const userId = req.user?._id || null
 
-  const sanitizedBody = sanitize(req.body)
+  const SKIP_PATHS = ['/api-docs']
 
-  await AUDITLOG_REPOSITORY.createLog({
+  if (SKIP_PATHS.some(path => req.originalUrl.startsWith(path))) {
+    return next()
+  }
+
+  const auditLog = await AUDITLOG_REPOSITORY.createLog({
     user: userId,
-    type: 'request',
     method: req.method,
     endpoint: req.originalUrl,
     request: {
-      body: sanitizedBody,
+      body: sanitize(req.body),
       params: req.params,
       query: req.query
     },
@@ -21,23 +25,20 @@ const auditLogMiddleware = async (req, res, next) => {
     userAgent: req.headers['user-agent']
   })
 
-  const originalSend = res.send.bind(res)
+  req.auditLogId = auditLog._id
 
-  res.send = async (body) => {
-    await AUDITLOG_REPOSITORY.createLog({
-      user: userId,
-      type: 'response',
-      method: req.method,
-      endpoint: req.originalUrl,
+  const originalJson = res.json.bind(res)
+
+  res.json = async (body) => {
+    await AUDITLOG_REPOSITORY.updateLog(req.auditLogId, {
       response: {
         status: res.statusCode,
-        body: typeof body === 'string' ? body.slice(0, 1000) : sanitize(body)
+        body: formatResponseForAuditLog(body)
       },
-      duration: Date.now() - startTime,
-      ip: req.ip,
-      userAgent: req.headers['user-agent']
+      duration: Date.now() - startTime
     })
-    originalSend(body)
+
+    return originalJson(body)
   }
 
   next()
