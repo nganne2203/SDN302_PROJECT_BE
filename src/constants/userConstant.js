@@ -1,12 +1,6 @@
 import { GENERATE_UTILS } from '#utils/generateUtil.js'
 import { AUTH_VALIDATION } from '#validations/authValidation.js'
-
-export const RoleEnum = {
-  CUSTOMER: 'customer',
-  ADMIN: 'admin',
-  MANAGER: 'manager',
-  STAFF: 'staff'
-}
+import { USER_VALIDATION } from '#validations/userValidation.js'
 
 export const USER_PROVIDER = {
   LOCAL: 'local',
@@ -43,4 +37,24 @@ export const CHANGE_PASSWORD_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
 
 export const RESET_PASSWORD_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
   AUTH_VALIDATION.resetPassword
+)
+
+export const CREATE_USER_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
+  USER_VALIDATION.createUser
+)
+export const REQUIRE_FIELD_CREATE_USER = GENERATE_UTILS.extractRequiredFieldsFromJoi(
+  USER_VALIDATION.createUser
+)
+
+export const UPDATE_USER_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
+  USER_VALIDATION.updateUser
+)
+export const UPDATE_STATUS_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
+  USER_VALIDATION.updateUserStatus
+)
+export const UPDATE_CURRENT_USER_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
+  USER_VALIDATION.updateCurrentUser
+)
+export const QUERY_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
+  USER_VALIDATION.query
 )

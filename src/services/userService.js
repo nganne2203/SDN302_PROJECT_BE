@@ -4,7 +4,7 @@ import { mapMongoosePagination } from '#utils/pagination.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { BCRYPT_UTILS } from '#utils/bcryptUtil.js'
-import { RoleEnum } from '#constants/userConstant.js'
+import { RoleEnum } from '#constants/roleConstant.js'
 
 const getUserById = async (userId) => {
   const user = await USER_REPOSITORY.getUserById(userId)
@@ -61,11 +61,34 @@ const assertEmailNotExists = async (email) => {
   return user
 }
 
+const canCreateUser = (creator, targetRole, targetBranch) => {
+  switch (creator.role) {
+  case RoleEnum.ADMIN:
+    return true
+
+  case RoleEnum.MANAGER:
+    if (![RoleEnum.STAFF, RoleEnum.CUSTOMER].includes(targetRole)) {
+      return false
+    }
+
+    if (targetRole === RoleEnum.CUSTOMER) return true
+
+    return creator.branch?.toString() === targetBranch?.toString()
+
+  case RoleEnum.STAFF:
+    return targetRole === RoleEnum.CUSTOMER
+
+  default:
+    return false
+  }
+}
+
 const createUserInternal = async ({
   fullname,
   email,
   password,
   phone,
+  branch = null,
   role = RoleEnum.CUSTOMER,
   avatar = null,
   addresses = [],
@@ -79,6 +102,7 @@ const createUserInternal = async ({
     email,
     password: hashedPassword,
     phone,
+    branch,
     role,
     avatar,
     addresses,
@@ -90,35 +114,116 @@ const createUserInternal = async ({
 }
 
 const createUser = async (userData, createdBy = null) => {
-  return await createUserInternal({ ...userData, createdBy })
+  const creator = await getUserById(createdBy)
+  const { role } = userData
+
+  if (creator.role === RoleEnum.MANAGER && role === RoleEnum.STAFF) {
+    userData.branch = creator.branch
+  }
+
+  if (role === RoleEnum.CUSTOMER) {
+    userData.branch = null
+  }
+
+  if (!canCreateUser(creator, role, userData.branch)) {
+    throw new ApiError(
+      ERROR_CODES.FORBIDDEN,
+      ['Bạn không có quyền tạo người dùng với vai trò này']
+    )
+  }
+
+  return await createUserInternal({
+    ...userData,
+    createdBy
+  })
 }
 
 const updateUser = async (userId, updateData, updatedBy = null) => {
+  const updater = await getUserById(updatedBy)
   const user = await getUserById(userId)
+
+  if (updater.role === RoleEnum.MANAGER && user.role === RoleEnum.ADMIN) {
+    throw new ApiError(ERROR_CODES.FORBIDDEN, ['Không thể cập nhật tài khoản ADMIN'])
+  }
+
+  if (
+    updater.role === RoleEnum.MANAGER &&
+    user.role === RoleEnum.STAFF &&
+    user.branch?.toString() !== updater.branch?.toString()
+  ) {
+    throw new ApiError(
+      ERROR_CODES.FORBIDDEN,
+      ['Không thể cập nhật STAFF ngoài chi nhánh quản lý']
+    )
+  }
+
   const {
     fullname,
     email,
     phone,
     addresses,
     avatar,
-    role
+    role,
+    branch
   } = updateData
+
+  if (
+    updater.role === RoleEnum.MANAGER &&
+    role === RoleEnum.ADMIN
+  ) {
+    throw new ApiError(
+      ERROR_CODES.FORBIDDEN,
+      ['MANAGER không được gán quyền ADMIN']
+    )
+  }
 
   if (email && email !== user.email) {
     await assertEmailNotExists(email)
   }
 
   const updatedUserData = { updatedBy }
+
   if (email) {
     updatedUserData.email = email
-    updateData.isEmailVerified = false
+    updatedUserData.isEmailVerified = false
     updatedUserData.emailVerifiedAt = null
   }
+
   if (fullname) updatedUserData.fullname = fullname
-  if (role) updatedUserData.role = role
   if (phone) updatedUserData.phone = phone
-  if (addresses) updatedUserData.addresses = addresses
+  if (addresses) {
+    if (!Array.isArray(addresses)) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Addresses phải là mảng'])
+    }
+    updatedUserData.addresses = addresses
+  }
+
   if (avatar) updatedUserData.avatar = avatar
+
+  if (role) {
+    updatedUserData.role = role
+
+    if (role === RoleEnum.CUSTOMER) {
+      updatedUserData.branch = null
+    }
+  }
+
+  if (branch !== undefined) {
+    if (user.role === RoleEnum.CUSTOMER || role === RoleEnum.CUSTOMER) {
+      updatedUserData.branch = null
+    } else {
+      if (
+        updater.role === RoleEnum.MANAGER &&
+        branch?.toString() !== updater.branch?.toString()
+      ) {
+        throw new ApiError(
+          ERROR_CODES.FORBIDDEN,
+          ['Không thể gán branch ngoài phạm vi quản lý']
+        )
+      }
+      updatedUserData.branch = branch
+    }
+  }
 
   return USER_REPOSITORY.updateUserById(userId, updatedUserData)
 }
@@ -138,7 +243,7 @@ const deleteUser = async (id) => {
   const user = await getUserById(id)
 
   if (user.isActive) {
-    throw new ApiError(ERROR_CODES.CANNOT_DELETE_ACTIVE_USER, [
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, [
       'Không thể xóa người dùng đang hoạt động. Vui lòng vô hiệu hóa trước khi xóa'
     ])
   }
@@ -174,6 +279,42 @@ const updateCurrentUser = async (userId, updateData) => {
   return USER_REPOSITORY.updateUserById(userId, updatedUserData)
 }
 
+const getAllUsersForManager = async (managerId, query = {}) => {
+  const manager = await getUserById(managerId)
+  const { page, limit, search, isActive, role, sortBy, sortOrder } = query
+
+  if (manager.role !== RoleEnum.MANAGER) {
+    throw new ApiError(ERROR_CODES.FORBIDDEN, ['Người dùng không có quyền truy cập'])
+  }
+  const filter = { branch: manager.branch }
+
+  if (search) {
+    const escapedSearch = escapeRegex(search)
+    filter.$or = [
+      { fullname: { $regex: escapedSearch, $options: 'i' } },
+      { email: { $regex: escapedSearch, $options: 'i' } },
+      { phone: { $regex: escapedSearch, $options: 'i' } }
+    ]
+  }
+  if (typeof isActive === 'boolean') {
+    filter.isActive = isActive
+  }
+  if (role) {
+    filter.role = role
+  }
+  const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
+
+  const result = await USER_REPOSITORY.getAllUsers(filter, {
+    page,
+    limit,
+    sort
+  })
+  return {
+    data: result.docs,
+    pagination: mapMongoosePagination(result)
+  }
+}
+
 export const USER_SERVICE = {
   getUserById,
   getAllUsers,
@@ -185,5 +326,6 @@ export const USER_SERVICE = {
   updateUserStatus,
   deleteUser,
   updateEmailVerificationStatus,
-  updateCurrentUser
+  updateCurrentUser,
+  getAllUsersForManager
 }
