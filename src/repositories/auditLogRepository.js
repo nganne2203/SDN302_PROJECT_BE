@@ -1,14 +1,14 @@
 import { auditLogModel } from '#models/auditLogModel.js'
 
-const createAuditLog = async (logData) => {
-  return await auditLogModel.create(logData)
+const createAuditLog = async (data) => {
+  return auditLogModel.create(data)
 }
 
-const getAuditLogs = async (filter = {}, options = {}) => {
-  return await auditLogModel.paginate(filter, options)
+const updateAuditLog = async (id, data) => {
+  return auditLogModel.findByIdAndUpdate(id, data)
 }
 
 export const AUDITLOG_REPOSITORY = {
   createLog: createAuditLog,
-  getLogs: getAuditLogs
+  updateLog: updateAuditLog
 }
