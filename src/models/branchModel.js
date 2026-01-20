@@ -1,14 +1,21 @@
 import mongoose from 'mongoose'
+import mongoosePaginate from 'mongoose-paginate-v2'
 
 const branchSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    address: { type: String, required: true },
+    name: { type: String, required: true, trim: true },
+    address: { type: String, required: true, trim: true },
     manager: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
     isActive: { type: Boolean, default: true },
-    createdAt: { type: Date, default: Date.now }
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users' }
   },
   { timestamps: true, versionKey: false }
 )
 
-export const branchModel = mongoose.model('branchs', branchSchema)
+branchSchema.index({ name: 1 })
+branchSchema.index({ manager: 1 })
+
+branchSchema.plugin(mongoosePaginate)
+
+export const branchModel = mongoose.model('branches', branchSchema)

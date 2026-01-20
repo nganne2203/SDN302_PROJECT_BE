@@ -1,4 +1,4 @@
-import { RoleEnum } from '#constants/userConstant.js'
+import { RoleEnum } from '#constants/roleConstant.js'
 import { userModel } from '#models/userModel.js'
 import { USER_SERVICE } from '#services/userService.js'
 import { env } from '#configs/environment.js'
