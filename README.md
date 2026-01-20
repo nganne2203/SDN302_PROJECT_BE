@@ -88,15 +88,26 @@ npm install
 
 3. Create a `.env` file in the root directory with required environment variables:
 ```env
-NODE_ENV=dev
+MONGODB_URI=
 PORT=3000
-HOSTNAME=localhost
-MONGODB_URI=mongodb://localhost:27017/phone-accessories
-JWT_SECRET=your_jwt_secret_key
-MAIL_HOST=smtp.example.com
-MAIL_PORT=587
-MAIL_USER=your_email@example.com
-MAIL_PASS=your_email_password
+HOSTNAME=string
+NODE_ENV=dev
+SWAGGER_USER=string
+SWAGGER_PASSWORD=string
+CLIENT_URLS=localhost:5173
+JWT_SECRET=akma
+JWT_EXPIRES_IN=30p
+REFRESH_TOKEN_SECRET=ana
+REFRESH_TOKEN_EXPIRES_IN=7d
+EMAIL_USER=abc
+EMAIL_PASSWORD=abc
+GOOGLE_CLIENT_ID=abc
+GOOGLE_CLIENT_SECRET=abc
+RECAPTCHA_SECRET_KEY=abc
+RECAPTCHA_SITE_KEY=abc
+OTP_EXPIRES_IN=10m
+VERIFY_CAPTCHA_URL=http://
+AUTHOR=
 ```
 
 ## Available Scripts
@@ -146,10 +157,18 @@ Once the server is running, access the Swagger API documentation at:
 | `HOSTNAME` | string | No | `localhost` | Server hostname |
 | `MONGODB_URI` | string | Yes | - | MongoDB connection string |
 | `JWT_SECRET` | string | Yes | - | Secret key for JWT signing |
-| `MAIL_HOST` | string | No | - | SMTP mail server host |
-| `MAIL_PORT` | number | No | `587` | SMTP mail server port |
-| `MAIL_USER` | string | No | - | SMTP authentication username |
-| `MAIL_PASS` | string | No | - | SMTP authentication password |
+| `JWT_EXPIRES_IN` | string | Yes | - | Expire time for JWT signing |
+| `REFRESH_TOKEN_SECRET` | string | Yes | - | Refresh token Secret key for JWT signing |
+| `REFRESH_TOKEN_EXPIRES_IN` | string | Yes | - | Expire time for JWT signing |
+| `EMAIL_USER` | string | Yes | - | SMTP authentication username |
+| `EMAIL_PASSWORD` | string | Yes | - | SMTP authentication password |
+| `GOOGLE_CLIENT_ID` | string | No | - | GG Client ID |
+| `GOOGLE_CLIENT_SECRET` | string | Yes | - | GG Client secret |
+| `RECAPTCHA_SECRET_KEY` | string | Yes | - | Secret key for recaptcha |
+| `RECAPTCHA_SITE_KEY` | string | Yes | - | Site key for recaptcha |
+| `OTP_EXPIRES_IN` | string | `5m` | - | OTP expires time for verify code |
+| `VERIFY_CAPTCHA_URL` | string | Yes | - | URL to verify captcha |
+| `AUTHOR` | string | No | `SDN302` | Author |
 
 ## Key Features Explained
 
