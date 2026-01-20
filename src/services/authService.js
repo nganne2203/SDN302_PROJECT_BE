@@ -1,7 +1,8 @@
 import { USER_REPOSITORY } from '#repositories/userRepository.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import ApiError from '#utils/ApiError.js'
-import { RoleEnum, USER_PROVIDER } from '#constants/userConstant.js'
+import { RoleEnum } from '#constants/roleConstant.js'
+import { USER_PROVIDER } from '#constants/userConstant.js'
 import { VERIFY_TYPE } from '#constants/verificationConstant.js'
 import { VERIFICATION_REPOSITORY } from '#repositories/verificationRepository.js'
 import { GENERATE_UTILS } from '#utils/generateUtil.js'
@@ -16,7 +17,8 @@ const buildTokenPayload = (user) => {
   return {
     id: user._id.toString(),
     email: user.email,
-    role: user.role
+    role: user.role,
+    branch: user.branch ? user.branch.toString() : null
   }
 }
 

@@ -46,6 +46,20 @@ const getAllUsers = async (filter = {}, options = {}) => {
   })
 }
 
+const getAllUsersForManager = async (managerBranchId, filter = {}, options = {}) => {
+  const { page = 1, limit = 10, sort = { createdAt: -1 } } = options
+  const combinedFilter = {
+    ...filter,
+    branch: managerBranchId
+  }
+  return await userModel.paginate(combinedFilter, {
+    page,
+    limit,
+    sort,
+    select: '-password'
+  })
+}
+
 const updateEmailVerificationStatusById = async (id, isEmailVerified, updatedBy = null) => {
   return await userModel.findByIdAndUpdate(
     id,
@@ -63,5 +77,6 @@ export const USER_REPOSITORY = {
   updateUserById,
   deleteUserById,
   getAllUsers,
+  getAllUsersForManager,
   updateEmailVerificationStatusById
 }
