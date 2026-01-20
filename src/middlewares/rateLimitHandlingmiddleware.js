@@ -16,7 +16,7 @@ export const createRateLimiter = (options = {}) => {
   const {
     windowMs = 15 * 60 * 1000,
     max = 100,
-    message = 'Too many requests, please try again later',
+    message = 'Quá nhiều yêu cầu. Vui lòng thử lại sau.',
     keyGenerator = (req) => req.ip || req.connection.remoteAddress || 'unknown',
     skipFailedRequests = false,
     skipSuccessfulRequests = false
@@ -74,45 +74,45 @@ export const createRateLimiter = (options = {}) => {
 export const authRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 10,
-  message: 'Too many authentication attempts, please try again after 15 minutes',
+  message: 'Quá nhiều yêu cầu, vui lòng thử lại sau 15 phút',
   keyGenerator: (req) => `auth:${req.ip || 'unknown'}`
 })
 
 export const apiRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: 'Too many requests, please try again later'
+  message: 'Quá nhiều yêu cầu, vui lòng thử lại sau'
 })
 
 export const readRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 500,
-  message: 'Too many requests, please try again later'
+  message: 'Quá nhiều yêu cầu, vui lòng thử lại sau'
 })
 
 export const sensitiveRateLimiter = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 3,
-  message: 'Too many attempts, please try again after an hour',
+  message: 'Quá nhiều yêu cầu, vui lòng thử lại sau một giờ',
   keyGenerator: (req) => `sensitive:${req.ip || 'unknown'}:${req.user?.userId || 'anon'}`
 })
 
 export const userRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 200,
-  message: 'Too many requests, please try again later',
+  message: 'Quá nhiều yêu cầu, vui lòng thử lại sau',
   keyGenerator: (req) => `user:${req.user?.userId || req.ip || 'unknown'}`
 })
 
 export const guestRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 50,
-  message: 'Too many requests, please try again later',
+  message: 'Quá nhiều yêu cầu, vui lòng thử lại sau',
   keyGenerator: (req) => `guest:${req.ip || 'unknown'}`
 })
 
 export const writeRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: 'Too many write requests, please try again later'
+  message: 'Quá nhiều yêu cầu, vui lòng thử lại sau'
 })

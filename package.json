@@ -24,6 +24,7 @@
     "build": "rimraf dist && copyfiles -u 1 \"src/**/*\" dist",
     "predev": "npm run build",
     "dev": "cross-env NODE_ENV=dev concurrently \"copyfiles -u 1 src/**/* dist -w\" \"nodemon -q dist/server.js\"",
+    "prod": "cross-env NODE_ENV=prod npm run start",
     "prestart": "npm run build",
     "start": "cross-env NODE_ENV=prod node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
