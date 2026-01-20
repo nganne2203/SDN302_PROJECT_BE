@@ -166,7 +166,7 @@ Once the server is running, access the Swagger API documentation at:
 | `GOOGLE_CLIENT_SECRET` | string | Yes | - | GG Client secret |
 | `RECAPTCHA_SECRET_KEY` | string | Yes | - | Secret key for recaptcha |
 | `RECAPTCHA_SITE_KEY` | string | Yes | - | Site key for recaptcha |
-| `OTP_EXPIRES_IN` | string | `5m` | - | OTP expires time for verify code |
+| `OTP_EXPIRES_IN` | string | No | `5m` | OTP expires time for verify code |
 | `VERIFY_CAPTCHA_URL` | string | Yes | - | URL to verify captcha |
 | `AUTHOR` | string | No | `SDN302` | Author |
 
