@@ -4,7 +4,7 @@ import { mapMongoosePagination } from '#utils/pagination.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { USER_REPOSITORY } from '#repositories/userRepository.js'
-import { RoleEnum } from '#constants/userConstant.js'
+import { RoleEnum } from '#constants/roleConstant.js'
 
 const getBranchById = async (branchId) => {
   const branch = await BRANCH_REPOSITORY.getBranchById(branchId)
