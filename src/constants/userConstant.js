@@ -39,6 +39,10 @@ export const RESET_PASSWORD_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
   AUTH_VALIDATION.resetPassword
 )
 
+export const CONFIRM_RESET_PASSWORD_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
+  AUTH_VALIDATION.confirmResetPassword
+)
+
 export const CREATE_USER_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
   USER_VALIDATION.createUser
 )
@@ -58,3 +62,4 @@ export const UPDATE_CURRENT_USER_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
 export const QUERY_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
   USER_VALIDATION.query
 )
+

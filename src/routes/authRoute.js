@@ -13,7 +13,8 @@ import {
   RESEND_OTP_FIELDS,
   REFRESH_TOKEN_FIELDS,
   CHANGE_PASSWORD_FIELDS,
-  RESET_PASSWORD_FIELDS
+  RESET_PASSWORD_FIELDS,
+  CONFIRM_RESET_PASSWORD_FIELDS
 } from '#constants/userConstant.js'
 import { verifyRecaptchaMiddleware } from '#middlewares/verifyCaptchaMiddleware.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
@@ -387,6 +388,73 @@ router.post('/reset-password',
   sanitizeRequest(RESET_PASSWORD_FIELDS, RESET_PASSWORD_FIELDS),
   validationHandlingMiddleware(AUTH_VALIDATION.resetPassword),
   AUTH_CONTROLLER.resetPassword
+)
+
+/**
+ * @swagger
+ * /api/auth/set-password:
+ *   post:
+ *     summary: Set password for OAuth users
+ *     description: Allows OAuth users without a password to set one
+ *     tags: [Auth]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password:
+ *                 type: string
+ *                 example: NewPassword@123
+ *     responses:
+ *       200:
+ *         description: Set password successful
+ */
+
+router.post('/set-password',
+  authRateLimiter,
+  authorizationMiddleware,
+  validationHandlingMiddleware(AUTH_VALIDATION.setPassword),
+  AUTH_CONTROLLER.setPassword
+)
+
+/**
+ * @swagger
+ * /api/auth/confirm-reset-password:
+ *   post:
+ *     summary: Confirm reset password
+ *     description: Confirm and finalize the password reset process
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 example: NewPassword@123
+ *     responses:
+ *       200:
+ *         description: Confirm reset password successful
+ */
+router.post('/confirm-reset-password',
+  authRateLimiter,
+  sanitizeRequest(CONFIRM_RESET_PASSWORD_FIELDS, CONFIRM_RESET_PASSWORD_FIELDS),
+  validationHandlingMiddleware(AUTH_VALIDATION.confirmResetPassword),
+  AUTH_CONTROLLER.confirmResetPassword
 )
 
 /**
