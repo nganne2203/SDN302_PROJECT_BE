@@ -134,5 +134,25 @@ export const AUTH_VALIDATION = {
       'any.required': 'Email là bắt buộc',
       'string.pattern.base': 'Email không hợp lệ'
     }).trim()
+  }),
+  setPassword: joi.object({
+    password: joi.string().pattern(PASSWORD_REGEX).required().messages({
+      'string.empty': 'Mật khẩu không được để trống',
+      'string.pattern.base': 'Mật khẩu phải từ 8-20 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt',
+      'any.required': 'Mật khẩu là bắt buộc'
+    }).trim()
+  }),
+  confirmResetPassword: joi.object({
+    email: joi.string().email().required().pattern(EMAIL_REGEX).messages({
+      'string.empty': 'Email không được để trống',
+      'string.email': 'Email không hợp lệ',
+      'any.required': 'Email là bắt buộc',
+      'string.pattern.base': 'Email không hợp lệ'
+    }).trim(),
+    password: joi.string().pattern(PASSWORD_REGEX).required().messages({
+      'string.empty': 'Mật khẩu không được để trống',
+      'string.pattern.base': 'Mật khẩu phải từ 8-20 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt',
+      'any.required': 'Mật khẩu là bắt buộc'
+    }).trim()
   })
 }
