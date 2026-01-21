@@ -155,6 +155,32 @@ const resetPassword = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const setPassword = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const { password } = req.body
+
+    const result = await AUTH_SERVICE.setPassword(userId, { password })
+
+    res.json({
+      success: true,
+      message: result.message
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+const confirmResetPassword = async (req, res, next) => {
+  try {
+    const result = await AUTH_SERVICE.confirmPasswordReset(req.body)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: null,
+      message: result.message || 'Xác nhận đặt lại mật khẩu thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 export const AUTH_CONTROLLER = {
   register,
   login,
@@ -166,5 +192,7 @@ export const AUTH_CONTROLLER = {
   logoutAll,
   getCurrentUser,
   changePassword,
-  resetPassword
+  resetPassword,
+  setPassword,
+  confirmResetPassword
 }

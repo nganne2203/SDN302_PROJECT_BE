@@ -125,21 +125,17 @@ const googleAuth = async (googleUserData, requestInfo = {}) => {
 
   if (!user) {
     user = await USER_REPOSITORY.getUserByEmail(email)
-  }
 
-  if (user) {
-    if (!user.googleId) {
+    if (user && !user.googleId) {
       user = await USER_REPOSITORY.updateUserById(user._id, {
         googleId,
         provider: USER_PROVIDER.GOOGLE,
-        isEmailVerified: true,
-        emailVerifiedAt: new Date(),
-        avatar: avatar || user.avatar,
-        password: GENERATE_UTILS.generatePasswordResetToken()
+        avatar: avatar || user.avatar
       })
-      await EMAIL_SERVICE.wellcomeEmail(email, user.password)
     }
+  }
 
+  if (user) {
     if (!user.isActive) {
       throw new ApiError(ERROR_CODES.ACCOUNT_DISABLED, [
         'Tài khoản của bạn đã bị vô hiệu hóa'
@@ -147,9 +143,12 @@ const googleAuth = async (googleUserData, requestInfo = {}) => {
     }
 
     const tokens = await createToken(user, ipAddress, userAgent)
+    const hasPassword = !!user.password
+
     return {
       ...tokens,
-      isNewUser: false
+      isNewUser: false,
+      hasPassword
     }
   }
 
@@ -162,14 +161,16 @@ const googleAuth = async (googleUserData, requestInfo = {}) => {
     role: RoleEnum.CUSTOMER,
     isEmailVerified: true,
     emailVerifiedAt: new Date(),
-    password: null
+    password: null,
+    hasPassword: false
   })
 
   const tokens = await createToken(newUser, ipAddress, userAgent)
 
   return {
     ...tokens,
-    isNewUser: true
+    isNewUser: true,
+    hasPassword: false
   }
 }
 
@@ -186,6 +187,7 @@ const buildGoogleAuthRedirectUrl = (result, res) => {
 
   redirectUrl.searchParams.set('accessToken', result.accessToken)
   redirectUrl.searchParams.set('isNewUser', String(result.isNewUser))
+  redirectUrl.searchParams.set('hasPassword', String(result.hasPassword))
 
   return redirectUrl.toString()
 }
@@ -197,7 +199,6 @@ const buildGoogleAuthErrorUrl = (error) => {
   return errorUrl.toString()
 }
 
-// eslint-disable-next-line no-unused-vars
 const handleOtpVerified = async (type, user, requestInfo) => {
   // const { ipAddress, userAgent } = requestInfo
 
@@ -227,15 +228,9 @@ const handleOtpVerified = async (type, user, requestInfo) => {
   }
 
   case VERIFY_TYPE.RESET_PASSWORD: {
-    const newPassword = GENERATE_UTILS.generatePasswordResetToken()
-    const hashedPassword = await BCRYPT_UTILS.hashPassword(newPassword)
-    await USER_REPOSITORY.updateUserById(user._id, {
-      password: hashedPassword
-    })
-    await EMAIL_SERVICE.sendPasswordResetNotification(user.email, user.fullName, newPassword)
     return {
       data: null,
-      message: `Xác thực thành công. Mật khẩu của bạn đã được đặt lại và gửi đến email ${maskEmail(user.email)}`
+      message: 'Xác thực thành công. Bạn có thể đặt mật khẩu mới.'
     }
   }
   default:
@@ -416,6 +411,43 @@ const changePassword = async (userId, data) => {
   }
 }
 
+const setPassword = async (userId, data) => {
+  const { password } = data
+  const user = await USER_REPOSITORY.getUserById(userId, { includePassword: true })
+  if (!user) {
+    throw new ApiError(ERROR_CODES.NOT_FOUND, ['Người dùng không tồn tại'])
+  }
+
+  if (!user.isActive) {
+    throw new ApiError(ERROR_CODES.ACCOUNT_DISABLED, [
+      'Tài khoản của bạn đã bị vô hiệu hóa'
+    ])
+  }
+
+  if (user.password) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, [
+      'Bạn đã có mật khẩu. Vui lòng dùng chức năng đổi mật khẩu'
+    ])
+  }
+
+  if (user.provider === USER_PROVIDER.LOCAL && user.password) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, [
+      'Chỉ người dùng OAuth mới có thể sử dụng chức năng này'
+    ])
+  }
+
+  const hashedPassword = await BCRYPT_UTILS.hashPassword(password)
+  await USER_REPOSITORY.updateUserById(user._id, {
+    password: hashedPassword
+  })
+
+  await EMAIL_SERVICE.changePasswordNotification(user.email)
+
+  return {
+    message: 'Đặt mật khẩu thành công'
+  }
+}
+
 const resetPassword = async (data, requestInfo = {}) => {
   const { email } = data
   const { ipAddress = '', userAgent = '' } = requestInfo
@@ -439,6 +471,31 @@ const resetPassword = async (data, requestInfo = {}) => {
   }
 }
 
+const confirmPasswordReset = async (data) => {
+  const { email, newPassword } = data
+  const user = await USER_REPOSITORY.getUserByEmail(email)
+  if (!user) {
+    throw new ApiError(ERROR_CODES.NOT_FOUND, ['Người dùng không tồn tại'])
+  }
+
+  if (!user.isActive) {
+    throw new ApiError(ERROR_CODES.ACCOUNT_DISABLED, [
+      'Tài khoản của bạn đã bị vô hiệu hóa'
+    ])
+  }
+
+  const hashedPassword = await BCRYPT_UTILS.hashPassword(newPassword)
+  await USER_REPOSITORY.updateUserById(user._id, {
+    password: hashedPassword
+  })
+
+  await EMAIL_SERVICE.changePasswordNotification(user.email)
+
+  return {
+    message: 'Đặt lại mật khẩu thành công'
+  }
+}
+
 export const AUTH_SERVICE = {
   registerUser,
   loginUser,
@@ -452,5 +509,7 @@ export const AUTH_SERVICE = {
   logoutAll,
   getCurrentUser,
   changePassword,
-  resetPassword
+  setPassword,
+  resetPassword,
+  confirmPasswordReset
 }
