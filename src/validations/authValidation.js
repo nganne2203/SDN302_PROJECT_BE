@@ -56,6 +56,10 @@ export const AUTH_VALIDATION = {
     }).optional(),
     avatar: joi.string().uri().optional().messages({
       'string.uri': 'URL ảnh đại diện không hợp lệ'
+    }).trim(),
+    captchaToken: joi.string().required().messages({
+      'string.empty': 'Captcha token không được để trống',
+      'any.required': 'Captcha token là bắt buộc'
     }).trim()
   }),
   loginUser: joi.object({
@@ -66,6 +70,10 @@ export const AUTH_VALIDATION = {
     password: joi.string().required().messages({
       'string.empty': 'Mật khẩu không được để trống',
       'any.required': 'Mật khẩu là bắt buộc'
+    }).trim(),
+    captchaToken: joi.string().required().messages({
+      'string.empty': 'Captcha token không được để trống',
+      'any.required': 'Captcha token là bắt buộc'
     }).trim()
   }),
   verifyOtp: joi.object({
