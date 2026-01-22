@@ -43,6 +43,7 @@ const orderSchema = new mongoose.Schema(
     },
     cancelReason: { type: String, default: '' },
     message: { type: String, default: '' },
+    branch: { type: mongoose.Schema.Types.ObjectId, ref: 'branches', default: null },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users' }
   },
