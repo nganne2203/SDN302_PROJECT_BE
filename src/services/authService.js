@@ -199,6 +199,7 @@ const buildGoogleAuthErrorUrl = (error) => {
   return errorUrl.toString()
 }
 
+// eslint-disable-next-line no-unused-vars
 const handleOtpVerified = async (type, user, requestInfo) => {
   // const { ipAddress, userAgent } = requestInfo
 
