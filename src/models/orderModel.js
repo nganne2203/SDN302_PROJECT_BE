@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { ORDER_STATUS } from '#constants/orderConstant.js'
+import { ORDER_STATUS, DELIVERY_STATUS } from '#constants/orderConstant.js'
 import { PAYMENT_METHODS } from '#constants/paymentConstant.js'
 
 const orderSchema = new mongoose.Schema(
@@ -10,7 +10,13 @@ const orderSchema = new mongoose.Schema(
       {
         product: { type: mongoose.Schema.Types.ObjectId, ref: 'products', required: true },
         quantity: { type: Number, required: true, default: 1 },
-        price: { type: Number, required: true }
+        price: { type: Number, required: true },
+        services: [
+          {
+            service: { type: mongoose.Schema.Types.ObjectId, ref: 'services' },
+            price: { type: Number, required: true }
+          }
+        ]
       }
     ],
     shippingAddress: {
@@ -23,12 +29,20 @@ const orderSchema = new mongoose.Schema(
     },
     orderStatus: { type: String, enum: Object.values(ORDER_STATUS), default: ORDER_STATUS.PENDING },
     totalAmount: { type: Number, required: true },
-    paymentMethod: { type: String, enum: Object.values(PAYMENT_METHODS), required: true },
-    promotion: { type: mongoose.Schema.Types.ObjectId, ref: 'promotions' }, // Reference đến promotion được áp dụng
-    discountCode: { type: String, default: '' },
+    subtotal: { type: Number, required: true },
     discountAmount: { type: Number, default: 0 },
-    cancelReason: { type: String, default: '' }, // Lý do hủy đơn
-    message: { type: String, default: '' }, // Ghi chú từ khách hàng
+    discountPercentage: { type: Number, default: 0 },
+    paymentMethod: { type: String, enum: Object.values(PAYMENT_METHODS), required: true },
+    delivery: {
+      providerName: { type: String, default: '' },
+      trackingCode: { type: String, default: '' },
+      status: { type: String, enum: Object.values(DELIVERY_STATUS), default: DELIVERY_STATUS.PENDING },
+      estimatedDeliveryDate: { type: Date },
+      deliveredAt: { type: Date },
+      recipientName: { type: String, default: '' }
+    },
+    cancelReason: { type: String, default: '' },
+    message: { type: String, default: '' },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users' }
   },
