@@ -12,4 +12,5 @@ Router.get('/', (req, res) => {
 Router.use('/api/auth', AUTH_ROUTE)
 Router.use('/api/users', USER_ROUTE)
 Router.use('/api/branch', BRANCH_ROUTE)
+
 export const ROUTES = Router

@@ -6,6 +6,8 @@ export const validationHandlingMiddleware = (schema) => {
     try {
       const validationErrors = []
 
+      req.validated = req.validated || {}
+
       if (schema.body) {
         const { error, value } = schema.body.validate(req.body, { abortEarly: false })
         if (error) {
@@ -29,13 +31,14 @@ export const validationHandlingMiddleware = (schema) => {
         if (error) {
           validationErrors.push(...error.details.map(detail => detail.message))
         } else {
-          req.query = value
+          req.validated.query = value
         }
       }
 
       if (validationErrors.length > 0) {
         throw new ApiError(ERROR_CODES.VALIDATION_ERROR, validationErrors)
       }
+
       next()
     } catch (error) {
       next(error)
