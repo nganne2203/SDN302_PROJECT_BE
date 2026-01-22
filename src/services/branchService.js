@@ -105,21 +105,21 @@ const updateBranch = async (branchId, data, updatedBy = null) => {
   return BRANCH_REPOSITORY.updateBranchById(branchId, { ...updatedBranchData, updatedBy })
 }
 
-const assignManagerToBranch = async (branchId, managerId, updatedBy = null) => {
+const assignManagerToBranch = async (branchId, manager, updatedBy = null) => {
   const branch = await getBranchById(branchId)
-  await assertValidManager(managerId)
-  if (branch.manager && branch.manager.toString() === managerId.toString()) {
+  await assertValidManager(manager)
+  if (branch.manager && branch.manager.toString() === manager.toString()) {
     return branch
   }
-  const existingBranch = await BRANCH_REPOSITORY.getAllBranches({ manager: managerId })
+  const existingBranch = await BRANCH_REPOSITORY.getAllBranches({ manager })
   if (existingBranch.totalDocs > 0) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Người dùng này đã là quản lý của một chi nhánh khác'])
   }
   if (branch.manager) {
     await USER_REPOSITORY.updateUserById(branch.manager, { branch: null })
   }
-  await USER_REPOSITORY.updateUserById(managerId, { branch: branchId })
-  return BRANCH_REPOSITORY.updateBranchById(branchId, { manager: managerId, updatedBy })
+  await USER_REPOSITORY.updateUserById(manager, { branch: branchId })
+  return BRANCH_REPOSITORY.updateBranchById(branchId, { manager, updatedBy })
 }
 
 const updateBranchStatus = async (branchId, isActive, updatedBy = null) => {
@@ -138,17 +138,6 @@ const removeManagerFromBranch = async (branchId, updatedBy = null) => {
   return BRANCH_REPOSITORY.updateBranchById(branchId, { manager: null, updatedBy })
 }
 
-const deleteBranch = async (branchId) => {
-  const branch = await getBranchById(branchId)
-  if (branch.manager) {
-    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể xóa chi nhánh đang có quản lý. Vui lòng gỡ quản lý trước khi xóa'])
-  }
-  if (branch.isActive) {
-    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể xóa chi nhánh đang hoạt động. Vui lòng vô hiệu hóa trước khi xóa'])
-  }
-  return BRANCH_REPOSITORY.deleteBranchById(branchId)
-}
-
 export const BRANCH_SERVICE = {
   getBranchById,
   getAllBranches,
@@ -156,6 +145,5 @@ export const BRANCH_SERVICE = {
   updateBranch,
   assignManagerToBranch,
   updateBranchStatus,
-  removeManagerFromBranch,
-  deleteBranch
+  removeManagerFromBranch
 }
