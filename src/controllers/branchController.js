@@ -12,6 +12,78 @@ const getBranchById = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getAllBranches = async (req, res, next) => {
+  try {
+    const result = await BRANCH_SERVICE.getAllBranches(req.validated.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result.data,
+      pagination: result.pagination,
+      message: 'Lấy danh sách chi nhánh thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const createBranch = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const result = await BRANCH_SERVICE.createBranch(req.body, userId)
+    res.status(StatusCodes.CREATED).json(responseSuccess({
+      data: result,
+      message: 'Tạo chi nhánh thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const updateBranch = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const result = await BRANCH_SERVICE.updateBranch(req.params.id, req.body, userId)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Cập nhật chi nhánh thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const assignManager = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const result = await BRANCH_SERVICE.assignManagerToBranch(req.params.id, req.body.manager, userId)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Gán quản lý chi nhánh thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const updateBranchStatus = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const result = await BRANCH_SERVICE.updateBranchStatus(req.params.id, req.body.isActive, userId)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Cập nhật trạng thái chi nhánh thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const removeManager = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const result = await BRANCH_SERVICE.removeManagerFromBranch(req.params.id, userId)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Gỡ quản lý chi nhánh thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 export const BRANCH_CONTROLLER = {
-  getBranchById
+  getBranchById,
+  getAllBranches,
+  createBranch,
+  updateBranch,
+  assignManager,
+  updateBranchStatus,
+  removeManager
 }

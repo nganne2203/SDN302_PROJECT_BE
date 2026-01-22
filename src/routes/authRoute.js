@@ -128,7 +128,7 @@ router.post('/register',
  */
 router.post('/login',
   authRateLimiter,
-  verifyRecaptchaMiddleware,
+  // verifyRecaptchaMiddleware,
   sanitizeRequest(LOGIN_FIELDS, LOGIN_FIELDS),
   validationHandlingMiddleware(AUTH_VALIDATION.loginUser),
   AUTH_CONTROLLER.login
@@ -333,6 +333,8 @@ router.post('/logout-all',
  *     summary: Change password
  *     description: Handles changing of user password
  *     tags: [Auth]
+ *     security:
+ *      - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -355,6 +357,7 @@ router.post('/logout-all',
  */
 router.post('/change-password',
   authRateLimiter,
+  authorizationMiddleware,
   sanitizeRequest(CHANGE_PASSWORD_FIELDS, CHANGE_PASSWORD_FIELDS),
   validationHandlingMiddleware(AUTH_VALIDATION.changePassword),
   AUTH_CONTROLLER.changePassword

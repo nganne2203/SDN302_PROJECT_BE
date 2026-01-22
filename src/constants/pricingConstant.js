@@ -6,7 +6,6 @@ export const PRICING_TIERS = {
   TIER_5: 'tier_5'
 }
 
-// Mô tả các mức giá dựa trên số lượng mua
 export const PRICING_DESCRIPTIONS = {
   INDIVIDUAL: 'Giá lẻ cho từng sản phẩm',
   BULK_5: 'Giá bán sỉ từ 5 sản phẩm trở lên',
