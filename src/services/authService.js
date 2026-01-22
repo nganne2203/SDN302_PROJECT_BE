@@ -199,6 +199,7 @@ const buildGoogleAuthErrorUrl = (error) => {
   return errorUrl.toString()
 }
 
+// eslint-disable-next-line no-unused-vars
 const handleOtpVerified = async (type, user, requestInfo) => {
   // const { ipAddress, userAgent } = requestInfo
 
@@ -472,7 +473,7 @@ const resetPassword = async (data, requestInfo = {}) => {
 }
 
 const confirmPasswordReset = async (data) => {
-  const { email, newPassword } = data
+  const { email, password } = data
   const user = await USER_REPOSITORY.getUserByEmail(email)
   if (!user) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Người dùng không tồn tại'])
@@ -484,7 +485,7 @@ const confirmPasswordReset = async (data) => {
     ])
   }
 
-  const hashedPassword = await BCRYPT_UTILS.hashPassword(newPassword)
+  const hashedPassword = await BCRYPT_UTILS.hashPassword(password)
   await USER_REPOSITORY.updateUserById(user._id, {
     password: hashedPassword
   })
