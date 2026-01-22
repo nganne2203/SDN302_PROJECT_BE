@@ -472,7 +472,7 @@ const resetPassword = async (data, requestInfo = {}) => {
 }
 
 const confirmPasswordReset = async (data) => {
-  const { email, newPassword } = data
+  const { email, password } = data
   const user = await USER_REPOSITORY.getUserByEmail(email)
   if (!user) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Người dùng không tồn tại'])
@@ -484,7 +484,7 @@ const confirmPasswordReset = async (data) => {
     ])
   }
 
-  const hashedPassword = await BCRYPT_UTILS.hashPassword(newPassword)
+  const hashedPassword = await BCRYPT_UTILS.hashPassword(password)
   await USER_REPOSITORY.updateUserById(user._id, {
     password: hashedPassword
   })
