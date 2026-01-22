@@ -331,7 +331,7 @@ router.post(
   '/',
   apiRateLimiter,
   authorizationMiddleware,
-  requireRoles([RoleEnum.ADMIN]),
+  requireRoles(RoleEnum.ADMIN),
   sanitizeRequest(CREATE_CATEGORY_FIELDS, CREATE_CATEGORY_REQUIRED),
   validationHandlingMiddleware({ body: CATEGORY_VALIDATION.createCategory }),
   CATEGORY_CONTROLLER.createCategory
@@ -354,7 +354,7 @@ router.put(
   '/:id',
   apiRateLimiter,
   authorizationMiddleware,
-  requireRoles([RoleEnum.ADMIN]),
+  requireRoles(RoleEnum.ADMIN),
   sanitizeRequest(CREATE_CATEGORY_FIELDS, []),
   validationHandlingMiddleware({
     params: CATEGORY_VALIDATION.idParam,
@@ -366,7 +366,7 @@ router.delete(
   '/:id',
   apiRateLimiter,
   authorizationMiddleware,
-  requireRoles([RoleEnum.ADMIN]),
+  requireRoles(RoleEnum.ADMIN),
   validationHandlingMiddleware({ params: CATEGORY_VALIDATION.idParam }),
   CATEGORY_CONTROLLER.deleteCategoryById
 )
