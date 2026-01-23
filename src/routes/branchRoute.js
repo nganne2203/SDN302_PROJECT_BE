@@ -208,7 +208,7 @@ router.post(
   '/',
   apiRateLimiter,
   authorizationMiddleware,
-  requireRoles([RoleEnum.ADMIN]),
+  requireRoles(RoleEnum.ADMIN),
   sanitizeRequest(CREATE_BRANCH_FIELDS, CREATE_BRANCH_REQUIRED),
   validationHandlingMiddleware({ body: BRANCH_VALIDATION.createBranch }),
   BRANCH_CONTROLLER.getAllBranches
@@ -225,7 +225,7 @@ router.get(
 router.get(
   '/:id',
   apiRateLimiter,
-  requireRoles([RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF]),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   validationHandlingMiddleware({ params: BRANCH_VALIDATION.idParam }),
   BRANCH_CONTROLLER.getBranchById
 )
@@ -234,7 +234,7 @@ router.put(
   '/:id',
   apiRateLimiter,
   authorizationMiddleware,
-  requireRoles([RoleEnum.ADMIN]),
+  requireRoles(RoleEnum.ADMIN),
   sanitizeRequest(UPDATE_BRANCH_FIELDS, []),
   validationHandlingMiddleware({
     params: BRANCH_VALIDATION.idParam,
@@ -247,7 +247,7 @@ router.patch(
   '/:id/manager',
   apiRateLimiter,
   authorizationMiddleware,
-  requireRoles([RoleEnum.ADMIN]),
+  requireRoles(RoleEnum.ADMIN),
   sanitizeRequest(ASSIGN_BRANCH_MANAGER_FIELDS, ['manager']),
   validationHandlingMiddleware({
     params: BRANCH_VALIDATION.idParam,
@@ -260,7 +260,7 @@ router.patch(
   '/:id/status',
   apiRateLimiter,
   authorizationMiddleware,
-  requireRoles([RoleEnum.ADMIN]),
+  requireRoles(RoleEnum.ADMIN),
   sanitizeRequest(UPDATE_BRANCH_STATUS, ['isActive']),
   validationHandlingMiddleware({
     params: BRANCH_VALIDATION.idParam,
@@ -273,7 +273,7 @@ router.patch(
   '/:id/manager/remove',
   apiRateLimiter,
   authorizationMiddleware,
-  requireRoles([RoleEnum.ADMIN]),
+  requireRoles(RoleEnum.ADMIN),
   validationHandlingMiddleware({
     params: BRANCH_VALIDATION.idParam
   }),
