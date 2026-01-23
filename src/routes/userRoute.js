@@ -72,7 +72,7 @@ router.use(authorizationMiddleware)
  */
 router.get('/',
   apiRateLimiter,
-  requireRoles([RoleEnum.ADMIN]),
+  requireRoles(RoleEnum.ADMIN),
   sanitizeRequest(QUERY_FIELDS, ['page', 'limit']),
   validationHandlingMiddleware({ query: USER_VALIDATION.query }),
   USER_CONTROLLER.getAllUsers
@@ -151,7 +151,7 @@ router.get('/',
  */
 router.post('/',
   createRateLimiter,
-  requireRoles([RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF]),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   sanitizeRequest(CREATE_USER_FIELDS, REQUIRE_FIELD_CREATE_USER),
   validationHandlingMiddleware({ body: USER_VALIDATION.createUser }),
   USER_CONTROLLER.createUser
@@ -210,7 +210,7 @@ router.post('/',
  */
 router.get('/manager',
   apiRateLimiter,
-  requireRoles([RoleEnum.MANAGER]),
+  requireRoles(RoleEnum.MANAGER),
   sanitizeRequest(QUERY_FIELDS, ['page', 'limit']),
   validationHandlingMiddleware({ query: USER_VALIDATION.query }),
   USER_CONTROLLER.getAllUsersForManager
@@ -306,7 +306,7 @@ router.put('/me',
  */
 router.get('/:id',
   apiRateLimiter,
-  requireRoles([RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF]),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   validationHandlingMiddleware({ params: USER_VALIDATION.idParam }),
   USER_CONTROLLER.getUserById
 )
@@ -381,7 +381,7 @@ router.get('/:id',
  */
 router.put('/:id',
   writeRateLimiter,
-  requireRoles([RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF]),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   sanitizeRequest(UPDATE_CURRENT_USER_FIELDS, []),
   validationHandlingMiddleware({
     params: USER_VALIDATION.idParam,
@@ -422,7 +422,7 @@ router.put('/:id',
  */
 router.put('/:id/status',
   writeRateLimiter,
-  requireRoles([RoleEnum.ADMIN, RoleEnum.MANAGER]),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
   validationHandlingMiddleware({
     params: USER_VALIDATION.idParam,
     body: USER_VALIDATION.updateUserStatus
