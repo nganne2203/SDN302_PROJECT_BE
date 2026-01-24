@@ -10,15 +10,17 @@ export const CATEGORY_VALIDATION = {
     }).trim()
   }),
   createCategory: joi.object({
-    name: joi.string().required().messages({
+    name: joi.string().required().max(100).messages({
       'string.empty': 'Tên danh mục không được để trống',
-      'any.required': 'Tên danh mục là bắt buộc'
+      'any.required': 'Tên danh mục là bắt buộc',
+      'string.max': 'Tên danh mục không được vượt quá 100 ký tự'
     }).trim(),
     description: joi.string().optional().allow('').trim()
   }),
   updateCategory: joi.object({
-    name: joi.string().optional().messages({
-      'string.empty': 'Tên danh mục không được để trống'
+    name: joi.string().optional().max(100).messages({
+      'string.empty': 'Tên danh mục không được để trống',
+      'string.max': 'Tên danh mục không được vượt quá 100 ký tự'
     }).trim(),
     description: joi.string().optional().allow('').trim()
   }),
