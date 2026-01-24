@@ -18,19 +18,21 @@ export const USER_VALIDATION = {
   createUser: joi.object({
     fullname: joi.string().required().messages({
       'string.empty': 'Họ và tên không được để trống',
-      'any.required': 'Họ và tên là bắt buộc'
-    }).trim(),
+      'any.required': 'Họ và tên là bắt buộc',
+      'any.max': 'Họ và tên không được vượt quá 100 ký tự'
+    }).max(100).trim(),
     email: joi.string().email().required().pattern(EMAIL_REGEX).messages({
       'string.empty': 'Email không được để trống',
       'string.email': 'Email không hợp lệ',
       'any.required': 'Email là bắt buộc',
-      'string.pattern.base': 'Email không hợp lệ'
-    }).trim(),
+      'string.pattern.base': 'Email không hợp lệ',
+      'string.max': 'Email không được vượt quá 100 ký tự'
+    }).max(100).trim(),
     password: joi.string().required().pattern(PASSWORD_REGEX).messages({
-      'string.pattern.base': 'Mật khẩu phải từ 8-20 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt',
+      'string.pattern.base': 'Mật khẩu phải từ 6-20 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt',
       'string.empty': 'Mật khẩu không được để trống',
       'any.required': 'Mật khẩu là bắt buộc'
-    }).trim(),
+    }).min(6).max(20).trim(),
     phone: joi.string().optional().pattern(PHONE_REGEX).length(10).messages({
       'string.pattern.base': 'Số điện thoại không hợp lệ',
       'string.length': 'Số điện thoại phải có 10 chữ số'
@@ -49,8 +51,9 @@ export const USER_VALIDATION = {
     addresses: joi.array().items(joi.object({
       fullname: joi.string().required().messages({
         'string.empty': 'Họ và tên không được để trống',
-        'any.required': 'Họ và tên là bắt buộc'
-      }).trim(),
+        'any.required': 'Họ và tên là bắt buộc',
+        'any.max': 'Họ và tên không được vượt quá 100 ký tự'
+      }).max(100).trim(),
       phone: joi.string().pattern(PHONE_REGEX).length(10).required().messages({
         'string.empty': 'Số điện thoại không được để trống',
         'string.pattern.base': 'Số điện thoại không hợp lệ',
@@ -59,32 +62,38 @@ export const USER_VALIDATION = {
       }).trim(),
       addressLine: joi.string().required().messages({
         'string.empty': 'Địa chỉ không được để trống',
-        'any.required': 'Địa chỉ là bắt buộc'
-      }).trim(),
+        'any.required': 'Địa chỉ là bắt buộc',
+        'any.max': 'Địa chỉ không được vượt quá 200 ký tự'
+      }).max(200).trim(),
       city: joi.string().required().messages({
         'string.empty': 'Thành phố không được để trống',
-        'any.required': 'Thành phố là bắt buộc'
-      }).trim(),
+        'any.required': 'Thành phố là bắt buộc',
+        'any.max': 'Thành phố không được vượt quá 100 ký tự'
+      }).max(100).trim(),
       district: joi.string().required().messages({
         'string.empty': 'Quận/Huyện không được để trống',
-        'any.required': 'Quận/Huyện là bắt buộc'
-      }).trim(),
+        'any.required': 'Quận/Huyện là bắt buộc',
+        'any.max': 'Quận/Huyện không được vượt quá 100 ký tự'
+      }).max(100).trim(),
       ward: joi.string().required().messages({
         'string.empty': 'Phường/Xã không được để trống',
-        'any.required': 'Phường/Xã là bắt buộc'
-      }).trim(),
+        'any.required': 'Phường/Xã là bắt buộc',
+        'any.max': 'Phường/Xã không được vượt quá 100 ký tự'
+      }).max(100).trim(),
       isDefault: joi.boolean().optional().default(false)
     })).optional()
   }),
   updateUser: joi.object({
     fullname: joi.string().optional().messages({
-      'string.empty': 'Họ và tên không được để trống'
-    }).trim(),
+      'string.empty': 'Họ và tên không được để trống',
+      'string.max': 'Họ và tên không được vượt quá 100 ký tự'
+    }).max(100).trim(),
     email: joi.string().email().optional().pattern(EMAIL_REGEX).messages({
       'string.empty': 'Email không được để trống',
       'string.email': 'Email không hợp lệ',
-      'string.pattern.base': 'Email không hợp lệ'
-    }).trim(),
+      'string.pattern.base': 'Email không hợp lệ',
+      'string.max': 'Email không được vượt quá 100 ký tự'
+    }).max(100).trim(),
     phone: joi.string().optional().pattern(PHONE_REGEX).length(10).messages({
       'string.empty': 'Số điện thoại không được để trống',
       'string.pattern.base': 'Số điện thoại không hợp lệ',
@@ -103,8 +112,9 @@ export const USER_VALIDATION = {
     addresses: joi.array().items(joi.object({
       fullname: joi.string().required().messages({
         'string.empty': 'Họ và tên không được để trống',
-        'any.required': 'Họ và tên là bắt buộc'
-      }).trim(),
+        'any.required': 'Họ và tên là bắt buộc',
+        'any.max': 'Họ và tên không được vượt quá 100 ký tự'
+      }).max(100).trim(),
       phone: joi.string().pattern(PHONE_REGEX).length(10).required().messages({
         'string.empty': 'Số điện thoại không được để trống',
         'string.pattern.base': 'Số điện thoại không hợp lệ',
@@ -113,20 +123,24 @@ export const USER_VALIDATION = {
       }).trim(),
       addressLine: joi.string().required().messages({
         'string.empty': 'Địa chỉ không được để trống',
-        'any.required': 'Địa chỉ là bắt buộc'
-      }).trim(),
+        'any.required': 'Địa chỉ là bắt buộc',
+        'any.max': 'Địa chỉ không được vượt quá 200 ký tự'
+      }).max(200).trim(),
       city: joi.string().required().messages({
         'string.empty': 'Thành phố không được để trống',
-        'any.required': 'Thành phố là bắt buộc'
-      }).trim(),
+        'any.required': 'Thành phố là bắt buộc',
+        'any.max': 'Thành phố không được vượt quá 100 ký tự'
+      }).max(100).trim(),
       district: joi.string().required().messages({
         'string.empty': 'Quận/Huyện không được để trống',
-        'any.required': 'Quận/Huyện là bắt buộc'
-      }).trim(),
+        'any.required': 'Quận/Huyện là bắt buộc',
+        'any.max': 'Quận/Huyện không được vượt quá 100 ký tự'
+      }).max(100).trim(),
       ward: joi.string().required().messages({
         'string.empty': 'Phường/Xã không được để trống',
-        'any.required': 'Phường/Xã là bắt buộc'
-      }).trim(),
+        'any.required': 'Phường/Xã là bắt buộc',
+        'any.max': 'Phường/Xã không được vượt quá 100 ký tự'
+      }).max(100).trim(),
       isDefault: joi.boolean().optional().default(false)
     })).optional()
   }),
@@ -137,13 +151,15 @@ export const USER_VALIDATION = {
   }),
   updateCurrentUser: joi.object({
     fullname: joi.string().optional().messages({
-      'string.empty': 'Họ và tên không được để trống'
-    }).trim(),
+      'string.empty': 'Họ và tên không được để trống',
+      'any.max': 'Họ và tên không được vượt quá 100 ký tự'
+    }).max(100).trim(),
     email: joi.string().email().optional().pattern(EMAIL_REGEX).messages({
       'string.empty': 'Email không được để trống',
       'string.email': 'Email không hợp lệ',
-      'string.pattern.base': 'Email không hợp lệ'
-    }).trim(),
+      'string.pattern.base': 'Email không hợp lệ',
+      'string.max': 'Email không được vượt quá 100 ký tự'
+    }).max(100).trim(),
     phone: joi.string().optional().pattern(PHONE_REGEX).length(10).messages({
       'string.empty': 'Số điện thoại không được để trống',
       'string.pattern.base': 'Số điện thoại không hợp lệ',
@@ -155,8 +171,9 @@ export const USER_VALIDATION = {
     addresses: joi.array().items(joi.object({
       fullname: joi.string().required().messages({
         'string.empty': 'Họ và tên không được để trống',
-        'any.required': 'Họ và tên là bắt buộc'
-      }).trim(),
+        'any.required': 'Họ và tên là bắt buộc',
+        'any.max': 'Họ và tên không được vượt quá 100 ký tự'
+      }).max(100).trim(),
       phone: joi.string().pattern(PHONE_REGEX).length(10).required().messages({
         'string.empty': 'Số điện thoại không được để trống',
         'string.pattern.base': 'Số điện thoại không hợp lệ',
@@ -165,20 +182,24 @@ export const USER_VALIDATION = {
       }).trim(),
       addressLine: joi.string().required().messages({
         'string.empty': 'Địa chỉ không được để trống',
-        'any.required': 'Địa chỉ là bắt buộc'
-      }).trim(),
+        'any.required': 'Địa chỉ là bắt buộc',
+        'any.max': 'Địa chỉ không được vượt quá 200 ký tự'
+      }).max(200).trim(),
       city: joi.string().required().messages({
         'string.empty': 'Thành phố không được để trống',
-        'any.required': 'Thành phố là bắt buộc'
-      }).trim(),
+        'any.required': 'Thành phố là bắt buộc',
+        'any.max': 'Thành phố không được vượt quá 100 ký tự'
+      }).max(100).trim(),
       district: joi.string().required().messages({
         'string.empty': 'Quận/Huyện không được để trống',
-        'any.required': 'Quận/Huyện là bắt buộc'
-      }).trim(),
+        'any.required': 'Quận/Huyện là bắt buộc',
+        'any.max': 'Quận/Huyện không được vượt quá 100 ký tự'
+      }).max(100).trim(),
       ward: joi.string().required().messages({
         'string.empty': 'Phường/Xã không được để trống',
-        'any.required': 'Phường/Xã là bắt buộc'
-      }).trim(),
+        'any.required': 'Phường/Xã là bắt buộc',
+        'any.max': 'Phường/Xã không được vượt quá 100 ký tự'
+      }).max(100).trim(),
       isDefault: joi.boolean().optional().default(false)
     })).optional()
   }),
