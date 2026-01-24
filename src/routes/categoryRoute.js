@@ -155,6 +155,32 @@ const router = express.Router()
  *         $ref: '#/components/responses/Forbidden'
  *       404:
  *         $ref: '#/components/responses/NotFound'
+ *   patch:
+ *    summary: Cập nhật trạng thái danh mục
+ *    description: Chỉ Admin mới có quyền cập nhật trạng thái danh mục.
+ *    tags: [Category]
+ *    security:
+ *      - BearerAuth: []
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema:
+ *          type: string
+ *        description: ID danh mục
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            properties:
+ *              isActive:
+ *                type: boolean
+ *                example: true
+ *    responses:
+ *      200:
+ *        description: Cập nhật trạng thái danh mục thành công
  *   delete:
  *     summary: Xóa danh mục
  *     description: Chỉ Admin mới có quyền xóa danh mục.
@@ -361,6 +387,18 @@ router.put(
     body: CATEGORY_VALIDATION.updateCategory
   }),
   CATEGORY_CONTROLLER.updateCategory
+)
+
+router.patch(
+  '/:id/status',
+  apiRateLimiter,
+  authorizationMiddleware,
+  requireRoles(RoleEnum.ADMIN),
+  validationHandlingMiddleware({
+    params: CATEGORY_VALIDATION.idParam,
+    body: CATEGORY_VALIDATION.updateCategoryStatus
+  }),
+  CATEGORY_CONTROLLER.updateCategoryStatus
 )
 router.delete(
   '/:id',
