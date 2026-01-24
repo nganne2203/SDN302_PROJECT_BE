@@ -178,7 +178,9 @@ const buildGoogleAuthRedirectUrl = (result, res) => {
   const clientUrl = env.CLIENT_URLS[0] || 'http://localhost:5173'
   const redirectUrl = new URL(`${clientUrl}/auth/callback`)
 
-  if (env.NODE_ENV === 'dev') {
+  const isProd = env.NODE_ENV === 'prod'
+
+  if (!isProd) {
     redirectUrl.searchParams.set('refreshToken', result.refreshToken)
   } else {
     res.cookie('refreshToken', result.refreshToken, {
