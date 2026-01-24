@@ -155,6 +155,7 @@ const router = express.Router()
  *         $ref: '#/components/responses/Forbidden'
  *       404:
  *         $ref: '#/components/responses/NotFound'
+* /api/category/{id}/status:
  *   patch:
  *    summary: Cập nhật trạng thái danh mục
  *    description: Chỉ Admin mới có quyền cập nhật trạng thái danh mục.
