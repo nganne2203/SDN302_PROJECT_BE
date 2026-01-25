@@ -210,7 +210,7 @@ router.post(
   requireRoles(RoleEnum.ADMIN),
   sanitizeRequest(CREATE_BRANCH_FIELDS, CREATE_BRANCH_REQUIRED),
   validationHandlingMiddleware({ body: BRANCH_VALIDATION.createBranch }),
-  BRANCH_CONTROLLER.getAllBranches
+  BRANCH_CONTROLLER.createBranch
 )
 
 router.get(
