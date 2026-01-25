@@ -9,7 +9,7 @@ import {
 import { RoleEnum } from '#constants/roleConstant.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
-import { apiRateLimiter, createRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
 import { USER_VALIDATION } from '#validations/userValidation.js'
 import { validationHandlingMiddleware } from '#middlewares/validationHandlingMiddleware.js'
 
@@ -95,6 +95,7 @@ router.get('/',
  *               - fullname
  *               - email
  *               - password
+ *               - role
  *             properties:
  *               fullname:
  *                 type: string
@@ -109,6 +110,10 @@ router.get('/',
  *               phone:
  *                 type: string
  *                 example: '0123456789'
+ *               role:
+ *                type: string
+ *                enum: [admin, manager, staff, customer]
+ *                example: customer
  *               branch:
  *                 type: string
  *                 example: '60d0fe4f5311236168a109ca'
@@ -148,7 +153,7 @@ router.get('/',
  *         description: Created successfully
  */
 router.post('/',
-  createRateLimiter,
+  apiRateLimiter,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   sanitizeRequest(CREATE_USER_FIELDS, REQUIRE_FIELD_CREATE_USER),
   validationHandlingMiddleware({ body: USER_VALIDATION.createUser }),
