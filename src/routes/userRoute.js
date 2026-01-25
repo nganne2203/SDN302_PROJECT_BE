@@ -2,7 +2,6 @@ import express from 'express'
 import { USER_CONTROLLER } from '#controllers/userController.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
 import {
-  QUERY_FIELDS,
   CREATE_USER_FIELDS,
   REQUIRE_FIELD_CREATE_USER,
   UPDATE_CURRENT_USER_FIELDS
@@ -73,7 +72,6 @@ router.use(authorizationMiddleware)
 router.get('/',
   apiRateLimiter,
   requireRoles(RoleEnum.ADMIN),
-  sanitizeRequest(QUERY_FIELDS, ['page', 'limit']),
   validationHandlingMiddleware({ query: USER_VALIDATION.query }),
   USER_CONTROLLER.getAllUsers
 )
@@ -211,7 +209,6 @@ router.post('/',
 router.get('/manager',
   apiRateLimiter,
   requireRoles(RoleEnum.MANAGER),
-  sanitizeRequest(QUERY_FIELDS, ['page', 'limit']),
   validationHandlingMiddleware({ query: USER_VALIDATION.query }),
   USER_CONTROLLER.getAllUsersForManager
 )
