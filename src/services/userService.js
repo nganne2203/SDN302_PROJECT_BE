@@ -84,6 +84,11 @@ const canCreateUser = (creator, targetRole, targetBranch) => {
   }
 }
 
+const getManagerByBranch = async (branchId) => {
+  const manager = await USER_REPOSITORY.getUserByBranch(branchId, RoleEnum.MANAGER)
+  return manager
+}
+
 const createUserInternal = async ({
   fullname,
   email,
@@ -118,6 +123,13 @@ const createUser = async (userData, createdBy = null) => {
   const creator = await getUserById(createdBy)
   const { role } = userData
 
+  if (!canCreateUser(creator, role, userData.branch)) {
+    throw new ApiError(
+      ERROR_CODES.FORBIDDEN,
+      ['Bạn không có quyền tạo người dùng với vai trò này']
+    )
+  }
+
   if (creator.role === RoleEnum.MANAGER && role === RoleEnum.STAFF) {
     userData.branch = creator.branch
   }
@@ -134,11 +146,11 @@ const createUser = async (userData, createdBy = null) => {
     }
   }
 
-  if (!canCreateUser(creator, role, userData.branch)) {
-    throw new ApiError(
-      ERROR_CODES.FORBIDDEN,
-      ['Bạn không có quyền tạo người dùng với vai trò này']
-    )
+  if (role === RoleEnum.MANAGER) {
+    const existingManager = await getManagerByBranch(branch)
+    if (existingManager) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chi nhánh này đã có 1 manager'])
+    }
   }
 
   return await createUserInternal({
@@ -151,19 +163,24 @@ const updateUser = async (userId, updateData, updatedBy = null) => {
   const updater = await getUserById(updatedBy)
   const user = await getUserById(userId)
 
-  if (updater.role === RoleEnum.MANAGER && user.role === RoleEnum.ADMIN) {
-    throw new ApiError(ERROR_CODES.FORBIDDEN, ['Không thể cập nhật tài khoản ADMIN'])
+  if (updater.role === RoleEnum.STAFF) {
+    throw new ApiError(ERROR_CODES.FORBIDDEN, ['STAFF không có quyền cập nhật người dùng'])
   }
 
-  if (
-    updater.role === RoleEnum.MANAGER &&
-    user.role === RoleEnum.STAFF &&
-    user.branch?.toString() !== updater.branch?.toString()
-  ) {
-    throw new ApiError(
-      ERROR_CODES.FORBIDDEN,
-      ['Không thể cập nhật STAFF ngoài chi nhánh quản lý']
-    )
+  if (updater.role === RoleEnum.MANAGER) {
+    if (user.role !== RoleEnum.STAFF) {
+      throw new ApiError(
+        ERROR_CODES.FORBIDDEN,
+        ['MANAGER chỉ có thể cập nhật STAFF trong chi nhánh quản lý']
+      )
+    }
+
+    if (user.branch?.toString() !== updater.branch?.toString()) {
+      throw new ApiError(
+        ERROR_CODES.FORBIDDEN,
+        ['Không thể cập nhật STAFF ngoài chi nhánh quản lý']
+      )
+    }
   }
 
   const {
@@ -176,13 +193,10 @@ const updateUser = async (userId, updateData, updatedBy = null) => {
     branch
   } = updateData
 
-  if (
-    updater.role === RoleEnum.MANAGER &&
-    role === RoleEnum.ADMIN
-  ) {
+  if (role && updater.role === RoleEnum.MANAGER) {
     throw new ApiError(
       ERROR_CODES.FORBIDDEN,
-      ['MANAGER không được gán quyền ADMIN']
+      ['MANAGER không được thay đổi vai trò']
     )
   }
 
@@ -336,5 +350,6 @@ export const USER_SERVICE = {
   deleteUser,
   updateEmailVerificationStatus,
   updateCurrentUser,
-  getAllUsersForManager
+  getAllUsersForManager,
+  getManagerByBranch
 }
