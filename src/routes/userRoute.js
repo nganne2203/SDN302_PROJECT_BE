@@ -4,7 +4,8 @@ import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
 import {
   CREATE_USER_FIELDS,
   REQUIRE_FIELD_CREATE_USER,
-  UPDATE_CURRENT_USER_FIELDS
+  UPDATE_CURRENT_USER_FIELDS,
+  UPDATE_USER_FIELDS
 } from '#constants/userConstant.js'
 import { RoleEnum } from '#constants/roleConstant.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
@@ -391,7 +392,7 @@ router.get('/:id',
 router.put('/:id',
   writeRateLimiter,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
-  sanitizeRequest(UPDATE_CURRENT_USER_FIELDS, []),
+  sanitizeRequest(UPDATE_USER_FIELDS, []),
   validationHandlingMiddleware({
     params: USER_VALIDATION.idParam,
     body: USER_VALIDATION.updateUser
