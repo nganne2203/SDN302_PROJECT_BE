@@ -38,7 +38,7 @@ export const USER_VALIDATION = {
       'string.length': 'Số điện thoại phải có 10 chữ số'
     }).trim(),
     branch: joi.when('role', {
-      is: joi.string().valid('staff', 'manager'),
+      is: joi.string().valid('manager'),
       then: joi.string().required().messages({
         'any.required': 'Chi nhánh là bắt buộc'
       }),
@@ -103,7 +103,7 @@ export const USER_VALIDATION = {
       'string.length': 'Số điện thoại phải có 10 chữ số'
     }),
     branch: joi.when('role', {
-      is: joi.string().valid('staff', 'manager'),
+      is: joi.string().valid('manager'),
       then: joi.string().required().messages({
         'any.required': 'Chi nhánh là bắt buộc'
       }),
