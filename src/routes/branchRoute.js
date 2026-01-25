@@ -9,7 +9,6 @@ import {
   CREATE_BRANCH_FIELDS,
   CREATE_BRANCH_REQUIRED,
   ASSIGN_BRANCH_MANAGER_FIELDS,
-  QUERY_BRANCH_FIELDS,
   UPDATE_BRANCH_FIELDS,
   UPDATE_BRANCH_STATUS
 } from '#constants/branchConstant.js'
@@ -217,7 +216,6 @@ router.post(
 router.get(
   '/',
   apiRateLimiter,
-  sanitizeRequest(QUERY_BRANCH_FIELDS, ['page', 'limit']),
   validationHandlingMiddleware({ query: BRANCH_VALIDATION.query }),
   BRANCH_CONTROLLER.getAllBranches
 )
