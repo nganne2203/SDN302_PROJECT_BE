@@ -346,6 +346,13 @@ router.get('/:id',
  *               phone:
  *                 type: string
  *                 example: '0123456789'
+ *               role:
+ *                 type: string
+ *                 enum: [admin, manager, staff, customer]
+ *                 example: customer
+ *               branch:
+ *                 type: string
+ *                 example: '60d0fe4f5311236168a109ca'
  *               avatar:
  *                 type: string
  *                 format: url
