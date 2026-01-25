@@ -5,6 +5,7 @@ import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { BCRYPT_UTILS } from '#utils/bcryptUtil.js'
 import { RoleEnum } from '#constants/roleConstant.js'
+import { BRANCH_REPOSITORY } from '#repositories/branchRepository.js'
 
 const getUserById = async (userId) => {
   const user = await USER_REPOSITORY.getUserById(userId)
@@ -123,6 +124,14 @@ const createUser = async (userData, createdBy = null) => {
 
   if (role === RoleEnum.CUSTOMER) {
     userData.branch = null
+  }
+
+  const { branch } = userData
+  if (branch) {
+    const branchExists = await BRANCH_REPOSITORY.getBranchById(branch)
+    if (!branchExists) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chi nhánh không tồn tại'])
+    }
   }
 
   if (!canCreateUser(creator, role, userData.branch)) {

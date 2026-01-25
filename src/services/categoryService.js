@@ -62,7 +62,9 @@ const updateCategoryById = async (categoryId, data, updatedBy = null) => {
   return CATEGORY_REPOSITORY.updateCategoryById(categoryId, { ...updatedCategoryData, updatedBy })
 }
 const deleteCategoryById = async (categoryId) => {
-  await getCategoryById(categoryId)
+  const category = await getCategoryById(categoryId)
+  if (!category.isActive)
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ có thể xóa danh mục đang hoạt động'])
   return CATEGORY_REPOSITORY.deleteCategoryById(categoryId)
 }
 const updateCategoryStatus = async (categoryId, isActive, updatedBy = null) => {
