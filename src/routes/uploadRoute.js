@@ -43,6 +43,42 @@ router.post('/images',
 
 /**
  * @swagger
+ * /api/uploads/multiple-images:
+ *   post:
+ *     summary: Upload multiple images to Cloudinary
+ *     description: Nhận multipart/form-data với field `images`, tải nhiều ảnh cùng lúc (tối đa 10 ảnh).
+ *     tags: [Upload]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - images
+ *             properties:
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 maxItems: 10
+ *     responses:
+ *       201:
+ *         description: Upload thành công
+ *       400:
+ *         description: Thiếu file hoặc file không hợp lệ
+ */
+router.post('/multiple-images',
+  writeRateLimiter,
+  upload.array('images', 10),
+  UPLOAD_CONTROLLER.uploadMultipleImages
+)
+
+/**
+ * @swagger
  * /api/uploads/images/{publicId}:
  *   get:
  *     summary: Lấy thông tin ảnh

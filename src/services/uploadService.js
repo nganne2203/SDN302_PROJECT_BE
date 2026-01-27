@@ -46,6 +46,28 @@ const getImage = async (publicId) => {
   }
 }
 
+const uploadMultipleImages = async (files) => {
+  if (!files || files.length === 0) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không tìm thấy file tải lên'])
+  }
+
+  try {
+    const uploadPromises = files.map(file => uploadToCloudinary(file.buffer, 'uploads'))
+    const results = await Promise.all(uploadPromises)
+
+    return results.map(result => ({
+      imageUrl: result.secure_url,
+      publicId: result.public_id,
+      width: result.width,
+      height: result.height,
+      format: result.format,
+      bytes: result.bytes
+    }))
+  } catch {
+    throw new ApiError(ERROR_CODES.SERVER_ERROR, ['Không thể tải ảnh lên Cloudinary'])
+  }
+}
+
 const deleteImage = async (publicId) => {
   if (!publicId) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Thiếu publicId của ảnh cần xóa'])
@@ -65,6 +87,7 @@ const deleteImage = async (publicId) => {
 
 export const UPLOAD_SERVICE = {
   uploadImage,
+  uploadMultipleImages,
   getImage,
   deleteImage
 }

@@ -22,6 +22,16 @@ const getImage = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const uploadMultipleImages = async (req, res, next) => {
+  try {
+    const result = await UPLOAD_SERVICE.uploadMultipleImages(req.files)
+    res.status(StatusCodes.CREATED).json(responseSuccess({
+      data: result,
+      message: `Tải ${result.length} ảnh thành công`
+    }))
+  } catch (error) { next(error) }
+}
+
 const deleteImage = async (req, res, next) => {
   try {
     await UPLOAD_SERVICE.deleteImage(req.params.publicId)
@@ -33,6 +43,7 @@ const deleteImage = async (req, res, next) => {
 
 export const UPLOAD_CONTROLLER = {
   uploadImage,
+  uploadMultipleImages,
   getImage,
   deleteImage
 }
