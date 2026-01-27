@@ -4,6 +4,7 @@ import { BRANCH_ROUTE } from '#routes/branchRoute.js'
 import { USER_ROUTE } from '#routes/userRoute.js'
 import { CATEGORY_ROUTE } from '#routes/categoryRoute.js'
 import { DEVICE_ROUTE } from '#routes/deviceRoute.js'
+import { UPLOAD_ROUTE } from '#routes/uploadRoute.js'
 
 const Router = express.Router()
 
@@ -16,5 +17,6 @@ Router.use('/api/users', USER_ROUTE)
 Router.use('/api/branch', BRANCH_ROUTE)
 Router.use('/api/category', CATEGORY_ROUTE)
 Router.use('/api/devices', DEVICE_ROUTE)
+Router.use('/api/uploads', UPLOAD_ROUTE)
 
 export const ROUTES = Router
