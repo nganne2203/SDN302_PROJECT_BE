@@ -28,10 +28,17 @@ const orderSchema = new mongoose.Schema(
       ward: { type: String, required: true }
     },
     orderStatus: { type: String, enum: Object.values(ORDER_STATUS), default: ORDER_STATUS.PENDING },
-    totalAmount: { type: Number, required: true },
     subtotal: { type: Number, required: true },
-    discountAmount: { type: Number, default: 0 },
-    discountPercentage: { type: Number, default: 0 },
+    totalAmount: { type: Number, required: true },
+    pricingApplied: [
+      {
+        product: { type: mongoose.Schema.Types.ObjectId, ref: 'products', required: true },
+        minQuantity: { type: Number, default: 0 },
+        maxQuantity: { type: Number, default: null },
+        discountPercentage: { type: Number, default: 0 },
+        discountAmount: { type: Number, default: 0 }
+      }
+    ],
     paymentMethod: { type: String, enum: Object.values(PAYMENT_METHODS), required: true },
     delivery: {
       providerName: { type: String, default: '' },
