@@ -6,6 +6,18 @@ import { ERROR_CODES } from '#constants/errorCode.js'
 import { BCRYPT_UTILS } from '#utils/bcryptUtil.js'
 import { RoleEnum } from '#constants/roleConstant.js'
 import { BRANCH_REPOSITORY } from '#repositories/branchRepository.js'
+import { UPLOAD_SERVICE } from '#services/uploadService.js'
+
+const deleteOldAvatarIfNeeded = async (currentAvatarId, newAvatarId) => {
+  if (!currentAvatarId || !newAvatarId) return
+  if (currentAvatarId === newAvatarId) return
+
+  try {
+    await UPLOAD_SERVICE.deleteImage(currentAvatarId)
+  } catch {
+    throw new ApiError(ERROR_CODES.INTERNAL_SERVER_ERROR, ['Không thể xóa ảnh cũ trên Cloudinary'])
+  }
+}
 
 const getUserById = async (userId) => {
   const user = await USER_REPOSITORY.getUserById(userId)
@@ -221,7 +233,10 @@ const updateUser = async (userId, updateData, updatedBy = null) => {
     updatedUserData.addresses = addresses
   }
 
-  if (avatar) updatedUserData.avatar = avatar
+  if (avatar) {
+    await deleteOldAvatarIfNeeded(user.avatar, avatar)
+    updatedUserData.avatar = avatar
+  }
 
   if (role) {
     updatedUserData.role = role
@@ -297,7 +312,10 @@ const updateCurrentUser = async (userId, updateData) => {
   if (fullname) updatedUserData.fullname = fullname
   if (phone) updatedUserData.phone = phone
   if (addresses) updatedUserData.addresses = addresses
-  if (avatar) updatedUserData.avatar = avatar
+  if (avatar) {
+    await deleteOldAvatarIfNeeded(user.avatar, avatar)
+    updatedUserData.avatar = avatar
+  }
 
   return USER_REPOSITORY.updateUserById(userId, updatedUserData)
 }

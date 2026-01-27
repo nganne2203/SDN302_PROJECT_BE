@@ -13,6 +13,7 @@ import { swaggerSpec } from '#configs/swagger.js'
 import { initializeDefaultValue } from '#providers/dataInitial.js'
 import auditLogMiddleware from '#middlewares/auditLogMiddleware.js'
 import compression from 'compression'
+import { REFRESHTOKEN_SCHEDULER } from '#providers/refreshTokenScheduler.js'
 
 const app = express()
 
@@ -67,9 +68,15 @@ const START_SERVER = () => {
     console.log(`Server in ${env.NODE_ENV} environment is running at ${env.PORT}`)
   })
   // implement scheduled tasks here if needed
-
+  if (!REFRESHTOKEN_SCHEDULER.isSchedulerRunning()) {
+    REFRESHTOKEN_SCHEDULER.startScheduler( 60 * 60 * 1000 ) // Chạy mỗi 1 giờ
+  }
   // Disconnect from MongoDB when the server stops
   existHook(async (callback) => {
+    // stop scheduled tasks here if needed
+    if (REFRESHTOKEN_SCHEDULER.isSchedulerRunning()) {
+      REFRESHTOKEN_SCHEDULER.stopScheduler()
+    }
     await CLOSE_DB()
     callback()
   })

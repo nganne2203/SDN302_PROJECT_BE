@@ -19,5 +19,8 @@ export const env = {
   RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
   RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,
   OTP_EXPIRES_IN: process.env.OTP_EXPIRES_IN,
-  VERIFY_CAPTCHA_URL: process.env.VERIFY_CAPTCHA_URL
+  VERIFY_CAPTCHA_URL: process.env.VERIFY_CAPTCHA_URL,
+  CLOUD_NAME: process.env.CLOUD_NAME,
+  API_KEY: process.env.API_KEY,
+  API_SECRET: process.env.API_SECRET
 }

@@ -48,9 +48,7 @@ export const USER_VALIDATION = {
       'any.only': 'Vai trò không hợp lệ',
       'any.required': 'Vai trò là bắt buộc'
     }).trim(),
-    avatar: joi.string().uri().optional().messages({
-      'string.uri': 'URL ảnh đại diện không hợp lệ'
-    }).trim(),
+    avatar: joi.string().optional().trim(),
     addresses: joi.array().items(joi.object({
       fullname: joi.string().required().messages({
         'string.empty': 'Họ và tên không được để trống',
@@ -112,9 +110,7 @@ export const USER_VALIDATION = {
     role: joi.string().trim().valid(...ROLE_VALUES).optional().messages({
       'any.only': 'Vai trò không hợp lệ'
     }),
-    avatar: joi.string().trim().uri().optional().messages({
-      'string.uri': 'URL ảnh đại diện không hợp lệ'
-    }),
+    avatar: joi.string().trim().optional(),
     addresses: joi.array().items(joi.object({
       fullname: joi.string().trim().required().messages({
         'string.empty': 'Họ và tên không được để trống',
@@ -171,9 +167,7 @@ export const USER_VALIDATION = {
       'string.pattern.base': 'Số điện thoại không hợp lệ',
       'string.length': 'Số điện thoại phải có 10 chữ số'
     }),
-    avatar: joi.string().trim().uri().optional().messages({
-      'string.uri': 'URL ảnh đại diện không hợp lệ'
-    }),
+    avatar: joi.string().trim().optional(),
     addresses: joi.array().items(joi.object({
       fullname: joi.string().trim().required().messages({
         'string.empty': 'Họ và tên không được để trống',
