@@ -11,7 +11,6 @@ const productSchema = new mongoose.Schema(
     images: { type: [String], default: [] },
     material: { type: String, default: '' },
     compatibility: [{ type: mongoose.Schema.Types.ObjectId, ref: 'devices' }],
-    stock: { type: Number, default: 0 },
     ratingAvg: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
