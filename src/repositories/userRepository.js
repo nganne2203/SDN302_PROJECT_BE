@@ -68,6 +68,10 @@ const updateEmailVerificationStatusById = async (id, isEmailVerified, updatedBy 
   ).select('-password')
 }
 
+const getUserByBranch = async (branchId, role) => {
+  return await userModel.findOne({ branch: branchId, role }).select('-password')
+}
+
 export const USER_REPOSITORY = {
   createUser,
   getUserByEmail,
@@ -78,5 +82,6 @@ export const USER_REPOSITORY = {
   deleteUserById,
   getAllUsers,
   getAllUsersForManager,
-  updateEmailVerificationStatusById
+  updateEmailVerificationStatusById,
+  getUserByBranch
 }

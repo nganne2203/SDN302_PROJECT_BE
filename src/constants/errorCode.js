@@ -77,5 +77,11 @@ export const ERROR_CODES = {
     code: 'TOKEN_EXPIRED',
     statusCode: StatusCodes.UNAUTHORIZED,
     message: 'Token đã hết hạn.'
+  },
+
+  CONFLICT: {
+    code: 'CONFLICT',
+    statusCode: StatusCodes.CONFLICT,
+    message: 'Xung đột dữ liệu.'
   }
 }

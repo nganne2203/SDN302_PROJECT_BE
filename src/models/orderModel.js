@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 import { ORDER_STATUS, DELIVERY_STATUS } from '#constants/orderConstant.js'
 import { PAYMENT_METHODS } from '#constants/paymentConstant.js'
+import mongoosePaginate from 'mongoose-paginate-v2'
 
 const orderSchema = new mongoose.Schema(
   {
@@ -28,10 +29,17 @@ const orderSchema = new mongoose.Schema(
       ward: { type: String, required: true }
     },
     orderStatus: { type: String, enum: Object.values(ORDER_STATUS), default: ORDER_STATUS.PENDING },
-    totalAmount: { type: Number, required: true },
     subtotal: { type: Number, required: true },
-    discountAmount: { type: Number, default: 0 },
-    discountPercentage: { type: Number, default: 0 },
+    totalAmount: { type: Number, required: true },
+    pricingApplied: [
+      {
+        product: { type: mongoose.Schema.Types.ObjectId, ref: 'products', required: true },
+        minQuantity: { type: Number, default: 0 },
+        maxQuantity: { type: Number, default: null },
+        discountPercentage: { type: Number, default: 0 },
+        discountAmount: { type: Number, default: 0 }
+      }
+    ],
     paymentMethod: { type: String, enum: Object.values(PAYMENT_METHODS), required: true },
     delivery: {
       providerName: { type: String, default: '' },
@@ -49,5 +57,7 @@ const orderSchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false }
 )
+
+orderSchema.plugin(mongoosePaginate)
 
 export const orderModel = mongoose.model('orders', orderSchema)

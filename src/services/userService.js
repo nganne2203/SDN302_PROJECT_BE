@@ -5,6 +5,19 @@ import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { BCRYPT_UTILS } from '#utils/bcryptUtil.js'
 import { RoleEnum } from '#constants/roleConstant.js'
+import { BRANCH_REPOSITORY } from '#repositories/branchRepository.js'
+import { UPLOAD_SERVICE } from '#services/uploadService.js'
+
+const deleteOldAvatarIfNeeded = async (currentAvatarId, newAvatarId) => {
+  if (!currentAvatarId || !newAvatarId) return
+  if (currentAvatarId === newAvatarId) return
+
+  try {
+    await UPLOAD_SERVICE.deleteImage(currentAvatarId)
+  } catch {
+    throw new ApiError(ERROR_CODES.INTERNAL_SERVER_ERROR, ['Không thể xóa ảnh cũ trên Cloudinary'])
+  }
+}
 
 const getUserById = async (userId) => {
   const user = await USER_REPOSITORY.getUserById(userId)
@@ -83,6 +96,11 @@ const canCreateUser = (creator, targetRole, targetBranch) => {
   }
 }
 
+const getManagerByBranch = async (branchId) => {
+  const manager = await USER_REPOSITORY.getUserByBranch(branchId, RoleEnum.MANAGER)
+  return manager
+}
+
 const createUserInternal = async ({
   fullname,
   email,
@@ -117,6 +135,13 @@ const createUser = async (userData, createdBy = null) => {
   const creator = await getUserById(createdBy)
   const { role } = userData
 
+  if (!canCreateUser(creator, role, userData.branch)) {
+    throw new ApiError(
+      ERROR_CODES.FORBIDDEN,
+      ['Bạn không có quyền tạo người dùng với vai trò này']
+    )
+  }
+
   if (creator.role === RoleEnum.MANAGER && role === RoleEnum.STAFF) {
     userData.branch = creator.branch
   }
@@ -125,11 +150,19 @@ const createUser = async (userData, createdBy = null) => {
     userData.branch = null
   }
 
-  if (!canCreateUser(creator, role, userData.branch)) {
-    throw new ApiError(
-      ERROR_CODES.FORBIDDEN,
-      ['Bạn không có quyền tạo người dùng với vai trò này']
-    )
+  const { branch } = userData
+  if (branch) {
+    const branchExists = await BRANCH_REPOSITORY.getBranchById(branch)
+    if (!branchExists) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chi nhánh không tồn tại'])
+    }
+  }
+
+  if (role === RoleEnum.MANAGER) {
+    const existingManager = await getManagerByBranch(branch)
+    if (existingManager) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chi nhánh này đã có 1 manager'])
+    }
   }
 
   return await createUserInternal({
@@ -142,19 +175,24 @@ const updateUser = async (userId, updateData, updatedBy = null) => {
   const updater = await getUserById(updatedBy)
   const user = await getUserById(userId)
 
-  if (updater.role === RoleEnum.MANAGER && user.role === RoleEnum.ADMIN) {
-    throw new ApiError(ERROR_CODES.FORBIDDEN, ['Không thể cập nhật tài khoản ADMIN'])
+  if (updater.role === RoleEnum.STAFF) {
+    throw new ApiError(ERROR_CODES.FORBIDDEN, ['STAFF không có quyền cập nhật người dùng'])
   }
 
-  if (
-    updater.role === RoleEnum.MANAGER &&
-    user.role === RoleEnum.STAFF &&
-    user.branch?.toString() !== updater.branch?.toString()
-  ) {
-    throw new ApiError(
-      ERROR_CODES.FORBIDDEN,
-      ['Không thể cập nhật STAFF ngoài chi nhánh quản lý']
-    )
+  if (updater.role === RoleEnum.MANAGER) {
+    if (user.role !== RoleEnum.STAFF) {
+      throw new ApiError(
+        ERROR_CODES.FORBIDDEN,
+        ['MANAGER chỉ có thể cập nhật STAFF trong chi nhánh quản lý']
+      )
+    }
+
+    if (user.branch?.toString() !== updater.branch?.toString()) {
+      throw new ApiError(
+        ERROR_CODES.FORBIDDEN,
+        ['Không thể cập nhật STAFF ngoài chi nhánh quản lý']
+      )
+    }
   }
 
   const {
@@ -167,13 +205,10 @@ const updateUser = async (userId, updateData, updatedBy = null) => {
     branch
   } = updateData
 
-  if (
-    updater.role === RoleEnum.MANAGER &&
-    role === RoleEnum.ADMIN
-  ) {
+  if (role && updater.role === RoleEnum.MANAGER) {
     throw new ApiError(
       ERROR_CODES.FORBIDDEN,
-      ['MANAGER không được gán quyền ADMIN']
+      ['MANAGER không được thay đổi vai trò']
     )
   }
 
@@ -198,7 +233,10 @@ const updateUser = async (userId, updateData, updatedBy = null) => {
     updatedUserData.addresses = addresses
   }
 
-  if (avatar) updatedUserData.avatar = avatar
+  if (avatar) {
+    await deleteOldAvatarIfNeeded(user.avatar, avatar)
+    updatedUserData.avatar = avatar
+  }
 
   if (role) {
     updatedUserData.role = role
@@ -274,7 +312,10 @@ const updateCurrentUser = async (userId, updateData) => {
   if (fullname) updatedUserData.fullname = fullname
   if (phone) updatedUserData.phone = phone
   if (addresses) updatedUserData.addresses = addresses
-  if (avatar) updatedUserData.avatar = avatar
+  if (avatar) {
+    await deleteOldAvatarIfNeeded(user.avatar, avatar)
+    updatedUserData.avatar = avatar
+  }
 
   return USER_REPOSITORY.updateUserById(userId, updatedUserData)
 }
@@ -327,5 +368,6 @@ export const USER_SERVICE = {
   deleteUser,
   updateEmailVerificationStatus,
   updateCurrentUser,
-  getAllUsersForManager
+  getAllUsersForManager,
+  getManagerByBranch
 }

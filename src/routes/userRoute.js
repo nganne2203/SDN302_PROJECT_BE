@@ -2,15 +2,15 @@ import express from 'express'
 import { USER_CONTROLLER } from '#controllers/userController.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
 import {
-  QUERY_FIELDS,
   CREATE_USER_FIELDS,
   REQUIRE_FIELD_CREATE_USER,
-  UPDATE_CURRENT_USER_FIELDS
+  UPDATE_CURRENT_USER_FIELDS,
+  UPDATE_USER_FIELDS
 } from '#constants/userConstant.js'
 import { RoleEnum } from '#constants/roleConstant.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
-import { apiRateLimiter, createRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
 import { USER_VALIDATION } from '#validations/userValidation.js'
 import { validationHandlingMiddleware } from '#middlewares/validationHandlingMiddleware.js'
 
@@ -72,8 +72,7 @@ router.use(authorizationMiddleware)
  */
 router.get('/',
   apiRateLimiter,
-  requireRoles([RoleEnum.ADMIN]),
-  sanitizeRequest(QUERY_FIELDS, ['page', 'limit']),
+  requireRoles(RoleEnum.ADMIN),
   validationHandlingMiddleware({ query: USER_VALIDATION.query }),
   USER_CONTROLLER.getAllUsers
 )
@@ -97,6 +96,7 @@ router.get('/',
  *               - fullname
  *               - email
  *               - password
+ *               - role
  *             properties:
  *               fullname:
  *                 type: string
@@ -111,6 +111,10 @@ router.get('/',
  *               phone:
  *                 type: string
  *                 example: '0123456789'
+ *               role:
+ *                type: string
+ *                enum: [admin, manager, staff, customer]
+ *                example: customer
  *               branch:
  *                 type: string
  *                 example: '60d0fe4f5311236168a109ca'
@@ -150,8 +154,8 @@ router.get('/',
  *         description: Created successfully
  */
 router.post('/',
-  createRateLimiter,
-  requireRoles([RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF]),
+  apiRateLimiter,
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   sanitizeRequest(CREATE_USER_FIELDS, REQUIRE_FIELD_CREATE_USER),
   validationHandlingMiddleware({ body: USER_VALIDATION.createUser }),
   USER_CONTROLLER.createUser
@@ -210,8 +214,7 @@ router.post('/',
  */
 router.get('/manager',
   apiRateLimiter,
-  requireRoles([RoleEnum.MANAGER]),
-  sanitizeRequest(QUERY_FIELDS, ['page', 'limit']),
+  requireRoles(RoleEnum.MANAGER),
   validationHandlingMiddleware({ query: USER_VALIDATION.query }),
   USER_CONTROLLER.getAllUsersForManager
 )
@@ -306,7 +309,7 @@ router.put('/me',
  */
 router.get('/:id',
   apiRateLimiter,
-  requireRoles([RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF]),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   validationHandlingMiddleware({ params: USER_VALIDATION.idParam }),
   USER_CONTROLLER.getUserById
 )
@@ -344,6 +347,13 @@ router.get('/:id',
  *               phone:
  *                 type: string
  *                 example: '0123456789'
+ *               role:
+ *                 type: string
+ *                 enum: [admin, manager, staff, customer]
+ *                 example: customer
+ *               branch:
+ *                 type: string
+ *                 example: '60d0fe4f5311236168a109ca'
  *               avatar:
  *                 type: string
  *                 format: url
@@ -381,8 +391,8 @@ router.get('/:id',
  */
 router.put('/:id',
   writeRateLimiter,
-  requireRoles([RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF]),
-  sanitizeRequest(UPDATE_CURRENT_USER_FIELDS, []),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
+  sanitizeRequest(UPDATE_USER_FIELDS, []),
   validationHandlingMiddleware({
     params: USER_VALIDATION.idParam,
     body: USER_VALIDATION.updateUser
@@ -422,7 +432,7 @@ router.put('/:id',
  */
 router.put('/:id/status',
   writeRateLimiter,
-  requireRoles([RoleEnum.ADMIN, RoleEnum.MANAGER]),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
   validationHandlingMiddleware({
     params: USER_VALIDATION.idParam,
     body: USER_VALIDATION.updateUserStatus
