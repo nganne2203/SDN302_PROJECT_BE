@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 import { ORDER_STATUS, DELIVERY_STATUS } from '#constants/orderConstant.js'
 import { PAYMENT_METHODS } from '#constants/paymentConstant.js'
+import mongoosePaginate from 'mongoose-paginate-v2'
 
 const orderSchema = new mongoose.Schema(
   {
@@ -56,5 +57,7 @@ const orderSchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false }
 )
+
+orderSchema.plugin(mongoosePaginate)
 
 export const orderModel = mongoose.model('orders', orderSchema)
