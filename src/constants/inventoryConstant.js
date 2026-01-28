@@ -1,0 +1,25 @@
+import { GENERATE_UTILS } from '#utils/generateUtil.js'
+import { INVENTORY_VALIDATION } from '#validations/inventoryValidation.js'
+
+const CREATE_INVENTORY_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
+  INVENTORY_VALIDATION.createInventory
+)
+
+const CREATE_INVENTORY_REQUIRED = GENERATE_UTILS.extractRequiredFieldsFromJoi(
+  INVENTORY_VALIDATION.createInventory
+)
+
+const ADJUST_INVENTORY_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
+  INVENTORY_VALIDATION.adjustInventory
+)
+
+const UPDATE_INVENTORY_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
+  INVENTORY_VALIDATION.updateInventory
+)
+
+export const INVENTORY_CONSTANT = {
+  CREATE_INVENTORY_FIELDS,
+  CREATE_INVENTORY_REQUIRED,
+  ADJUST_INVENTORY_FIELDS,
+  UPDATE_INVENTORY_FIELDS
+}
