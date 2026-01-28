@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import mongoosePaginate from 'mongoose-paginate-v2'
 
 const pricingSchema = new mongoose.Schema(
   {
@@ -14,5 +15,7 @@ const pricingSchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false }
 )
+
+pricingSchema.plugin(mongoosePaginate)
 
 export const pricingModel = mongoose.model('pricings', pricingSchema)

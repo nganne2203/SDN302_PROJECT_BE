@@ -11,6 +11,7 @@ const inventorySchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false }
 )
+
 inventorySchema.plugin(mongoosePaginate)
 
 export const inventoryModel = mongoose.model('inventories', inventorySchema)

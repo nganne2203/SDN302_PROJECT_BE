@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import { SERVICE_TYPES } from '#constants/serviceConstant.js'
+import mongoosePaginate from 'mongoose-paginate-v2'
 
 const serviceSchema = new mongoose.Schema(
   {
@@ -14,5 +15,7 @@ const serviceSchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false }
 )
+
+serviceSchema.plugin(mongoosePaginate)
 
 export const serviceModel = mongoose.model('services', serviceSchema)
