@@ -20,7 +20,7 @@ const router = express.Router()
  *   - name: Category
  *     description: Quản lý danh mục sản phẩm
  *
- * /api/category:
+ * /api/categories:
  *   post:
  *     summary: Tạo danh mục mới
  *     description: Chỉ Admin mới có quyền tạo danh mục mới.
@@ -95,7 +95,7 @@ const router = express.Router()
  *       403:
  *         $ref: '#/components/responses/Forbidden'
  *
- * /api/category/{id}:
+ * /api/categories/{id}:
  *   get:
  *     summary: Lấy thông tin danh mục theo ID
  *     description: Lấy chi tiết một danh mục theo ID.
@@ -184,7 +184,7 @@ const router = express.Router()
  *         $ref: '#/components/responses/Forbidden'
  *       404:
  *         $ref: '#/components/responses/NotFound'
- * /api/category/{id}/status:
+ * /api/categories/{id}/status:
  *   patch:
  *    summary: Cập nhật trạng thái danh mục
  *    description: Chỉ Admin mới có quyền cập nhật trạng thái danh mục.

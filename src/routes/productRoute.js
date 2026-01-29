@@ -16,6 +16,88 @@ import {
 
 const router = express.Router()
 
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     summary: Get all products
+ *     description: Retrieve a list of products with optional filtering, pagination, and sorting.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           maximum: 100
+ *         description: Number of products per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term to filter products by name
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *         description: Filter products by category ID
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *         description: Minimum price filter
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *         description: Maximum price filter
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *         description: Filter products by active status
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [name, price, createdAt, updatedAt, ratingAvg, ratingCount]
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order, either 'asc' or 'desc'
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 docs:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 totalDocs:
+ *                   type: integer
+ *                 limit:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
+ *       400:
+ *         description: Invalid query parameters
+ */
 router.get(
   '/',
   apiRateLimiter,
@@ -23,6 +105,52 @@ router.get(
   PRODUCT_CONTROLLER.getAllProducts
 )
 
+/**
+ * @swagger
+ * /api/products/search:
+ *   get:
+ *     summary: Search products
+ *     description: Search products by keyword with pagination and sorting.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search keyword
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           maximum: 100
+ *         description: Number of products per page
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [name, price, createdAt, updatedAt, ratingAvg, ratingCount]
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order, either 'asc' or 'desc'
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved search results
+ *       400:
+ *         description: Invalid query parameters or missing search keyword
+ */
 router.get(
   '/search',
   apiRateLimiter,
@@ -30,12 +158,91 @@ router.get(
   PRODUCT_CONTROLLER.searchProducts
 )
 
+/**
+ * @swagger
+ * /api/products/categories:
+ *   get:
+ *     summary: Get product categories
+ *     description: Retrieve all available product categories.
+ *     tags: [Product]
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved categories
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ */
 router.get(
   '/categories',
   apiRateLimiter,
   PRODUCT_CONTROLLER.getProductCategories
 )
 
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   get:
+ *     summary: Get product by ID
+ *     description: Retrieve a specific product by its ID.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID (24 character hex string)
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved product
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 slug:
+ *                   type: string
+ *                 description:
+ *                   type: string
+ *                 category:
+ *                   type: object
+ *                 price:
+ *                   type: number
+ *                 images:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   description: Array of Cloudinary publicIds
+ *                 material:
+ *                   type: string
+ *                 compatibility:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 ratingAvg:
+ *                   type: number
+ *                 ratingCount:
+ *                   type: number
+ *                 isActive:
+ *                   type: boolean
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Invalid product ID
+ *       404:
+ *         description: Product not found
+ */
 router.get(
   '/:id',
   apiRateLimiter,
@@ -43,6 +250,72 @@ router.get(
   PRODUCT_CONTROLLER.getProductById
 )
 
+/**
+ * @swagger
+ * /api/products:
+ *   post:
+ *     summary: Create a new product
+ *     description: |
+ *       Create a new product (Admin only).
+ *
+ *       **Image Upload Flow:**
+ *       1. First, upload images using POST /api/uploads/multiple-images
+ *       2. Get publicIds from the upload response
+ *       3. Use those publicIds in the images array when creating product
+ *     tags: [Product]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - categoryId
+ *               - price
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 maxLength: 200
+ *                 example: iPhone 15 Pro Max Case
+ *               description:
+ *                 type: string
+ *                 example: Premium protective case for iPhone 15 Pro Max
+ *               categoryId:
+ *                 type: string
+ *                 example: 60d0fe4f5311236168a109ca
+ *                 description: Category ID (24 character hex string)
+ *               price:
+ *                 type: number
+ *                 minimum: 0
+ *                 example: 299000
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ['uploads/abc123def456', 'uploads/xyz789ghi012']
+ *                 description: Array of Cloudinary publicIds (get from upload API first)
+ *               material:
+ *                 type: string
+ *                 example: Silicone
+ *               compatibility:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ['60d0fe4f5311236168a109cb', '60d0fe4f5311236168a109cc']
+ *                 description: Array of device IDs (24 character hex strings)
+ *     responses:
+ *       201:
+ *         description: Product created successfully
+ *       400:
+ *         description: Invalid request body
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin role required
+ */
 router.post(
   '/',
   apiRateLimiter,
@@ -53,6 +326,77 @@ router.post(
   PRODUCT_CONTROLLER.createProduct
 )
 
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   put:
+ *     summary: Update a product
+ *     description: |
+ *       Update an existing product by ID (Admin only).
+ *
+ *       **Image Update Flow:**
+ *       - To add new images: Upload via POST /api/uploads/multiple-images first, then include all publicIds (old + new)
+ *       - To remove images: Simply exclude their publicIds from the images array (they will be auto-deleted from Cloudinary)
+ *       - To keep existing images: Include their publicIds in the array
+ *     tags: [Product]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID (24 character hex string)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 maxLength: 200
+ *                 example: iPhone 15 Pro Max Case - Updated
+ *               description:
+ *                 type: string
+ *                 example: Updated description
+ *               categoryId:
+ *                 type: string
+ *                 example: 60d0fe4f5311236168a109ca
+ *                 description: Category ID (24 character hex string)
+ *               price:
+ *                 type: number
+ *                 minimum: 0
+ *                 example: 350000
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ['uploads/abc123def456']
+ *                 description: Array of Cloudinary publicIds (old images not in array will be deleted from Cloudinary)
+ *               material:
+ *                 type: string
+ *                 example: Premium Silicone
+ *               compatibility:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ['60d0fe4f5311236168a109cb']
+ *                 description: Array of device IDs (24 character hex strings)
+ *     responses:
+ *       200:
+ *         description: Product updated successfully
+ *       400:
+ *         description: Invalid request body or product ID
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin role required
+ *       404:
+ *         description: Product not found
+ */
 router.put(
   '/:id',
   apiRateLimiter,
@@ -66,6 +410,46 @@ router.put(
   PRODUCT_CONTROLLER.updateProduct
 )
 
+/**
+ * @swagger
+ * /api/products/{id}/status:
+ *   patch:
+ *     summary: Update product status
+ *     description: Update the active status of a product (Admin only).
+ *     tags: [Product]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID (24 character hex string)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - isActive
+ *             properties:
+ *               isActive:
+ *                 type: boolean
+ *                 example: false
+ *     responses:
+ *       200:
+ *         description: Product status updated successfully
+ *       400:
+ *         description: Invalid request body or product ID
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin role required
+ *       404:
+ *         description: Product not found
+ */
 router.patch(
   '/:id/status',
   apiRateLimiter,
@@ -79,6 +463,37 @@ router.patch(
   PRODUCT_CONTROLLER.updateProductStatus
 )
 
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   delete:
+ *     summary: Delete a product
+ *     description: |
+ *       Delete a product by ID (Admin only).
+ *
+ *       **Note:** All associated images will be automatically deleted from Cloudinary.
+ *     tags: [Product]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID (24 character hex string)
+ *     responses:
+ *       200:
+ *         description: Product deleted successfully
+ *       400:
+ *         description: Invalid product ID
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin role required
+ *       404:
+ *         description: Product not found
+ */
 router.delete(
   '/:id',
   apiRateLimiter,

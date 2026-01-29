@@ -2,11 +2,15 @@ import { STORE_INVENTORY_REPOSITORY } from '#repositories/storeInventoryReposito
 import ApiError from '#utils/ApiError.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
+import { PRODUCT_SERVICE } from '#services/productService.js'
+import { BRANCH_SERVICE } from '#services/branchService.js'
 
 /**
  * Tạo inventory cho chi nhánh
  */
 const createStoreInventory = async (branchId, productId, quantity = 0, createdBy = null) => {
+  await PRODUCT_SERVICE.getProductById(productId)
+  await BRANCH_SERVICE.getBranchById(branchId)
   const existingStoreInventory = await STORE_INVENTORY_REPOSITORY.getStoreInventoryByBranchAndProduct(
     branchId,
     productId
@@ -94,11 +98,17 @@ const increaseStoreInventory = async (branchId, productId, quantity) => {
   return STORE_INVENTORY_REPOSITORY.increaseQuantity(branchId, productId, quantity)
 }
 
+const getStoreInventoriesByProduct = async (productId) => {
+  await PRODUCT_SERVICE.getProductById(productId)
+  return STORE_INVENTORY_REPOSITORY.getStoreInventoriesByProduct(productId)
+}
+
 export const STORE_INVENTORY_SERVICE = {
   createStoreInventory,
   getStoreInventoryByBranchAndProduct,
   getStoreInventoriesByBranch,
   getOutOfStockProductsAtBranch,
   decreaseStoreInventoryOnSale,
-  increaseStoreInventory
+  increaseStoreInventory,
+  getStoreInventoriesByProduct
 }

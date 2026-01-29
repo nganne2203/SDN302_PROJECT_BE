@@ -86,6 +86,10 @@ const getLowStockProductsAtBranch = async (branchId, threshold, options = {}) =>
   return storeInventoryModel.paginate(filter, queryOptions)
 }
 
+const getStoreInventoriesByProduct = async (productId) => {
+  return storeInventoryModel.find({ product: productId }).populate(['branch', 'product'])
+}
+
 export const STORE_INVENTORY_REPOSITORY = {
   getStoreInventoryByBranchAndProduct,
   getAllStoreInventories,
@@ -97,5 +101,6 @@ export const STORE_INVENTORY_REPOSITORY = {
   increaseQuantity,
   getOutOfStockProducts,
   checkStoreInventoryExists,
-  getLowStockProductsAtBranch
+  getLowStockProductsAtBranch,
+  getStoreInventoriesByProduct
 }
