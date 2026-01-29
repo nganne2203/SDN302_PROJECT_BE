@@ -28,8 +28,8 @@ export const PRODUCT_VALIDATION = {
       'any.required': 'Giá sản phẩm là bắt buộc'
     }),
     images: joi.array().items(
-      joi.string().uri().messages({
-        'string.uri': 'Ảnh sản phẩm phải là URL hợp lệ'
+      joi.string().trim().messages({
+        'string.base': 'ID ảnh sản phẩm phải là chuỗi'
       })
     ).default([]),
     material: joi.string().optional().allow('').trim(),
@@ -55,8 +55,8 @@ export const PRODUCT_VALIDATION = {
       'number.positive': 'Giá sản phẩm phải lớn hơn 0'
     }),
     images: joi.array().items(
-      joi.string().uri().messages({
-        'string.uri': 'Ảnh sản phẩm phải là URL hợp lệ'
+      joi.string().trim().messages({
+        'string.base': 'ID ảnh sản phẩm phải là chuỗi'
       })
     ),
     material: joi.string().optional().allow('').trim(),

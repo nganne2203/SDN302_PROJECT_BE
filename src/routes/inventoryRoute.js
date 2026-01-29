@@ -287,11 +287,6 @@ router.get('/product/:productId',
  *                 type: integer
  *                 example: 50
  *                 description: Số lượng điều chỉnh (có thể âm để trừ, dương để cộng)
- *               reason:
- *                 type: string
- *                 maxLength: 500
- *                 example: 'Nhập hàng từ nhà cung cấp'
- *                 description: Lý do điều chỉnh
  *     responses:
  *       200:
  *         description: Điều chỉnh tồn kho thành công
