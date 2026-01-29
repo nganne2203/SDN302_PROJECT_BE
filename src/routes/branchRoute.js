@@ -23,7 +23,7 @@ const router = express.Router()
  *   - name: Branch
  *     description: Quản lý chi nhánh
  *
- * /api/branch:
+ * /api/branches:
  *   post:
  *     summary: Tạo chi nhánh mới
  *     tags: [Branch]
@@ -66,7 +66,7 @@ const router = express.Router()
  *       200:
  *         description: Lấy danh sách chi nhánh thành công
  *
- * /api/branch/{id}:
+ * /api/branches/{id}:
  *   get:
  *     summary: Lấy thông tin chi nhánh theo ID
  *     tags: [Branch]
@@ -102,7 +102,7 @@ const router = express.Router()
  *       200:
  *         description: Cập nhật chi nhánh thành công
  *
- * /api/branch/{id}/manager:
+ * /api/branches/{id}/manager:
  *   patch:
  *     summary: Gán quản lý cho chi nhánh
  *     tags: [Branch]
@@ -129,7 +129,7 @@ const router = express.Router()
  *       200:
  *         description: Gán quản lý chi nhánh thành công
  *
- * /api/branch/{id}/manager/remove:
+ * /api/branches/{id}/manager/remove:
  *   patch:
  *     summary: Gỡ quản lý khỏi chi nhánh
  *     tags: [Branch]
@@ -146,7 +146,7 @@ const router = express.Router()
  *       200:
  *         description: Gỡ quản lý chi nhánh thành công
  *
- * /api/branch/{id}/status:
+ * /api/branches/{id}/status:
  *   patch:
  *     summary: Cập nhật trạng thái hoạt động của chi nhánh
  *     tags: [Branch]

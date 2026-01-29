@@ -12,7 +12,7 @@ import { env } from '#configs/environment.js'
 import { JWT_UTILS } from '#utils/jwtUtil.js'
 import { REFRESHTOKEN_REPOSITORY } from '#repositories/refreshTokenRepository.js'
 import { maskEmail } from '#utils/formatterUtil.js'
-
+import { CART_SERVICE } from '#services/cartService.js'
 const buildTokenPayload = (user) => {
   return {
     id: user._id.toString(),
@@ -60,6 +60,8 @@ const registerUser = async (userData, requestInfo = {}) => {
     password: hashedPassword,
     role: RoleEnum.CUSTOMER
   })
+
+  await CART_SERVICE.getOrCreateCart(newUser._id)
 
   await VERIFICATION_REPOSITORY.deleteVerificationCodesByUserId(newUser._id, VERIFY_TYPE.VERIFY_EMAIL)
   const code = GENERATE_UTILS.generateVerificationCode()
@@ -164,6 +166,8 @@ const googleAuth = async (googleUserData, requestInfo = {}) => {
     password: null,
     hasPassword: false
   })
+
+  await CART_SERVICE.getOrCreateCart(newUser._id)
 
   const tokens = await createToken(newUser, ipAddress, userAgent)
 

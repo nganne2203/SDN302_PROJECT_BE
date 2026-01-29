@@ -7,6 +7,7 @@ import { BCRYPT_UTILS } from '#utils/bcryptUtil.js'
 import { RoleEnum } from '#constants/roleConstant.js'
 import { BRANCH_REPOSITORY } from '#repositories/branchRepository.js'
 import { UPLOAD_SERVICE } from '#services/uploadService.js'
+import { CART_SERVICE } from '#services/cartService.js'
 
 const deleteOldAvatarIfNeeded = async (currentAvatarId, newAvatarId) => {
   if (!currentAvatarId || !newAvatarId) return
@@ -128,6 +129,11 @@ const createUserInternal = async ({
     isEmailVerified
   }
   const createdUser = await USER_REPOSITORY.createUser(newUser)
+
+  if (role === RoleEnum.CUSTOMER) {
+    await CART_SERVICE.createCart(createdUser._id)
+  }
+
   return await getUserById(createdUser._id)
 }
 

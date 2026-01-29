@@ -1,9 +1,11 @@
 import { PRODUCT_REPOSITORY } from '#repositories/productRepository.js'
 import { CATEGORY_REPOSITORY } from '#repositories/categoryRepository.js'
+import { UPLOAD_SERVICE } from '#services/uploadService.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { escapeRegex, slugify } from '#utils/formatterUtil.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
+import { DEVICE_SERVICE } from '#services/deviceService.js'
 
 const getProductById = async (productId) => {
   const product = await PRODUCT_REPOSITORY.getProductById(productId)
@@ -68,6 +70,11 @@ const createProduct = async (data, createdBy = null) => {
   const { name, description = '', categoryId, price, images = [], material = '', compatibility = [] } = data
   await assertProductNameUnique(name)
   await assertCategoryExists(categoryId)
+  if (compatibility.length > 0) {
+    for (const deviceId of compatibility) {
+      await DEVICE_SERVICE.getDeviceById(deviceId)
+    }
+  }
 
   return await PRODUCT_REPOSITORY.createProduct({
     name,
@@ -84,37 +91,49 @@ const createProduct = async (data, createdBy = null) => {
 
 const updateProductById = async (productId, data, updatedBy = null) => {
   const product = await getProductById(productId)
+  const { name, description, categoryId, price, images = [], material, compatibility = [] } = data
   const updatedData = {}
 
-  if (data.name && data.name !== product.name) {
-    await assertProductNameUnique(data.name)
-    updatedData.name = data.name
-    updatedData.slug = slugify(data.name)
+  if (name && name !== product.name) {
+    await assertProductNameUnique(name)
+    updatedData.name = name
+    updatedData.slug = slugify(name)
   }
 
-  if (data.description !== undefined) {
-    updatedData.description = data.description
+  if (description !== undefined) {
+    updatedData.description = description
   }
 
-  if (data.categoryId && String(data.categoryId) !== String(product.category?._id || product.category)) {
-    await assertCategoryExists(data.categoryId)
-    updatedData.category = data.categoryId
+  if (categoryId && String(categoryId) !== String(product.category?._id || product.category)) {
+    await assertCategoryExists(categoryId)
+    updatedData.category = categoryId
   }
 
-  if (data.price !== undefined) {
-    updatedData.price = data.price
+  if (price !== undefined) {
+    updatedData.price = price
   }
 
-  if (data.images !== undefined) {
-    updatedData.images = data.images
+  if (images !== undefined) {
+    const oldImages = product.images || []
+    const newImages = images || []
+    const imagesToDelete = oldImages.filter(img => !newImages.includes(img))
+    if (imagesToDelete.length > 0) {
+      await UPLOAD_SERVICE.deleteImagesFromCloudinary(imagesToDelete)
+    }
+    updatedData.images = newImages
   }
 
-  if (data.material !== undefined) {
-    updatedData.material = data.material
+  if (material !== undefined) {
+    updatedData.material = material
   }
 
-  if (data.compatibility !== undefined) {
-    updatedData.compatibility = data.compatibility
+  if (compatibility !== undefined) {
+    if (compatibility.length > 0) {
+      for (const deviceId of compatibility) {
+        await DEVICE_SERVICE.getDeviceById(deviceId)
+      }
+    }
+    updatedData.compatibility = compatibility
   }
 
   return PRODUCT_REPOSITORY.updateProductById(productId, { ...updatedData, updatedBy })
@@ -125,6 +144,11 @@ const deleteProductById = async (productId) => {
   if (!product.isActive) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ có thể xóa sản phẩm đang hoạt động'])
   }
+
+  if (product.images && product.images.length > 0) {
+    await UPLOAD_SERVICE.deleteImagesFromCloudinary(product.images)
+  }
+
   return PRODUCT_REPOSITORY.deleteProductById(productId)
 }
 
@@ -137,8 +161,8 @@ const updateProductStatus = async (productId, isActive, updatedBy = null) => {
 }
 
 const getProductCategories = async () => {
-  const result = await CATEGORY_REPOSITORY.getAllCategories({ isActive: true }, { page: 1, limit: 1000, sort: { name: 1 } })
-  return result.docs.map((item) => ({
+  const result = await CATEGORY_REPOSITORY.getAllCategoriesWithoutPagination({ isActive: true }, { name: 1 })
+  return result.map((item) => ({
     id: item._id,
     name: item.name
   }))
