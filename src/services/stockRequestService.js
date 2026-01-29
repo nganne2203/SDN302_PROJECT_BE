@@ -5,11 +5,15 @@ import { STOCK_REQUEST_STATUS } from '#constants/stockRequestConstant.js'
 import ApiError from '#utils/ApiError.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
+import { PRODUCT_SERVICE } from '#services/productService.js'
+import { BRANCH_SERVICE } from '#services/branchService.js'
 
 /**
  * Tạo yêu cầu nhập hàng từ chi nhánh
  */
 const createStockRequest = async (branchId, productId, quantity, reason, requesterId) => {
+  await BRANCH_SERVICE.getBranchById(branchId)
+  await PRODUCT_SERVICE.getProductById(productId)
   const inventory = await INVENTORY_REPOSITORY.getInventoryByProductId(productId)
   if (!inventory || inventory.quantity < quantity) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Kho tổng không đủ hàng để cấp cho chi nhánh'])
