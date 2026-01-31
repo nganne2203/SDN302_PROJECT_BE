@@ -10,7 +10,7 @@ const getAllCategories = async (filter = {}, options = {}) => {
     page,
     limit,
     sort
-  }).populate('products', 'name image price')
+  })
 }
 
 const getCategoryByName = async (name) => {
