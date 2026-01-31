@@ -29,12 +29,17 @@ const deleteCategoryById = async (id) => {
   return await categoryModel.findByIdAndDelete(id)
 }
 
+const getAllCategoriesWithoutPagination = async (filter = {}, sort = { name: 1 }) => {
+  return await categoryModel.find(filter).sort(sort)
+}
+
 export const CATEGORY_REPOSITORY = {
   getCategoryById,
   getAllCategories,
   createCategory,
   updateCategoryById,
   deleteCategoryById,
-  getCategoryByName
+  getCategoryByName,
+  getAllCategoriesWithoutPagination
 }
 

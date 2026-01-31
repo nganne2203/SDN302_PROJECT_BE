@@ -2,6 +2,7 @@ import { INVENTORY_REPOSITORY } from '#repositories/inventoryRepository.js'
 import ApiError from '#utils/ApiError.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
+import { PRODUCT_SERVICE } from '#services/productService.js'
 
 // ============== INVENTORY MANAGEMENT (KHO TỔNG) ==============
 
@@ -9,6 +10,7 @@ import { ERROR_CODES } from '#constants/errorCode.js'
  * Tạo inventory mới cho sản phẩm
  */
 const createInventory = async (productId, quantity = 0, location = '', userId) => {
+  await PRODUCT_SERVICE.getProductById(productId)
   const existingInventory = await INVENTORY_REPOSITORY.getInventoryByProductId(productId)
   if (existingInventory) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Inventory cho sản phẩm này đã tồn tại'])

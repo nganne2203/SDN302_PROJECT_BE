@@ -64,13 +64,13 @@ const router = express.Router()
  *         description: Forbidden (Not an admin)
  */
 router.post(
-  '/',
-  apiRateLimiter,
-  authorizationMiddleware,
-  requireRoles(RoleEnum.ADMIN),
-  sanitizeRequest(CREATE_SERVICE_FIELDS, CREATE_SERVICE_REQUIRED),
-  validationHandlingMiddleware({ body: SERVICE_VALIDATION.createService }),
-  SERVICE_CONTROLLER.createService
+    '/',
+    apiRateLimiter,
+    authorizationMiddleware,
+    requireRoles(RoleEnum.ADMIN),
+    sanitizeRequest(CREATE_SERVICE_FIELDS, CREATE_SERVICE_REQUIRED),
+    validationHandlingMiddleware({ body: SERVICE_VALIDATION.createService }),
+    SERVICE_CONTROLLER.createService
 )
 
 /**
@@ -168,12 +168,12 @@ router.post(
  *         description: Forbidden (Not an admin)
  */
 router.get(
-  '/',
-  apiRateLimiter,
-  authorizationMiddleware,
-  requireRoles(RoleEnum.ADMIN),
-  validationHandlingMiddleware({ query: SERVICE_VALIDATION.query }),
-  SERVICE_CONTROLLER.getAllServices
+    '/',
+    apiRateLimiter,
+    authorizationMiddleware,
+    requireRoles(RoleEnum.ADMIN),
+    validationHandlingMiddleware({ query: SERVICE_VALIDATION.query }),
+    SERVICE_CONTROLLER.getAllServices
 )
 
 /**
@@ -269,10 +269,10 @@ router.get(
  *         description: Service not found
  */
 router.get(
-  '/:id',
-  apiRateLimiter,
-  validationHandlingMiddleware({ params: SERVICE_VALIDATION.idParam }),
-  SERVICE_CONTROLLER.getServiceById
+    '/:id',
+    apiRateLimiter,
+    validationHandlingMiddleware({ params: SERVICE_VALIDATION.idParam }),
+    SERVICE_CONTROLLER.getServiceById
 )
 
 /**
@@ -374,11 +374,11 @@ router.get(
  *         description: Product not found
  */
 router.get('/product/:productId',
-  apiRateLimiter,
-  authorizationMiddleware,
-  requireRoles(RoleEnum.ADMIN),
-  validationHandlingMiddleware({ params: SERVICE_VALIDATION.productIdParam }),
-  SERVICE_CONTROLLER.getServiceByProductId
+    apiRateLimiter,
+    authorizationMiddleware,
+    requireRoles(RoleEnum.ADMIN),
+    validationHandlingMiddleware({ params: SERVICE_VALIDATION.productIdParam }),
+    SERVICE_CONTROLLER.getServiceByProductId
 )
 
 /**
@@ -442,16 +442,16 @@ router.get('/product/:productId',
  *         description: Service not found
  */
 router.put(
-  '/:id',
-  apiRateLimiter,
-  authorizationMiddleware,
-  requireRoles(RoleEnum.ADMIN),
-  sanitizeRequest(UPDATE_SERVICE_FIELDS, []),
-  validationHandlingMiddleware({
-    params: SERVICE_VALIDATION.idParam,
-    body: SERVICE_VALIDATION.updateService
-  }),
-  SERVICE_CONTROLLER.updateService
+    '/:id',
+    apiRateLimiter,
+    authorizationMiddleware,
+    requireRoles(RoleEnum.ADMIN),
+    sanitizeRequest(UPDATE_SERVICE_FIELDS, []),
+    validationHandlingMiddleware({
+        params: SERVICE_VALIDATION.idParam,
+        body: SERVICE_VALIDATION.updateService
+    }),
+    SERVICE_CONTROLLER.updateService
 )
 
 /**
@@ -502,16 +502,16 @@ router.put(
  *         description: Service not found
  */
 router.patch(
-  '/:id/status',
-  apiRateLimiter,
-  authorizationMiddleware,
-  sanitizeRequest(UPDATE_SERVICE_STATUS, ['isActive']),
-  requireRoles(RoleEnum.ADMIN),
-  validationHandlingMiddleware({
-    params: SERVICE_VALIDATION.idParam,
-    body: SERVICE_VALIDATION.updateServiceStatus
-  }),
-  SERVICE_CONTROLLER.updateServiceStatus
+    '/:id/status',
+    apiRateLimiter,
+    authorizationMiddleware,
+    sanitizeRequest(UPDATE_SERVICE_STATUS, ['isActive']),
+    requireRoles(RoleEnum.ADMIN),
+    validationHandlingMiddleware({
+        params: SERVICE_VALIDATION.idParam,
+        body: SERVICE_VALIDATION.updateServiceStatus
+    }),
+    SERVICE_CONTROLLER.updateServiceStatus
 )
 
 /**
@@ -549,12 +549,12 @@ router.patch(
  *         description: Service not found
  */
 router.delete(
-  '/:id',
-  apiRateLimiter,
-  authorizationMiddleware,
-  requireRoles(RoleEnum.ADMIN),
-  validationHandlingMiddleware({ params: SERVICE_VALIDATION.idParam }),
-  SERVICE_CONTROLLER.deleteServiceById
+    '/:id',
+    apiRateLimiter,
+    authorizationMiddleware,
+    requireRoles(RoleEnum.ADMIN),
+    validationHandlingMiddleware({ params: SERVICE_VALIDATION.idParam }),
+    SERVICE_CONTROLLER.deleteServiceById
 )
 
 export const SERVICE_ROUTE = router
