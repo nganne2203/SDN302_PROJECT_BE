@@ -1,4 +1,5 @@
 import { orderModel } from '#models/orderModel.js'
+import { ORDER_STATUS } from '#constants/orderConstant.js'
 
 const createOrder = async (orderData) => {
   return await orderModel.create(orderData)
@@ -7,7 +8,7 @@ const createOrder = async (orderData) => {
 const getOrderById = async (orderId, options = {}) => {
   const { populate = true } = options
   let query = orderModel.findById(orderId)
-  
+
   if (populate) {
     query = query
       .populate('user', 'fullname email phone')
@@ -17,14 +18,14 @@ const getOrderById = async (orderId, options = {}) => {
       .populate('createdBy', 'fullname email')
       .populate('updatedBy', 'fullname email')
   }
-  
+
   return await query.exec()
 }
 
 const getOrderByOrderNumber = async (orderNumber, options = {}) => {
   const { populate = true } = options
   let query = orderModel.findOne({ orderNumber })
-  
+
   if (populate) {
     query = query
       .populate('user', 'fullname email phone')
@@ -34,14 +35,14 @@ const getOrderByOrderNumber = async (orderNumber, options = {}) => {
       .populate('createdBy', 'fullname email')
       .populate('updatedBy', 'fullname email')
   }
-  
+
   return await query.exec()
 }
 
 const getOrdersByUser = async (userId, filter = {}, options = {}) => {
   const query = { user: userId, ...filter }
   const { page = 1, limit = 10, sort = { createdAt: -1 } } = options
-  
+
   return await orderModel.paginate(query, {
     page,
     limit,
@@ -57,7 +58,7 @@ const getOrdersByUser = async (userId, filter = {}, options = {}) => {
 
 const getAllOrders = async (filter = {}, options = {}) => {
   const { page = 1, limit = 10, sort = { createdAt: -1 } } = options
-  
+
   return await orderModel.paginate(filter, {
     page,
     limit,
@@ -102,8 +103,8 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
 const cancelOrder = async (orderId, cancelReason, updatedBy) => {
   return await orderModel.findByIdAndUpdate(
     orderId,
-    { 
-      orderStatus: 'canceled', 
+    {
+      orderStatus: ORDER_STATUS.CANCELED,
       cancelReason,
       updatedBy,
       updatedAt: new Date()
@@ -118,7 +119,7 @@ const cancelOrder = async (orderId, cancelReason, updatedBy) => {
 
 const countOrdersByStatus = async (userId = null) => {
   const matchStage = userId ? { user: userId } : {}
-  
+
   return await orderModel.aggregate([
     { $match: matchStage },
     { $group: { _id: '$orderStatus', count: { $sum: 1 } } }

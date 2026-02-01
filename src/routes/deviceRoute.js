@@ -8,7 +8,7 @@ import {
 import { DEVICE_VALIDATION } from '#validations/deviceValidation.js'
 import { DEVICE_CONTROLLER } from '#controllers/deviceController.js'
 import { validationHandlingMiddleware } from '#middlewares/validationHandlingMiddleware.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
@@ -239,7 +239,7 @@ router.post(
   authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN),
   sanitizeRequest(DEVICE_FIELD_CREATE, REQUIRE_FIELD_CREATE_DEVICE),
-  validationHandlingMiddleware(DEVICE_VALIDATION.createDevice),
+  validationHandlingMiddleware({ body: DEVICE_VALIDATION.createDevice }),
   DEVICE_CONTROLLER.createDevice
 )
 

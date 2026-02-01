@@ -9,6 +9,20 @@ export const PRODUCT_VALIDATION = {
       'any.required': 'ID là bắt buộc'
     }).trim()
   }),
+  slugParam: joi.object({
+    slug: joi.string().required().messages({
+      'string.empty': 'Slug không được để trống',
+      'any.required': 'Slug là bắt buộc'
+    }).trim()
+  }),
+  deviceIdParam: joi.object({
+    deviceId: joi.string().hex().length(24).required().messages({
+      'string.empty': 'Device ID không được để trống',
+      'string.hex': 'Device ID không hợp lệ',
+      'string.length': 'Device ID không hợp lệ',
+      'any.required': 'Device ID là bắt buộc'
+    }).trim()
+  }),
   createProduct: joi.object({
     name: joi.string().required().max(200).messages({
       'string.empty': 'Tên sản phẩm không được để trống',

@@ -2,7 +2,7 @@ import express from 'express'
 import { STOCK_REQUEST_CONTROLLER } from '#controllers/stockRequestController.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
 import { STOCK_REQUEST_CONSTANT } from '#constants/stockRequestConstant.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 import { RoleEnum } from '#constants/roleConstant.js'
@@ -65,7 +65,7 @@ router.use(authorizationMiddleware)
 router.post('/',
   requireRoles(RoleEnum.MANAGER),
   sanitizeRequest(STOCK_REQUEST_CONSTANT.CREATE_STOCK_REQUEST, STOCK_REQUEST_CONSTANT.CREATE_STOCK_REQUEST_REQUIRED),
-  validationHandlingMiddleware(STOCK_REQUEST_VALIDATION.createStockRequest),
+  validationHandlingMiddleware({ body: STOCK_REQUEST_VALIDATION.createStockRequest }),
   STOCK_REQUEST_CONTROLLER.createStockRequest
 )
 
@@ -126,6 +126,7 @@ router.get('/',
   validationHandlingMiddleware({ query: STOCK_REQUEST_VALIDATION.query }),
   STOCK_REQUEST_CONTROLLER.getAllStockRequests
 )
+
 /**
  * @swagger
  * /api/stock-requests/pending:

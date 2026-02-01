@@ -2,7 +2,7 @@ import express from 'express'
 import { RoleEnum } from '#constants/roleConstant.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { validationHandlingMiddleware } from '#middlewares/validationHandlingMiddleware.js'
 import { SERVICE_VALIDATION } from '#validations/serviceValidation.js'
@@ -64,13 +64,13 @@ const router = express.Router()
  *         description: Forbidden (Not an admin)
  */
 router.post(
-    '/',
-    apiRateLimiter,
-    authorizationMiddleware,
-    requireRoles(RoleEnum.ADMIN),
-    sanitizeRequest(CREATE_SERVICE_FIELDS, CREATE_SERVICE_REQUIRED),
-    validationHandlingMiddleware({ body: SERVICE_VALIDATION.createService }),
-    SERVICE_CONTROLLER.createService
+  '/',
+  apiRateLimiter,
+  authorizationMiddleware,
+  requireRoles(RoleEnum.ADMIN),
+  sanitizeRequest(CREATE_SERVICE_FIELDS, CREATE_SERVICE_REQUIRED),
+  validationHandlingMiddleware({ body: SERVICE_VALIDATION.createService }),
+  SERVICE_CONTROLLER.createService
 )
 
 /**
@@ -168,12 +168,12 @@ router.post(
  *         description: Forbidden (Not an admin)
  */
 router.get(
-    '/',
-    apiRateLimiter,
-    authorizationMiddleware,
-    requireRoles(RoleEnum.ADMIN),
-    validationHandlingMiddleware({ query: SERVICE_VALIDATION.query }),
-    SERVICE_CONTROLLER.getAllServices
+  '/',
+  apiRateLimiter,
+  authorizationMiddleware,
+  requireRoles(RoleEnum.ADMIN),
+  validationHandlingMiddleware({ query: SERVICE_VALIDATION.query }),
+  SERVICE_CONTROLLER.getAllServices
 )
 
 /**
@@ -269,10 +269,186 @@ router.get(
  *         description: Service not found
  */
 router.get(
-    '/:id',
-    apiRateLimiter,
-    validationHandlingMiddleware({ params: SERVICE_VALIDATION.idParam }),
-    SERVICE_CONTROLLER.getServiceById
+  '/:id',
+  apiRateLimiter,
+  validationHandlingMiddleware({ params: SERVICE_VALIDATION.idParam }),
+  SERVICE_CONTROLLER.getServiceById
+)
+
+/**
+ * @swagger
+ * /api/services/{id}:
+ *   put:
+ *     summary: Update a service
+ *     description: Update service details. Only admins can update services.
+ *     tags: [Services]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The service ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The name of the service (must be unique within the product)
+ *                 example: Khắc tên Update
+ *               description:
+ *                 type: string
+ *                 description: The description of the service
+ *                 example: Dịch vụ khắc tên lên sản phẩm cập nhật
+ *               type:
+ *                 type: string
+ *                 description: The type of the service
+ *                 enum: [engraving, printing, drilling, cutting, embossing, coating, lamination, other]
+ *                 example: engraving
+ *               price:
+ *                 type: number
+ *                 description: The price of the service
+ *                 example: 55000
+ *     responses:
+ *       200:
+ *         description: Service updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Cập nhật dịch vụ thành công
+ *       400:
+ *         description: Bad request (Validation error or duplicate service name)
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Not an admin)
+ *       404:
+ *         description: Service not found
+ */
+router.put(
+  '/:id',
+  apiRateLimiter,
+  authorizationMiddleware,
+  requireRoles(RoleEnum.ADMIN),
+  sanitizeRequest(UPDATE_SERVICE_FIELDS, []),
+  validationHandlingMiddleware({
+    params: SERVICE_VALIDATION.idParam,
+    body: SERVICE_VALIDATION.updateService
+  }),
+  SERVICE_CONTROLLER.updateService
+)
+
+/**
+ * @swagger
+ * /api/services/{id}/status:
+ *   patch:
+ *     summary: Update a service status
+ *     description: Update service status. Only admins can update service status.
+ *     tags: [Services]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The service ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               isActive:
+ *                 type: boolean
+ *                 description: The status of the service
+ *                 example: false
+ *     responses:
+ *       200:
+ *         description: Service status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Cập nhật trạng thái dịch vụ thành công
+ *       400:
+ *         description: Bad request (Validation error or status not changed)
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Not an admin)
+ *       404:
+ *         description: Service not found
+ */
+router.patch(
+  '/:id/status',
+  apiRateLimiter,
+  authorizationMiddleware,
+  sanitizeRequest(UPDATE_SERVICE_STATUS, ['isActive']),
+  requireRoles(RoleEnum.ADMIN),
+  validationHandlingMiddleware({
+    params: SERVICE_VALIDATION.idParam,
+    body: SERVICE_VALIDATION.updateServiceStatus
+  }),
+  SERVICE_CONTROLLER.updateServiceStatus
+)
+
+/**
+ * @swagger
+ * /api/services/{id}:
+ *   delete:
+ *     summary: Delete a service
+ *     description: Delete a service by ID. Only admins can delete services.
+ *     tags: [Services]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The service ID
+ *     responses:
+ *       200:
+ *         description: Service deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Xóa dịch vụ thành công
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Not an admin)
+ *       404:
+ *         description: Service not found
+ */
+router.delete(
+  '/:id',
+  apiRateLimiter,
+  authorizationMiddleware,
+  requireRoles(RoleEnum.ADMIN),
+  validationHandlingMiddleware({ params: SERVICE_VALIDATION.idParam }),
+  SERVICE_CONTROLLER.deleteServiceById
 )
 
 /**
@@ -374,187 +550,11 @@ router.get(
  *         description: Product not found
  */
 router.get('/product/:productId',
-    apiRateLimiter,
-    authorizationMiddleware,
-    requireRoles(RoleEnum.ADMIN),
-    validationHandlingMiddleware({ params: SERVICE_VALIDATION.productIdParam }),
-    SERVICE_CONTROLLER.getServiceByProductId
-)
-
-/**
- * @swagger
- * /api/services/{id}:
- *   put:
- *     summary: Update a service
- *     description: Update service details. Only admins can update services.
- *     tags: [Services]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The service ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 description: The name of the service (must be unique within the product)
- *                 example: Khắc tên Update
- *               description:
- *                 type: string
- *                 description: The description of the service
- *                 example: Dịch vụ khắc tên lên sản phẩm cập nhật
- *               type:
- *                 type: string
- *                 description: The type of the service
- *                 enum: [engraving, printing, drilling, cutting, embossing, coating, lamination, other]
- *                 example: engraving
- *               price:
- *                 type: number
- *                 description: The price of the service
- *                 example: 55000
- *     responses:
- *       200:
- *         description: Service updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Cập nhật dịch vụ thành công
- *       400:
- *         description: Bad request (Validation error or duplicate service name)
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden (Not an admin)
- *       404:
- *         description: Service not found
- */
-router.put(
-    '/:id',
-    apiRateLimiter,
-    authorizationMiddleware,
-    requireRoles(RoleEnum.ADMIN),
-    sanitizeRequest(UPDATE_SERVICE_FIELDS, []),
-    validationHandlingMiddleware({
-        params: SERVICE_VALIDATION.idParam,
-        body: SERVICE_VALIDATION.updateService
-    }),
-    SERVICE_CONTROLLER.updateService
-)
-
-/**
- * @swagger
- * /api/services/{id}/status:
- *   patch:
- *     summary: Update a service status
- *     description: Update service status. Only admins can update service status.
- *     tags: [Services]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The service ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               isActive:
- *                 type: boolean
- *                 description: The status of the service
- *                 example: false
- *     responses:
- *       200:
- *         description: Service status updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Cập nhật trạng thái dịch vụ thành công
- *       400:
- *         description: Bad request (Validation error or status not changed)
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden (Not an admin)
- *       404:
- *         description: Service not found
- */
-router.patch(
-    '/:id/status',
-    apiRateLimiter,
-    authorizationMiddleware,
-    sanitizeRequest(UPDATE_SERVICE_STATUS, ['isActive']),
-    requireRoles(RoleEnum.ADMIN),
-    validationHandlingMiddleware({
-        params: SERVICE_VALIDATION.idParam,
-        body: SERVICE_VALIDATION.updateServiceStatus
-    }),
-    SERVICE_CONTROLLER.updateServiceStatus
-)
-
-/**
- * @swagger
- * /api/services/{id}:
- *   delete:
- *     summary: Delete a service
- *     description: Delete a service by ID. Only admins can delete services.
- *     tags: [Services]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The service ID
- *     responses:
- *       200:
- *         description: Service deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Xóa dịch vụ thành công
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden (Not an admin)
- *       404:
- *         description: Service not found
- */
-router.delete(
-    '/:id',
-    apiRateLimiter,
-    authorizationMiddleware,
-    requireRoles(RoleEnum.ADMIN),
-    validationHandlingMiddleware({ params: SERVICE_VALIDATION.idParam }),
-    SERVICE_CONTROLLER.deleteServiceById
+  apiRateLimiter,
+  authorizationMiddleware,
+  requireRoles(RoleEnum.ADMIN),
+  validationHandlingMiddleware({ params: SERVICE_VALIDATION.productIdParam }),
+  SERVICE_CONTROLLER.getServiceByProductId
 )
 
 export const SERVICE_ROUTE = router

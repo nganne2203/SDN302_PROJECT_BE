@@ -232,7 +232,7 @@ const sendOrderConfirmation = async (to, fullName, order) => {
     const servicesHtml = item.services && item.services.length > 0
       ? item.services.map(s => `<li style="font-size: 12px; color: #666;">+ ${s.service?.name || 'Service'}: ${formatCurrency(s.price)}</li>`).join('')
       : ''
-    
+
     return `
       <tr>
         <td style="padding: 10px; border-bottom: 1px solid #ddd;">

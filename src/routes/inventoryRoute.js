@@ -2,7 +2,7 @@ import express from 'express'
 import { INVENTORY_CONTROLLER } from '#controllers/inventoryController.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
 import { INVENTORY_CONSTANT } from '#constants/inventoryConstant.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 import { RoleEnum } from '#constants/roleConstant.js'
@@ -60,7 +60,7 @@ router.use(requireRoles(RoleEnum.ADMIN))
 // POST - Tạo inventory mới
 router.post('/',
   sanitizeRequest(INVENTORY_CONSTANT.CREATE_INVENTORY_FIELDS, INVENTORY_CONSTANT.CREATE_INVENTORY_REQUIRED),
-  validationHandlingMiddleware(INVENTORY_VALIDATION.createInventory),
+  validationHandlingMiddleware({ body: INVENTORY_VALIDATION.createInventory }),
   INVENTORY_CONTROLLER.createInventory
 )
 

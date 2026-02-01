@@ -10,7 +10,7 @@ import {
 import { RoleEnum } from '#constants/roleConstant.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
-import { apiRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { USER_VALIDATION } from '#validations/userValidation.js'
 import { validationHandlingMiddleware } from '#middlewares/validationHandlingMiddleware.js'
 

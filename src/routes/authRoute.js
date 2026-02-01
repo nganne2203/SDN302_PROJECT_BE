@@ -1,7 +1,7 @@
 import express from 'express'
 import passport from '#configs/passport.js'
 import { AUTH_CONTROLLER } from '#controllers/authController.js'
-import { authRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { authRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { validationHandlingMiddleware } from '#middlewares/validationHandlingMiddleware.js'
 import { AUTH_VALIDATION } from '#validations/authValidation.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
@@ -92,7 +92,7 @@ router.post('/register',
   authRateLimiter,
   verifyRecaptchaMiddleware,
   sanitizeRequest(REGISTER_FIELDS, REQUIRE_FIELD_REGISTER),
-  validationHandlingMiddleware(AUTH_VALIDATION.registerUser),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.registerUser }),
   AUTH_CONTROLLER.register
 )
 
@@ -130,7 +130,7 @@ router.post('/login',
   authRateLimiter,
   verifyRecaptchaMiddleware,
   sanitizeRequest(LOGIN_FIELDS, LOGIN_FIELDS),
-  validationHandlingMiddleware(AUTH_VALIDATION.loginUser),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.loginUser }),
   AUTH_CONTROLLER.login
 )
 
@@ -209,7 +209,7 @@ router.get('/google/callback',
 router.post('/verify-otp',
   authRateLimiter,
   sanitizeRequest(VERIFY_OTP_FIELDS, VERIFY_OTP_FIELDS),
-  validationHandlingMiddleware(AUTH_VALIDATION.verifyOtp),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.verifyOtp }),
   AUTH_CONTROLLER.verifyOtp
 )
 
@@ -244,7 +244,7 @@ router.post('/verify-otp',
 router.post('/resend-verification-code',
   authRateLimiter,
   sanitizeRequest(RESEND_OTP_FIELDS, RESEND_OTP_FIELDS),
-  validationHandlingMiddleware(AUTH_VALIDATION.resendVerificationCode),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.resendVerificationCode }),
   AUTH_CONTROLLER.resendVerificationCode
 )
 
@@ -274,7 +274,7 @@ router.post('/resend-verification-code',
 router.post('/refresh-token',
   authRateLimiter,
   sanitizeRequest(REFRESH_TOKEN_FIELDS, REFRESH_TOKEN_FIELDS),
-  validationHandlingMiddleware(AUTH_VALIDATION.refreshToken),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.refreshToken }),
   AUTH_CONTROLLER.refreshToken
 )
 
@@ -304,7 +304,7 @@ router.post('/refresh-token',
 router.post('/logout',
   authRateLimiter,
   sanitizeRequest(REFRESH_TOKEN_FIELDS, REFRESH_TOKEN_FIELDS),
-  validationHandlingMiddleware(AUTH_VALIDATION.logout),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.logout }),
   AUTH_CONTROLLER.logout
 )
 
@@ -359,7 +359,7 @@ router.post('/change-password',
   authRateLimiter,
   authorizationMiddleware,
   sanitizeRequest(CHANGE_PASSWORD_FIELDS, CHANGE_PASSWORD_FIELDS),
-  validationHandlingMiddleware(AUTH_VALIDATION.changePassword),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.changePassword }),
   AUTH_CONTROLLER.changePassword
 )
 
@@ -389,7 +389,7 @@ router.post('/change-password',
 router.post('/reset-password',
   authRateLimiter,
   sanitizeRequest(RESET_PASSWORD_FIELDS, RESET_PASSWORD_FIELDS),
-  validationHandlingMiddleware(AUTH_VALIDATION.resetPassword),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.resetPassword }),
   AUTH_CONTROLLER.resetPassword
 )
 
@@ -422,7 +422,7 @@ router.post('/reset-password',
 router.post('/set-password',
   authRateLimiter,
   authorizationMiddleware,
-  validationHandlingMiddleware(AUTH_VALIDATION.setPassword),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.setPassword }),
   AUTH_CONTROLLER.setPassword
 )
 
@@ -456,7 +456,7 @@ router.post('/set-password',
 router.post('/confirm-reset-password',
   authRateLimiter,
   sanitizeRequest(CONFIRM_RESET_PASSWORD_FIELDS, CONFIRM_RESET_PASSWORD_FIELDS),
-  validationHandlingMiddleware(AUTH_VALIDATION.confirmResetPassword),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.confirmResetPassword }),
   AUTH_CONTROLLER.confirmResetPassword
 )
 

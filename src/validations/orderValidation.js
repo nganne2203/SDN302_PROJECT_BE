@@ -1,6 +1,22 @@
 import joi from 'joi'
 
 export const ORDER_VALIDATION = {
+  orderIdParam: joi.object({
+    orderId: joi.string().hex().length(24).required().messages({
+      'string.empty': 'Order ID không được để trống',
+      'string.hex': 'Order ID không hợp lệ',
+      'string.length': 'Order ID không hợp lệ',
+      'any.required': 'Order ID là bắt buộc'
+    })
+  }),
+  orderParam: joi.object({
+    orderNumber: joi.string().hex().length(36).required().messages({
+      'string.empty': 'Order number không được để trống',
+      'string.hex': 'Order number không hợp lệ',
+      'string.length': 'Order number không hợp lệ',
+      'any.required': 'Order number là bắt buộc'
+    })
+  }),
   createOrder: joi.object({
     shippingAddress: joi.object({
       fullname: joi.string().trim().required().messages({
@@ -46,12 +62,6 @@ export const ORDER_VALIDATION = {
   }),
 
   updateOrderStatus: joi.object({
-    orderId: joi.string().hex().length(24).required().messages({
-      'string.empty': 'Order ID không được để trống',
-      'string.hex': 'Order ID không hợp lệ',
-      'string.length': 'Order ID không hợp lệ',
-      'any.required': 'Order ID là bắt buộc'
-    }),
     status: joi.string().valid('pending', 'confirmed', 'shipped', 'delivered', 'canceled').required().messages({
       'string.empty': 'Trạng thái đơn hàng không được để trống',
       'any.only': 'Trạng thái không hợp lệ',
@@ -60,12 +70,6 @@ export const ORDER_VALIDATION = {
   }),
 
   cancelOrder: joi.object({
-    orderId: joi.string().hex().length(24).required().messages({
-      'string.empty': 'Order ID không được để trống',
-      'string.hex': 'Order ID không hợp lệ',
-      'string.length': 'Order ID không hợp lệ',
-      'any.required': 'Order ID là bắt buộc'
-    }),
     cancelReason: joi.string().trim().min(10).max(500).required().messages({
       'string.empty': 'Lý do hủy không được để trống',
       'string.min': 'Lý do hủy phải có ít nhất 10 ký tự',
@@ -75,12 +79,6 @@ export const ORDER_VALIDATION = {
   }),
 
   updateDeliveryInfo: joi.object({
-    orderId: joi.string().hex().length(24).required().messages({
-      'string.empty': 'Order ID không được để trống',
-      'string.hex': 'Order ID không hợp lệ',
-      'string.length': 'Order ID không hợp lệ',
-      'any.required': 'Order ID là bắt buộc'
-    }),
     providerName: joi.string().trim().optional().allow(''),
     trackingCode: joi.string().trim().optional().allow(''),
     status: joi.string().valid('pending', 'shipping', 'delivered', 'cancelled', 'failed').optional(),

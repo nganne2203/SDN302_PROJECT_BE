@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { STORE_INVENTORY_CONTROLLER } from '#controllers/storeInventoryController.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 import { RoleEnum } from '#constants/roleConstant.js'
