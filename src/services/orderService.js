@@ -201,12 +201,16 @@ const createOrder = async (userId, orderData) => {
   // Get populated order
   const populatedOrder = await ORDER_REPOSITORY.getOrderById(order._id)
   
-  // Send confirmation email
-  await EMAIL_SERVICE.sendOrderConfirmation(
-    populatedOrder.user.email,
-    populatedOrder.user.fullname,
-    populatedOrder
-  )
+  // Send confirmation email (don't fail if email fails)
+  try {
+    await EMAIL_SERVICE.sendOrderConfirmation(
+      populatedOrder.user.email,
+      populatedOrder.user.fullname,
+      populatedOrder
+    )
+  } catch (emailError) {
+    console.error('Failed to send order confirmation email:', emailError.message)
+  }
   
   return populatedOrder
 }
@@ -310,12 +314,16 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
   
   const updatedOrder = await ORDER_REPOSITORY.updateOrderStatus(orderId, status, updatedBy)
   
-  // Send email notification
-  await EMAIL_SERVICE.sendOrderStatusUpdate(
-    updatedOrder.user.email,
-    updatedOrder.user.fullname,
-    updatedOrder
-  )
+  // Send email notification (don't fail if email fails)
+  try {
+    await EMAIL_SERVICE.sendOrderStatusUpdate(
+      updatedOrder.user.email,
+      updatedOrder.user.fullname,
+      updatedOrder
+    )
+  } catch (emailError) {
+    console.error('Failed to send order status update email:', emailError.message)
+  }
   
   return updatedOrder
 }
@@ -355,12 +363,16 @@ const cancelOrder = async (orderId, cancelReason, userId, userRole) => {
     await restoreInventoryForOrder(order)
   }
   
-  // Send cancellation email
-  await EMAIL_SERVICE.sendOrderCancellation(
-    canceledOrder.user.email,
-    canceledOrder.user.fullname,
-    canceledOrder
-  )
+  // Send cancellation email (don't fail if email fails)
+  try {
+    await EMAIL_SERVICE.sendOrderCancellation(
+      canceledOrder.user.email,
+      canceledOrder.user.fullname,
+      canceledOrder
+    )
+  } catch (emailError) {
+    console.error('Failed to send order cancellation email:', emailError.message)
+  }
   
   return canceledOrder
 }
