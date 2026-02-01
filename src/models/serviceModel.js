@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { SERVICE_TYPES } from '#constants/serviceConstant.js'
+import { SERVICE_TYPES } from '#constants/serviceType.js'
 import mongoosePaginate from 'mongoose-paginate-v2'
 
 const serviceSchema = new mongoose.Schema(

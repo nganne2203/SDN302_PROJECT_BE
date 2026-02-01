@@ -9,7 +9,9 @@ import { UPLOAD_ROUTE } from '#routes/uploadRoute.js'
 import INVENTORY_ROUTE from '#routes/inventoryRoute.js'
 import STORE_INVENTORY_ROUTE from '#routes/storeInventoryRoute.js'
 import STOCK_REQUEST_ROUTE from '#routes/stockRequestRoute.js'
+import { SERVICE_ROUTE } from '#routes/serviceRoute.js'
 import { CART_ROUTE } from '#routes/cartRoute.js'
+import { ORDER_ROUTE } from '#routes/orderRoute.js'
 
 const Router = express.Router()
 
@@ -27,5 +29,7 @@ Router.use('/api/uploads', UPLOAD_ROUTE)
 Router.use('/api/inventories', INVENTORY_ROUTE)
 Router.use('/api/store-inventories', STORE_INVENTORY_ROUTE)
 Router.use('/api/stock-requests', STOCK_REQUEST_ROUTE)
+Router.use('/api/services', SERVICE_ROUTE)
 Router.use('/api/carts', CART_ROUTE)
+Router.use('/api/orders', ORDER_ROUTE)
 export const ROUTES = Router
