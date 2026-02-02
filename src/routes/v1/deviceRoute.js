@@ -21,7 +21,7 @@ const router = express.Router()
  * tags:
  *   name: Devices
  *   description: Device management
- * /api/devices:
+ * /api/v1/devices:
  *   post:
  *     summary: Create a new device
  *     tags: [Devices]
@@ -85,7 +85,7 @@ const router = express.Router()
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Device'
- * /api/devices/{id}:
+ * /api/v1/devices/{id}:
  *   get:
  *     summary: Get device by ID
  *     tags: [Devices]
@@ -146,7 +146,7 @@ const router = express.Router()
  *         description: Device deleted
  *       '404':
  *         description: Device not found
- * /api/devices/{id}/status:
+ * /api/v1/devices/{id}/status:
  *   patch:
  *     summary: Update device status
  *     tags: [Devices]

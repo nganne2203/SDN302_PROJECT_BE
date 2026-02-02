@@ -16,7 +16,7 @@ router.use(authorizationMiddleware)
 
 /**
  * @swagger
- * /api/orders:
+ * /api/v1/orders:
  *   post:
  *     summary: Create new order from cart
  *     description: Customer creates order from their cart (COD payment only for now)
@@ -90,7 +90,7 @@ router.post(
 
 /**
  * @swagger
- * /api/orders/my-orders:
+ * /api/v1/orders/my-orders:
  *   get:
  *     summary: Get customer's orders
  *     description: Get all orders of the authenticated customer
@@ -141,7 +141,7 @@ router.get(
 
 /**
  * @swagger
- * /api/orders/statistics:
+ * /api/v1/orders/statistics:
  *   get:
  *     summary: Get order statistics
  *     description: Get order count by status (customer sees their own, admin/staff sees all)
@@ -162,7 +162,7 @@ router.get(
 
 /**
  * @swagger
- * /api/orders/all:
+ * /api/v1/orders/all:
  *   get:
  *     summary: Get all orders (Admin/Staff)
  *     description: Get all orders in the system with filters
@@ -215,7 +215,7 @@ router.get(
 
 /**
  * @swagger
- * /api/orders/order-number/{orderNumber}:
+ * /api/v1/orders/order-number/{orderNumber}:
  *   get:
  *     summary: Get order by order number
  *     description: Get order details by order number
@@ -248,7 +248,7 @@ router.get(
 
 /**
  * @swagger
- * /api/orders/{orderId}:
+ * /api/v1/orders/{orderId}:
  *   get:
  *     summary: Get order by ID
  *     description: Get order details by ID
@@ -281,7 +281,7 @@ router.get(
 
 /**
  * @swagger
- * /api/orders/{orderId}/status:
+ * /api/v1/orders/{orderId}/status:
  *   patch:
  *     summary: Update order status (Admin/Staff)
  *     description: Update the status of an order
@@ -333,7 +333,7 @@ router.patch(
 
 /**
  * @swagger
- * /api/orders/{orderId}/cancel:
+ * /api/v1/orders/{orderId}/cancel:
  *   patch:
  *     summary: Cancel order
  *     description: Cancel an order (customer can cancel their own orders, admin/staff can cancel any)
@@ -384,7 +384,7 @@ router.patch(
 
 /**
  * @swagger
- * /api/orders/{orderId}/delivery:
+ * /api/v1/orders/{orderId}/delivery:
  *   patch:
  *     summary: Update delivery information (Admin/Staff)
  *     description: Update delivery tracking and status information

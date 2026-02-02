@@ -15,7 +15,7 @@ router.use(authorizationMiddleware)
 
 /**
  * @swagger
- * /api/store-inventories:
+ * /api/v1/store-inventories:
  *   post:
  *     summary: Tạo tồn kho cho chi nhánh
  *     description: Tạo bản ghi tồn kho mới cho sản phẩm tại chi nhánh cụ thể
@@ -67,7 +67,7 @@ router.post('/',
 
 /**
  * @swagger
- * /api/store-inventories/{branchId}:
+ * /api/v1/store-inventories/{branchId}:
  *   get:
  *     summary: Lấy danh sách tồn kho tại chi nhánh
  *     description: Lấy danh sách tất cả sản phẩm có tồn kho tại chi nhánh cụ thể
@@ -127,7 +127,7 @@ router.get('/:branchId',
 
 /**
  * @swagger
- * /api/store-inventories/{branchId}/out-of-stock:
+ * /api/v1/store-inventories/{branchId}/out-of-stock:
  *   get:
  *     summary: Lấy danh sách sản phẩm hết hàng tại chi nhánh
  *     description: Lấy danh sách sản phẩm có số lượng tồn kho bằng 0 tại chi nhánh cụ thể
@@ -187,7 +187,7 @@ router.get('/:branchId/out-of-stock',
 
 /**
  * @swagger
- * /api/store-inventories/{branchId}/{productId}:
+ * /api/v1/store-inventories/{branchId}/{productId}:
  *   get:
  *     summary: Lấy tồn kho sản phẩm tại chi nhánh
  *     description: Lấy chi tiết tồn kho của một sản phẩm cụ thể tại chi nhánh
