@@ -11,7 +11,7 @@ const router = express.Router()
 
 /**
  * @swagger
- * /api/payments/banks:
+ * /api/v1/payments/banks:
  *   get:
  *     summary: Get supported VNPay banks
  *     description: Get list of banks supported by VNPay for online payment
@@ -49,7 +49,7 @@ router.get(
 
 /**
  * @swagger
- * /api/payments/vnpay-return:
+ * /api/v1/payments/vnpay-return:
  *   get:
  *     summary: VNPay return URL handler
  *     description: Handle VNPay payment return. This endpoint is called by VNPay after payment completion.
@@ -81,7 +81,7 @@ router.get(
 
 /**
  * @swagger
- * /api/payments/vnpay-ipn:
+ * /api/v1/payments/vnpay-ipn:
  *   get:
  *     summary: VNPay IPN handler
  *     description: Handle VNPay Instant Payment Notification. This endpoint is called by VNPay server.
@@ -100,7 +100,7 @@ router.use(authorizationMiddleware)
 
 /**
  * @swagger
- * /api/payments/vnpay/create:
+ * /api/v1/payments/vnpay/create:
  *   post:
  *     summary: Create VNPay payment
  *     description: Create a new VNPay payment for the cart items. Returns payment URL to redirect user.
@@ -198,7 +198,7 @@ router.post(
 
 /**
  * @swagger
- * /api/payments/my-payments:
+ * /api/v1/payments/my-payments:
  *   get:
  *     summary: Get user's payments
  *     description: Get all payments of the authenticated user
@@ -237,7 +237,7 @@ router.get(
 
 /**
  * @swagger
- * /api/payments/status/{orderNumber}:
+ * /api/v1/payments/status/{orderNumber}:
  *   get:
  *     summary: Query transaction status
  *     description: Query the payment transaction status from VNPay
@@ -268,7 +268,7 @@ router.get(
 
 /**
  * @swagger
- * /api/payments/check/{orderNumber}:
+ * /api/v1/payments/check/{orderNumber}:
  *   get:
  *     summary: Check payment result
  *     description: Check if payment has been completed (for frontend polling)
@@ -297,7 +297,7 @@ router.get(
 
 /**
  * @swagger
- * /api/payments/order/{orderId}:
+ * /api/v1/payments/order/{orderId}:
  *   get:
  *     summary: Get payment by order ID
  *     description: Get payment details for a specific order
@@ -329,7 +329,7 @@ router.get(
 
 /**
  * @swagger
- * /api/payments/{orderId}/cancel:
+ * /api/v1/payments/{orderId}/cancel:
  *   post:
  *     summary: Cancel pending payment
  *     description: Cancel a pending VNPay payment

@@ -11,10 +11,7 @@ import {
   REQUIRE_FIELD_REGISTER,
   VERIFY_OTP_FIELDS,
   RESEND_OTP_FIELDS,
-  REFRESH_TOKEN_FIELDS,
-  CHANGE_PASSWORD_FIELDS,
-  RESET_PASSWORD_FIELDS,
-  CONFIRM_RESET_PASSWORD_FIELDS
+  REFRESH_TOKEN_FIELDS
 } from '#constants/userConstant.js'
 import { verifyRecaptchaMiddleware } from '#middlewares/verifyCaptchaMiddleware.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
@@ -23,7 +20,7 @@ const router = express.Router()
 
 /**
  * @swagger
- * /api/auth/register:
+ * /api/v1/auth/register:
  *   post:
  *     summary: Register a new user
  *     description: Register a new account.
@@ -98,7 +95,7 @@ router.post('/register',
 
 /**
  * @swagger
- * /api/auth/login:
+ * /api/v1/auth/login:
  *   post:
  *     summary: Login with email and password
  *     tags: [Auth]
@@ -136,7 +133,7 @@ router.post('/login',
 
 /**
  * @swagger
- * /api/auth/google:
+ * /api/v1/auth/google:
  *   get:
  *     summary: Initiate Google OAuth login
  *     description: Redirects to Google OAuth consent screen
@@ -151,7 +148,7 @@ router.get('/google',
 
 /**
  * @swagger
- * /api/auth/google/callback:
+ * /api/v1/auth/google/callback:
  *   get:
  *     summary: Google OAuth callback
  *     description: Handles the callback from Google OAuth
@@ -176,7 +173,7 @@ router.get('/google/callback',
 
 /**
  * @swagger
- * /api/auth/verify-otp:
+ * /api/v1/auth/verify-otp:
  *   post:
  *     summary: Verify OTP
  *     description: Handles OTP verification
@@ -215,7 +212,7 @@ router.post('/verify-otp',
 
 /**
  * @swagger
- * /api/auth/resend-verification-code:
+ * /api/v1/auth/resend-verification-code:
  *   post:
  *     summary: Resend OTP
  *     description: Handles resending OTP codes
@@ -250,7 +247,7 @@ router.post('/resend-verification-code',
 
 /**
  * @swagger
- * /api/auth/refresh-token:
+ * /api/v1/auth/refresh-token:
  *   post:
  *     summary: Refresh token
  *     description: Handles refreshing of access tokens
@@ -280,7 +277,7 @@ router.post('/refresh-token',
 
 /**
  * @swagger
- * /api/auth/logout:
+ * /api/v1/auth/logout:
  *   post:
  *     summary: Logout
  *     description: Handles logout by invalidating the refresh token
@@ -310,7 +307,7 @@ router.post('/logout',
 
 /**
  * @swagger
- * /api/auth/logout-all:
+ * /api/v1/auth/logout-all:
  *   post:
  *     summary: Logout from all devices
  *     description: Handles logging out from all devices by invalidating all refresh tokens
@@ -324,158 +321,5 @@ router.post('/logout',
 router.post('/logout-all',
   authorizationMiddleware,
   AUTH_CONTROLLER.logoutAll
-)
-
-/**
- * @swagger
- * /api/auth/change-password:
- *   post:
- *     summary: Change password
- *     description: Handles changing of user password
- *     tags: [Auth]
- *     security:
- *      - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - currentPassword
- *               - newPassword
- *             properties:
- *               currentPassword:
- *                type: string
- *                example: string
- *               newPassword:
- *                type: string
- *                example: string
- *     responses:
- *       200:
- *         description: Change password successful
- */
-router.post('/change-password',
-  authRateLimiter,
-  authorizationMiddleware,
-  sanitizeRequest(CHANGE_PASSWORD_FIELDS, CHANGE_PASSWORD_FIELDS),
-  validationHandlingMiddleware({ body: AUTH_VALIDATION.changePassword }),
-  AUTH_CONTROLLER.changePassword
-)
-
-/**
- * @swagger
- * /api/auth/reset-password:
- *   post:
- *     summary: Reset password
- *     description: Handles resetting of user password
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *             properties:
- *               email:
- *                type: string
- *                example: string
- *     responses:
- *       200:
- *         description: Reset password successful
- */
-router.post('/reset-password',
-  authRateLimiter,
-  sanitizeRequest(RESET_PASSWORD_FIELDS, RESET_PASSWORD_FIELDS),
-  validationHandlingMiddleware({ body: AUTH_VALIDATION.resetPassword }),
-  AUTH_CONTROLLER.resetPassword
-)
-
-/**
- * @swagger
- * /api/auth/set-password:
- *   post:
- *     summary: Set password for OAuth users
- *     description: Allows OAuth users without a password to set one
- *     tags: [Auth]
- *     security:
- *       - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - password
- *             properties:
- *               password:
- *                 type: string
- *                 example: NewPassword@123
- *     responses:
- *       200:
- *         description: Set password successful
- */
-
-router.post('/set-password',
-  authRateLimiter,
-  authorizationMiddleware,
-  validationHandlingMiddleware({ body: AUTH_VALIDATION.setPassword }),
-  AUTH_CONTROLLER.setPassword
-)
-
-/**
- * @swagger
- * /api/auth/confirm-reset-password:
- *   post:
- *     summary: Confirm reset password
- *     description: Confirm and finalize the password reset process
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 example: user@example.com
- *               password:
- *                 type: string
- *                 example: NewPassword@123
- *     responses:
- *       200:
- *         description: Confirm reset password successful
- */
-router.post('/confirm-reset-password',
-  authRateLimiter,
-  sanitizeRequest(CONFIRM_RESET_PASSWORD_FIELDS, CONFIRM_RESET_PASSWORD_FIELDS),
-  validationHandlingMiddleware({ body: AUTH_VALIDATION.confirmResetPassword }),
-  AUTH_CONTROLLER.confirmResetPassword
-)
-
-/**
- * @swagger
- * /api/auth/profile:
- *   get:
- *     summary: Get current user profile
- *     description: Retrieves the profile of the currently authenticated user
- *     tags: [Auth]
- *     security:
- *       - BearerAuth: []
- *     responses:
- *       200:
- *         description: Get current user profile successful
- */
-router.get('/profile',
-  authRateLimiter,
-  authorizationMiddleware,
-  AUTH_CONTROLLER.getCurrentUser
 )
 export const AUTH_ROUTE = router

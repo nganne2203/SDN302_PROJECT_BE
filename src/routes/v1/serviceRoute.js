@@ -13,7 +13,7 @@ const router = express.Router()
 
 /**
  * @swagger
- * /api/services:
+ * /api/v1/services:
  *   post:
  *     summary: Create a new service
  *     description: Create a new service for a specific product. Only admins can create services.
@@ -75,7 +75,7 @@ router.post(
 
 /**
  * @swagger
- * /api/services:
+ * /api/v1/services:
  *   get:
  *     summary: Get all services
  *     description: Retrieve a list of services with pagination, filtering, and sorting. Only admins can view this list.
@@ -178,7 +178,7 @@ router.get(
 
 /**
  * @swagger
- * /api/services/{id}:
+ * /api/v1/services/{id}:
  *   get:
  *     summary: Get a service by ID
  *     description: Retrieve a service by its ID. Only admins can view this service.
@@ -277,7 +277,7 @@ router.get(
 
 /**
  * @swagger
- * /api/services/{id}:
+ * /api/v1/services/{id}:
  *   put:
  *     summary: Update a service
  *     description: Update service details. Only admins can update services.
@@ -350,7 +350,7 @@ router.put(
 
 /**
  * @swagger
- * /api/services/{id}/status:
+ * /api/v1/services/{id}/status:
  *   patch:
  *     summary: Update a service status
  *     description: Update service status. Only admins can update service status.
@@ -410,7 +410,7 @@ router.patch(
 
 /**
  * @swagger
- * /api/services/{id}:
+ * /api/v1/services/{id}:
  *   delete:
  *     summary: Delete a service
  *     description: Delete a service by ID. Only admins can delete services.
@@ -453,7 +453,7 @@ router.delete(
 
 /**
  * @swagger
- * /api/services/product/{productId}:
+ * /api/v1/services/product/{productId}:
  *   get:
  *     summary: Get services by product ID
  *     description: Retrieve all services for a specific product. Only admins can view this service.

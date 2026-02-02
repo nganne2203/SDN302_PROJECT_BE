@@ -23,7 +23,7 @@ const router = express.Router()
  *   - name: Branch
  *     description: Quản lý chi nhánh
  *
- * /api/branches:
+ * /api/v1/branches:
  *   post:
  *     summary: Tạo chi nhánh mới
  *     tags: [Branch]
@@ -66,7 +66,41 @@ const router = express.Router()
  *       200:
  *         description: Lấy danh sách chi nhánh thành công
  *
- * /api/branches/{id}:
+ * /api/v1/branches/managers:
+ *   get:
+ *     summary: Lấy danh sách quản lý chi nhánh
+ *     tags: [Branch]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Trang hiện tại
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Số lượng mỗi trang
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Tìm kiếm theo tên hoặc email
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *         description: Sắp xếp theo trường (name, email)
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *         description: Thứ tự sắp xếp (asc, desc)
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách quản lý chi nhánh thành công
+ *
+ * /api/v1/branches/{id}:
  *   get:
  *     summary: Lấy thông tin chi nhánh theo ID
  *     tags: [Branch]
@@ -101,8 +135,23 @@ const router = express.Router()
  *     responses:
  *       200:
  *         description: Cập nhật chi nhánh thành công
+ *   delete:
+ *     summary: Xóa chi nhánh
+ *     tags: [Branch]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID chi nhánh
+ *     responses:
+ *       200:
+ *         description: Xóa chi nhánh thành công
  *
- * /api/branches/{id}/manager:
+ * /api/v1/branches/{id}/manager:
  *   patch:
  *     summary: Gán quản lý cho chi nhánh
  *     tags: [Branch]
@@ -129,7 +178,7 @@ const router = express.Router()
  *       200:
  *         description: Gán quản lý chi nhánh thành công
  *
- * /api/branches/{id}/manager/remove:
+ * /api/v1/branches/{id}/manager/remove:
  *   patch:
  *     summary: Gỡ quản lý khỏi chi nhánh
  *     tags: [Branch]
@@ -146,7 +195,7 @@ const router = express.Router()
  *       200:
  *         description: Gỡ quản lý chi nhánh thành công
  *
- * /api/branches/{id}/status:
+ * /api/v1/branches/{id}/status:
  *   patch:
  *     summary: Cập nhật trạng thái hoạt động của chi nhánh
  *     tags: [Branch]
@@ -221,6 +270,14 @@ router.get(
 )
 
 router.get(
+  '/managers',
+  apiRateLimiter,
+  requireRoles(RoleEnum.ADMIN),
+  validationHandlingMiddleware({ query: BRANCH_VALIDATION.getAllManagerForBranch }),
+  BRANCH_CONTROLLER.getAllManagerForBranch
+)
+
+router.get(
   '/:id',
   apiRateLimiter,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
@@ -252,6 +309,17 @@ router.patch(
     body: BRANCH_VALIDATION.assignManager
   }),
   BRANCH_CONTROLLER.assignManager
+)
+
+router.delete(
+  '/:id',
+  apiRateLimiter,
+  authorizationMiddleware,
+  requireRoles(RoleEnum.ADMIN),
+  validationHandlingMiddleware({
+    params: BRANCH_VALIDATION.idParam
+  }),
+  BRANCH_CONTROLLER.deleteBranch
 )
 
 router.patch(

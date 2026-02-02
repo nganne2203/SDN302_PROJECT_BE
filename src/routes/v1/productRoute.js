@@ -18,7 +18,7 @@ const router = express.Router()
 
 /**
  * @swagger
- * /api/products:
+ * /api/v1/products:
  *   get:
  *     summary: Get all products
  *     description: Retrieve a list of products with optional filtering, pagination, and sorting.
@@ -107,7 +107,7 @@ router.get(
 
 /**
  * @swagger
- * /api/products/with-stock:
+ * /api/v1/products/with-stock:
  *   get:
  *     summary: Get products with stock information
  *     description: Retrieve products with stock availability and pricing rules for ordering.
@@ -152,7 +152,7 @@ router.get(
 
 /**
  * @swagger
- * /api/products/featured:
+ * /api/v1/products/featured:
  *   get:
  *     summary: Get featured products
  *     description: Retrieve top-rated and popular products.
@@ -175,7 +175,7 @@ router.get(
 
 /**
  * @swagger
- * /api/products/new-arrivals:
+ * /api/v1/products/new-arrivals:
  *   get:
  *     summary: Get new arrival products
  *     description: Retrieve latest products.
@@ -198,7 +198,7 @@ router.get(
 
 /**
  * @swagger
- * /api/products/search:
+ * /api/v1/products/search:
  *   get:
  *     summary: Search products
  *     description: Search products by keyword with pagination and sorting.
@@ -251,7 +251,7 @@ router.get(
 
 /**
  * @swagger
- * /api/products/by-device/{deviceId}:
+ * /api/v1/products/by-device/{deviceId}:
  *   get:
  *     summary: Get products by device compatibility
  *     description: Retrieve products compatible with a specific device.
@@ -288,7 +288,7 @@ router.get(
 
 /**
  * @swagger
- * /api/products/slug/{slug}:
+ * /api/v1/products/slug/{slug}:
  *   get:
  *     summary: Get product by slug
  *     description: Retrieve a product using SEO-friendly slug.
@@ -315,7 +315,7 @@ router.get(
 
 /**
  * @swagger
- * /api/products/categories:
+ * /api/v1/products/categories:
  *   get:
  *     summary: Get product categories
  *     description: Retrieve all available product categories.
@@ -338,7 +338,7 @@ router.get(
 
 /**
  * @swagger
- * /api/products/{id}:
+ * /api/v1/products/{id}:
  *   get:
  *     summary: Get product by ID
  *     description: Retrieve a specific product by its ID.
@@ -407,7 +407,7 @@ router.get(
 
 /**
  * @swagger
- * /api/products/{id}/for-order:
+ * /api/v1/products/{id}/for-order:
  *   get:
  *     summary: Get product detail for ordering
  *     description: Retrieve product with full stock info and pricing rules for order flow.
@@ -436,7 +436,7 @@ router.get(
 
 /**
  * @swagger
- * /api/products/{id}/related:
+ * /api/v1/products/{id}/related:
  *   get:
  *     summary: Get related products
  *     description: Retrieve products in the same category.
@@ -468,14 +468,14 @@ router.get(
 
 /**
  * @swagger
- * /api/products:
+ * /api/v1/products:
  *   post:
  *     summary: Create a new product
  *     description: |
  *       Create a new product (Admin only).
  *
  *       **Image Upload Flow:**
- *       1. First, upload images using POST /api/uploads/multiple-images
+ *       1. First, upload images using POST /api/v1/uploads/multiple-images
  *       2. Get publicIds from the upload response
  *       3. Use those publicIds in the images array when creating product
  *     tags: [Product]
@@ -544,14 +544,14 @@ router.post(
 
 /**
  * @swagger
- * /api/products/{id}:
+ * /api/v1/products/{id}:
  *   put:
  *     summary: Update a product
  *     description: |
  *       Update an existing product by ID (Admin only).
  *
  *       **Image Update Flow:**
- *       - To add new images: Upload via POST /api/uploads/multiple-images first, then include all publicIds (old + new)
+ *       - To add new images: Upload via POST /api/v1/uploads/multiple-images first, then include all publicIds (old + new)
  *       - To remove images: Simply exclude their publicIds from the images array (they will be auto-deleted from Cloudinary)
  *       - To keep existing images: Include their publicIds in the array
  *     tags: [Product]
@@ -628,7 +628,7 @@ router.put(
 
 /**
  * @swagger
- * /api/products/{id}/status:
+ * /api/v1/products/{id}/status:
  *   patch:
  *     summary: Update product status
  *     description: Update the active status of a product (Admin only).
@@ -681,7 +681,7 @@ router.patch(
 
 /**
  * @swagger
- * /api/products/{id}:
+ * /api/v1/products/{id}:
  *   delete:
  *     summary: Delete a product
  *     description: |

@@ -7,6 +7,7 @@ const branchSchema = new mongoose.Schema(
     address: { type: String, required: true, trim: true },
     manager: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
     isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users' }
   },

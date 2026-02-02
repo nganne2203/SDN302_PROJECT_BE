@@ -6,8 +6,8 @@ const VNPAY_CONFIG = {
   vnp_TmnCode: env.VNPAY_TMN_CODE || 'DEMO',
   vnp_HashSecret: env.VNPAY_HASH_SECRET || 'DEMOSECRET',
   vnp_Url: env.VNPAY_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html',
-  vnp_ReturnUrl: env.VNPAY_RETURN_URL || 'http://localhost:8080/api/payments/vnpay-return',
-  vnp_ApiUrl: env.VNPAY_API_URL || 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction'
+  vnp_ReturnUrl: env.VNPAY_RETURN_URL || 'http://localhost:8080/api/v1/payments/vnpay-return',
+  vnp_ApiUrl: env.VNPAY_API_URL || 'https://sandbox.vnpayment.vn/merchant_webapi/api/v1/transaction'
 }
 
 const sortObject = (obj) => {

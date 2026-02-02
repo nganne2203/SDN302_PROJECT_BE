@@ -23,8 +23,8 @@ import {
 
 const app = express()
 app.use(express.json())
-app.use('/api/orders', ORDER_ROUTE)
-app.use('/api/carts', CART_ROUTE)
+app.use('/api/v1/orders', ORDER_ROUTE)
+app.use('/api/v1/carts', CART_ROUTE)
 
 describe('Order API Integration Tests', () => {
   let testUser
@@ -49,11 +49,11 @@ describe('Order API Integration Tests', () => {
     await createStoreInventory(testBranch._id, testProduct._id, 50)
   })
 
-  describe('POST /api/orders - Create Order', () => {
+  describe('POST /api/v1/orders - Create Order', () => {
     beforeEach(async () => {
       // Add product to cart first
       await request(app)
-        .post('/api/carts')
+        .post('/api/v1/carts')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct._id.toString(),
@@ -64,7 +64,7 @@ describe('Order API Integration Tests', () => {
 
     it('should create order successfully', async () => {
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/v1/orders')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           shippingAddress: {
@@ -88,7 +88,7 @@ describe('Order API Integration Tests', () => {
 
     it('should fail without authentication', async () => {
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/v1/orders')
         .send({
           shippingAddress: {
             fullname: 'Test User',
@@ -106,7 +106,7 @@ describe('Order API Integration Tests', () => {
 
     it('should fail with invalid shipping address', async () => {
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/v1/orders')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           shippingAddress: {
@@ -125,7 +125,7 @@ describe('Order API Integration Tests', () => {
 
     it('should fail with invalid payment method', async () => {
       const response = await request(app)
-        .post('/api/orders')
+        .post('/api/v1/orders')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           shippingAddress: {
@@ -144,13 +144,13 @@ describe('Order API Integration Tests', () => {
     })
   })
 
-  describe('GET /api/orders/my-orders - Get My Orders', () => {
+  describe('GET /api/v1/orders/my-orders - Get My Orders', () => {
     let orderId
 
     beforeEach(async () => {
       // Add to cart and create order
       await request(app)
-        .post('/api/carts')
+        .post('/api/v1/carts')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct._id.toString(),
@@ -159,7 +159,7 @@ describe('Order API Integration Tests', () => {
         })
 
       const orderResponse = await request(app)
-        .post('/api/orders')
+        .post('/api/v1/orders')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           shippingAddress: {
@@ -178,7 +178,7 @@ describe('Order API Integration Tests', () => {
 
     it('should get my orders successfully', async () => {
       const response = await request(app)
-        .get('/api/orders/my-orders')
+        .get('/api/v1/orders/my-orders')
         .set('Authorization', `Bearer ${userToken}`)
 
       expect(response.status).toBe(200)
@@ -190,7 +190,7 @@ describe('Order API Integration Tests', () => {
 
     it('should filter orders by status', async () => {
       const response = await request(app)
-        .get('/api/orders/my-orders?status=confirmed')
+        .get('/api/v1/orders/my-orders?status=confirmed')
         .set('Authorization', `Bearer ${userToken}`)
 
       expect(response.status).toBe(200)
@@ -199,7 +199,7 @@ describe('Order API Integration Tests', () => {
 
     it('should paginate orders correctly', async () => {
       const response = await request(app)
-        .get('/api/orders/my-orders?page=1&limit=5')
+        .get('/api/v1/orders/my-orders?page=1&limit=5')
         .set('Authorization', `Bearer ${userToken}`)
 
       expect(response.status).toBe(200)
@@ -208,12 +208,12 @@ describe('Order API Integration Tests', () => {
     })
   })
 
-  describe('GET /api/orders/:orderId - Get Order By ID', () => {
+  describe('GET /api/v1/orders/:orderId - Get Order By ID', () => {
     let orderId
 
     beforeEach(async () => {
       await request(app)
-        .post('/api/carts')
+        .post('/api/v1/carts')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct._id.toString(),
@@ -222,7 +222,7 @@ describe('Order API Integration Tests', () => {
         })
 
       const orderResponse = await request(app)
-        .post('/api/orders')
+        .post('/api/v1/orders')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           shippingAddress: {
@@ -241,7 +241,7 @@ describe('Order API Integration Tests', () => {
 
     it('should get order by id successfully', async () => {
       const response = await request(app)
-        .get(`/api/orders/${orderId}`)
+        .get(`/api/v1/orders/${orderId}`)
         .set('Authorization', `Bearer ${userToken}`)
 
       expect(response.status).toBe(200)
@@ -251,7 +251,7 @@ describe('Order API Integration Tests', () => {
 
     it('should fail with invalid order id', async () => {
       const response = await request(app)
-        .get('/api/orders/invalid-id')
+        .get('/api/v1/orders/invalid-id')
         .set('Authorization', `Bearer ${userToken}`)
 
       expect(response.status).toBe(500)
@@ -262,17 +262,17 @@ describe('Order API Integration Tests', () => {
       const anotherToken = generateToken(anotherUser._id, 'customer')
 
       const response = await request(app)
-        .get(`/api/orders/${orderId}`)
+        .get(`/api/v1/orders/${orderId}`)
         .set('Authorization', `Bearer ${anotherToken}`)
 
       expect(response.status).toBe(403)
     })
   })
 
-  describe('GET /api/orders/statistics - Get Statistics', () => {
+  describe('GET /api/v1/orders/statistics - Get Statistics', () => {
     beforeEach(async () => {
       await request(app)
-        .post('/api/carts')
+        .post('/api/v1/carts')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct._id.toString(),
@@ -281,7 +281,7 @@ describe('Order API Integration Tests', () => {
         })
 
       await request(app)
-        .post('/api/orders')
+        .post('/api/v1/orders')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           shippingAddress: {
@@ -298,7 +298,7 @@ describe('Order API Integration Tests', () => {
 
     it('should get order statistics successfully', async () => {
       const response = await request(app)
-        .get('/api/orders/statistics')
+        .get('/api/v1/orders/statistics')
         .set('Authorization', `Bearer ${userToken}`)
 
       expect(response.status).toBe(200)
@@ -312,12 +312,12 @@ describe('Order API Integration Tests', () => {
     })
   })
 
-  describe('PATCH /api/orders/:orderId/cancel - Cancel Order', () => {
+  describe('PATCH /api/v1/orders/:orderId/cancel - Cancel Order', () => {
     let orderId
 
     beforeEach(async () => {
       await request(app)
-        .post('/api/carts')
+        .post('/api/v1/carts')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct._id.toString(),
@@ -326,7 +326,7 @@ describe('Order API Integration Tests', () => {
         })
 
       const orderResponse = await request(app)
-        .post('/api/orders')
+        .post('/api/v1/orders')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           shippingAddress: {
@@ -345,7 +345,7 @@ describe('Order API Integration Tests', () => {
 
     it('should cancel order successfully', async () => {
       const response = await request(app)
-        .patch(`/api/orders/${orderId}/cancel`)
+        .patch(`/api/v1/orders/${orderId}/cancel`)
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           cancelReason: 'Changed my mind about this purchase'
@@ -359,7 +359,7 @@ describe('Order API Integration Tests', () => {
 
     it('should fail with short cancel reason', async () => {
       const response = await request(app)
-        .patch(`/api/orders/${orderId}/cancel`)
+        .patch(`/api/v1/orders/${orderId}/cancel`)
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           cancelReason: 'Short'
@@ -370,7 +370,7 @@ describe('Order API Integration Tests', () => {
 
     it('should fail without cancel reason', async () => {
       const response = await request(app)
-        .patch(`/api/orders/${orderId}/cancel`)
+        .patch(`/api/v1/orders/${orderId}/cancel`)
         .set('Authorization', `Bearer ${userToken}`)
         .send({})
 
@@ -378,12 +378,12 @@ describe('Order API Integration Tests', () => {
     })
   })
 
-  describe('PATCH /api/orders/:orderId/status - Update Order Status (Admin)', () => {
+  describe('PATCH /api/v1/orders/:orderId/status - Update Order Status (Admin)', () => {
     let orderId
 
     beforeEach(async () => {
       await request(app)
-        .post('/api/carts')
+        .post('/api/v1/carts')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct._id.toString(),
@@ -392,7 +392,7 @@ describe('Order API Integration Tests', () => {
         })
 
       const orderResponse = await request(app)
-        .post('/api/orders')
+        .post('/api/v1/orders')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           shippingAddress: {
@@ -411,7 +411,7 @@ describe('Order API Integration Tests', () => {
 
     it('should update order status as admin', async () => {
       const response = await request(app)
-        .patch(`/api/orders/${orderId}/status`)
+        .patch(`/api/v1/orders/${orderId}/status`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           orderId: orderId,
@@ -425,7 +425,7 @@ describe('Order API Integration Tests', () => {
 
     it('should fail as customer', async () => {
       const response = await request(app)
-        .patch(`/api/orders/${orderId}/status`)
+        .patch(`/api/v1/orders/${orderId}/status`)
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           orderId: orderId,
@@ -437,7 +437,7 @@ describe('Order API Integration Tests', () => {
 
     it('should fail with invalid status', async () => {
       const response = await request(app)
-        .patch(`/api/orders/${orderId}/status`)
+        .patch(`/api/v1/orders/${orderId}/status`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           orderId: orderId,
@@ -448,12 +448,12 @@ describe('Order API Integration Tests', () => {
     })
   })
 
-  describe('PATCH /api/orders/:orderId/delivery - Update Delivery Info (Admin)', () => {
+  describe('PATCH /api/v1/orders/:orderId/delivery - Update Delivery Info (Admin)', () => {
     let orderId
 
     beforeEach(async () => {
       await request(app)
-        .post('/api/carts')
+        .post('/api/v1/carts')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct._id.toString(),
@@ -462,7 +462,7 @@ describe('Order API Integration Tests', () => {
         })
 
       const orderResponse = await request(app)
-        .post('/api/orders')
+        .post('/api/v1/orders')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           shippingAddress: {
@@ -481,7 +481,7 @@ describe('Order API Integration Tests', () => {
 
     it('should update delivery info as admin', async () => {
       const response = await request(app)
-        .patch(`/api/orders/${orderId}/delivery`)
+        .patch(`/api/v1/orders/${orderId}/delivery`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           orderId: orderId,
@@ -498,7 +498,7 @@ describe('Order API Integration Tests', () => {
 
     it('should fail as customer', async () => {
       const response = await request(app)
-        .patch(`/api/orders/${orderId}/delivery`)
+        .patch(`/api/v1/orders/${orderId}/delivery`)
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           orderId: orderId,
@@ -510,10 +510,10 @@ describe('Order API Integration Tests', () => {
     })
   })
 
-  describe('GET /api/orders/all - Get All Orders (Admin)', () => {
+  describe('GET /api/v1/orders/all - Get All Orders (Admin)', () => {
     beforeEach(async () => {
       await request(app)
-        .post('/api/carts')
+        .post('/api/v1/carts')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           productId: testProduct._id.toString(),
@@ -522,7 +522,7 @@ describe('Order API Integration Tests', () => {
         })
 
       await request(app)
-        .post('/api/orders')
+        .post('/api/v1/orders')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           shippingAddress: {
@@ -539,7 +539,7 @@ describe('Order API Integration Tests', () => {
 
     it('should get all orders as admin', async () => {
       const response = await request(app)
-        .get('/api/orders/all')
+        .get('/api/v1/orders/all')
         .set('Authorization', `Bearer ${adminToken}`)
 
       expect(response.status).toBe(200)
@@ -550,7 +550,7 @@ describe('Order API Integration Tests', () => {
 
     it('should fail as customer', async () => {
       const response = await request(app)
-        .get('/api/orders/all')
+        .get('/api/v1/orders/all')
         .set('Authorization', `Bearer ${userToken}`)
 
       expect(response.status).toBe(403)

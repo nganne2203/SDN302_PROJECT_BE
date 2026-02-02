@@ -210,7 +210,7 @@ Router.use(authorizationMiddleware)
 
 /**
  * @swagger
- * /api/statistics/dashboard:
+ * /api/v1/statistics/dashboard:
  *   get:
  *     summary: Lấy tổng quan dashboard
  *     tags: [Statistics]
@@ -262,7 +262,7 @@ Router.get(
 
 /**
  * @swagger
- * /api/statistics/revenue:
+ * /api/v1/statistics/revenue:
  *   get:
  *     summary: Thống kê doanh thu
  *     tags: [Statistics]
@@ -314,7 +314,7 @@ Router.get(
 
 /**
  * @swagger
- * /api/statistics/orders:
+ * /api/v1/statistics/orders:
  *   get:
  *     summary: Thống kê đơn hàng
  *     tags: [Statistics]
@@ -358,7 +358,7 @@ Router.get(
 
 /**
  * @swagger
- * /api/statistics/products:
+ * /api/v1/statistics/products:
  *   get:
  *     summary: Thống kê sản phẩm
  *     tags: [Statistics]
@@ -410,7 +410,7 @@ Router.get(
 
 /**
  * @swagger
- * /api/statistics/branches:
+ * /api/v1/statistics/branches:
  *   get:
  *     summary: Thống kê theo chi nhánh (chỉ Admin)
  *     tags: [Statistics]
@@ -450,7 +450,7 @@ Router.get(
 
 /**
  * @swagger
- * /api/statistics/customers:
+ * /api/v1/statistics/customers:
  *   get:
  *     summary: Thống kê khách hàng
  *     tags: [Statistics]
@@ -498,7 +498,7 @@ Router.get(
 
 /**
  * @swagger
- * /api/statistics/payments:
+ * /api/v1/statistics/payments:
  *   get:
  *     summary: Thống kê thanh toán
  *     tags: [Statistics]
@@ -542,7 +542,7 @@ Router.get(
 
 /**
  * @swagger
- * /api/statistics/inventory:
+ * /api/v1/statistics/inventory:
  *   get:
  *     summary: Thống kê tồn kho
  *     tags: [Statistics]
@@ -571,7 +571,7 @@ Router.get(
 
 /**
  * @swagger
- * /api/statistics/comparison:
+ * /api/v1/statistics/comparison:
  *   get:
  *     summary: So sánh thống kê giữa các khoảng thời gian
  *     tags: [Statistics]

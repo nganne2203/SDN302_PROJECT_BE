@@ -78,6 +78,27 @@ const removeManager = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const deleteBranch = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const result = await BRANCH_SERVICE.deleteBranch(req.params.id, userId)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Xóa chi nhánh thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const getAllManagerForBranch = async (req, res, next) => {
+  try {
+    const result = await BRANCH_SERVICE.getAllManagerForBranch(req.validated.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy danh sách quản lý chi nhánh thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 export const BRANCH_CONTROLLER = {
   getBranchById,
   getAllBranches,
@@ -85,5 +106,7 @@ export const BRANCH_CONTROLLER = {
   updateBranch,
   assignManager,
   updateBranchStatus,
-  removeManager
+  removeManager,
+  deleteBranch,
+  getAllManagerForBranch
 }
