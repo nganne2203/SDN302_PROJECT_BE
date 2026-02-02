@@ -14,6 +14,7 @@ import { CART_ROUTE } from '#routes/cartRoute.js'
 import { ORDER_ROUTE } from '#routes/orderRoute.js'
 import { PAYMENT_ROUTE } from '#routes/paymentRoute.js'
 import { STATISTICS_ROUTE } from '#routes/statisticsRoute.js'
+import { pricingRoute } from '#routes/pricingRoute.js'
 
 const Router = express.Router()
 
@@ -36,4 +37,5 @@ Router.use('/api/carts', CART_ROUTE)
 Router.use('/api/orders', ORDER_ROUTE)
 Router.use('/api/payments', PAYMENT_ROUTE)
 Router.use('/api/statistics', STATISTICS_ROUTE)
+Router.use('/api/pricings', pricingRoute)
 export const ROUTES = Router

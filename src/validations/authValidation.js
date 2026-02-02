@@ -71,10 +71,10 @@ export const AUTH_VALIDATION = {
       'string.empty': 'Mật khẩu không được để trống',
       'any.required': 'Mật khẩu là bắt buộc'
     }).trim(),
-    captchaToken: joi.string().required().messages({
-      'string.empty': 'Captcha token không được để trống',
-      'any.required': 'Captcha token là bắt buộc'
-    }).trim()
+    // captchaToken: joi.string().required().messages({
+    //   'string.empty': 'Captcha token không được để trống',
+    //   'any.required': 'Captcha token là bắt buộc'
+    // }).trim()
   }),
   verifyOtp: joi.object({
     email: joi.string().email().required().pattern(EMAIL_REGEX).messages({

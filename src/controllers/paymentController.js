@@ -1,7 +1,6 @@
 import { PAYMENT_SERVICE } from '#services/paymentService.js'
 import { responseSuccess } from '#utils/responseUtil.js'
 import { StatusCodes } from 'http-status-codes'
-import { env } from '#configs/environment.js'
 
 /**
  * Get client IP address
@@ -44,17 +43,13 @@ const vnpayReturn = async (req, res) => {
   try {
     const result = await PAYMENT_SERVICE.processVNPayReturn(req.validated.query)
 
-    // Redirect to frontend with result
-    const clientUrl = env.CLIENT_URLS[0] || 'http://localhost:5173'
-    const redirectUrl = result.success
-      ? `${clientUrl}/payment/success?orderNumber=${result.orderNumber}`
-      : `${clientUrl}/payment/failed?orderNumber=${result.orderNumber}&message=${encodeURIComponent(result.message)}`
-
+    // Build redirect URL from service (similar to Google Auth pattern)
+    const redirectUrl = PAYMENT_SERVICE.buildVNPayReturnRedirectUrl(result)
     res.redirect(redirectUrl)
   } catch (error) {
-    // Redirect to error page on failure
-    const clientUrl = env.CLIENT_URLS[0] || 'http://localhost:5173'
-    res.redirect(`${clientUrl}/payment/error?message=${encodeURIComponent(error.message)}`)
+    // Build error redirect URL from service
+    const errorUrl = PAYMENT_SERVICE.buildVNPayErrorRedirectUrl(error)
+    res.redirect(errorUrl)
   }
 }
 

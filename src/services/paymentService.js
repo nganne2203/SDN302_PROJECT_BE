@@ -1,5 +1,6 @@
-import { paymentModel } from '#models/paymentModel.js'
 import { ORDER_REPOSITORY } from '#repositories/orderRepository.js'
+import { PAYMENT_REPOSITORY } from '#repositories/paymentRepository.js'
+import { PRICING_REPOSITORY } from '#repositories/pricingRepository.js'
 import { VNPAY_SERVICE } from '#services/vnpayService.js'
 import { CART_SERVICE } from '#services/cartService.js'
 import { STORE_INVENTORY_SERVICE } from '#services/storeInventoryService.js'
@@ -8,7 +9,7 @@ import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { PAYMENT_STATUS, PAYMENT_METHODS, PAYMENT_PROVIDERS } from '#constants/paymentConstant.js'
 import { ORDER_STATUS, DELIVERY_STATUS } from '#constants/orderConstant.js'
-import { pricingModel } from '#models/pricingModel.js'
+import { env } from '#configs/environment.js'
 import crypto from 'crypto'
 
 const generateTransactionId = () => {
@@ -29,17 +30,7 @@ const calculatePricingDiscounts = async (items) => {
   for (const item of items) {
     const productId = item.product._id || item.product
 
-    const pricingRules = await pricingModel
-      .find({
-        product: productId,
-        isActive: true,
-        $or: [
-          { minQuantity: { $lte: item.quantity }, maxQuantity: { $gte: item.quantity } },
-          { minQuantity: { $lte: item.quantity }, maxQuantity: null }
-        ]
-      })
-      .sort({ minQuantity: -1 })
-      .limit(1)
+    const pricingRules = await PRICING_REPOSITORY.getPricingRulesForProduct(productId, item.quantity)
 
     if (pricingRules.length > 0) {
       const rule = pricingRules[0]
@@ -150,7 +141,7 @@ const createVNPayPayment = async (userId, paymentData, ipAddress) => {
 
   const transactionId = generateTransactionId()
 
-  const payment = await paymentModel.create({
+  const payment = await PAYMENT_REPOSITORY.createPayment({
     order: order._id,
     user: userId,
     method: PAYMENT_METHODS.VNPAY,
@@ -172,7 +163,7 @@ const createVNPayPayment = async (userId, paymentData, ipAddress) => {
   })
 
   payment.paymentUrl = paymentUrl
-  await payment.save()
+  await PAYMENT_REPOSITORY.savePayment(payment)
 
   return {
     paymentUrl,
@@ -193,7 +184,7 @@ const processVNPayReturn = async (vnpParams) => {
   const { vnp_TxnRef, vnp_ResponseCode, vnp_TransactionNo, vnp_BankCode } = verifyResult
 
   // Find payment by order number
-  const payment = await paymentModel.findOne({ vnp_TxnRef: vnp_TxnRef })
+  const payment = await PAYMENT_REPOSITORY.findByTxnRef(vnp_TxnRef)
 
   if (!payment) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy thông tin thanh toán'])
@@ -225,7 +216,7 @@ const processVNPayReturn = async (vnpParams) => {
   if (isSuccess) {
     payment.status = PAYMENT_STATUS.SUCCESS
     payment.paidAt = new Date()
-    await payment.save()
+    await PAYMENT_REPOSITORY.savePayment(payment)
 
     await ORDER_REPOSITORY.updateOrderStatus(order._id, ORDER_STATUS.CONFIRMED, order.user)
 
@@ -255,7 +246,7 @@ const processVNPayReturn = async (vnpParams) => {
   } else {
     payment.status = PAYMENT_STATUS.FAILED
     payment.failureReason = responseMessage
-    await payment.save()
+    await PAYMENT_REPOSITORY.savePayment(payment)
 
     await ORDER_REPOSITORY.cancelOrder(order._id, `Thanh toán thất bại: ${responseMessage}`, order.user)
 
@@ -277,7 +268,7 @@ const processVNPayIPN = async (vnpParams) => {
 
   const { vnp_TxnRef, vnp_ResponseCode, vnp_TransactionNo, vnp_BankCode, vnp_Amount } = verifyResult
 
-  const payment = await paymentModel.findOne({ vnp_TxnRef: vnp_TxnRef })
+  const payment = await PAYMENT_REPOSITORY.findByTxnRef(vnp_TxnRef)
 
   if (!payment) {
     return { RspCode: '01', Message: 'Order not found' }
@@ -308,7 +299,7 @@ const processVNPayIPN = async (vnpParams) => {
   if (isSuccess) {
     payment.status = PAYMENT_STATUS.SUCCESS
     payment.paidAt = new Date()
-    await payment.save()
+    await PAYMENT_REPOSITORY.savePayment(payment)
 
     await ORDER_REPOSITORY.updateOrderStatus(order._id, ORDER_STATUS.CONFIRMED, order.user)
 
@@ -320,7 +311,7 @@ const processVNPayIPN = async (vnpParams) => {
   } else {
     payment.status = PAYMENT_STATUS.FAILED
     payment.failureReason = responseMessage
-    await payment.save()
+    await PAYMENT_REPOSITORY.savePayment(payment)
 
     await ORDER_REPOSITORY.cancelOrder(order._id, `Thanh toán thất bại: ${responseMessage}`, order.user)
 
@@ -334,10 +325,7 @@ const processVNPayIPN = async (vnpParams) => {
  * @returns {Object} Payment record
  */
 const getPaymentByOrderId = async (orderId) => {
-  const payment = await paymentModel.findOne({ order: orderId })
-    .populate('order', 'orderNumber totalAmount orderStatus')
-    .populate('user', 'fullname email')
-
+  const payment = await PAYMENT_REPOSITORY.findByOrderId(orderId)
   return payment
 }
 
@@ -347,10 +335,7 @@ const getPaymentByOrderId = async (orderId) => {
  * @returns {Object} Payment record
  */
 const getPaymentByTransactionId = async (transactionId) => {
-  const payment = await paymentModel.findOne({ transactionId })
-    .populate('order', 'orderNumber totalAmount orderStatus')
-    .populate('user', 'fullname email')
-
+  const payment = await PAYMENT_REPOSITORY.findByTransactionId(transactionId)
   return payment
 }
 
@@ -363,26 +348,15 @@ const getPaymentByTransactionId = async (transactionId) => {
 const getUserPayments = async (userId, query = {}) => {
   const { page = 1, limit = 10, status } = query
 
-  const filter = { user: userId }
-  if (status) {
-    filter.status = status
-  }
-
-  const payments = await paymentModel.find(filter)
-    .populate('order', 'orderNumber totalAmount orderStatus')
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit)
-
-  const total = await paymentModel.countDocuments(filter)
+  const result = await PAYMENT_REPOSITORY.findByUserWithPagination(userId, { page, limit, status })
 
   return {
-    data: payments,
+    data: result.payments,
     pagination: {
       page,
       limit,
-      total,
-      totalPages: Math.ceil(total / limit)
+      total: result.total,
+      totalPages: Math.ceil(result.total / limit)
     }
   }
 }
@@ -402,7 +376,7 @@ const getSupportedBanks = () => {
  * @returns {Object} Transaction status
  */
 const queryTransactionStatus = async (orderNumber, ipAddress) => {
-  const payment = await paymentModel.findOne({ vnp_TxnRef: orderNumber })
+  const payment = await PAYMENT_REPOSITORY.findByTxnRef(orderNumber)
 
   if (!payment) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy thông tin thanh toán'])
@@ -426,7 +400,7 @@ const queryTransactionStatus = async (orderNumber, ipAddress) => {
  * @returns {Object} Cancelled payment
  */
 const cancelPayment = async (orderId, userId) => {
-  const payment = await paymentModel.findOne({ order: orderId, user: userId })
+  const payment = await PAYMENT_REPOSITORY.findByOrderAndUser(orderId, userId)
 
   if (!payment) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy thông tin thanh toán'])
@@ -437,12 +411,42 @@ const cancelPayment = async (orderId, userId) => {
   }
 
   payment.status = PAYMENT_STATUS.CANCELED
-  await payment.save()
+  await PAYMENT_REPOSITORY.savePayment(payment)
 
   // Cancel the order
   await ORDER_REPOSITORY.cancelOrder(orderId, 'Khách hàng hủy thanh toán', userId)
 
   return payment
+}
+
+/**
+ * Build VNPay return redirect URL (success/failed)
+ * Similar to buildGoogleAuthRedirectUrl pattern
+ */
+const buildVNPayReturnRedirectUrl = (result) => {
+  const clientUrl = env.CLIENT_URLS[0] || 'http://localhost:5173'
+
+  if (result.success) {
+    const redirectUrl = new URL(`${clientUrl}/payment/success`)
+    redirectUrl.searchParams.set('orderNumber', result.orderNumber)
+    return redirectUrl.toString()
+  } else {
+    const redirectUrl = new URL(`${clientUrl}/payment/failed`)
+    redirectUrl.searchParams.set('orderNumber', result.orderNumber)
+    redirectUrl.searchParams.set('message', result.message)
+    return redirectUrl.toString()
+  }
+}
+
+/**
+ * Build VNPay error redirect URL
+ * Similar to buildGoogleAuthErrorUrl pattern
+ */
+const buildVNPayErrorRedirectUrl = (error) => {
+  const clientUrl = env.CLIENT_URLS[0] || 'http://localhost:5173'
+  const errorUrl = new URL(`${clientUrl}/payment/error`)
+  errorUrl.searchParams.set('message', error.message || 'Có lỗi xảy ra')
+  return errorUrl.toString()
 }
 
 export const PAYMENT_SERVICE = {
@@ -454,5 +458,7 @@ export const PAYMENT_SERVICE = {
   getUserPayments,
   getSupportedBanks,
   queryTransactionStatus,
-  cancelPayment
+  cancelPayment,
+  buildVNPayReturnRedirectUrl,
+  buildVNPayErrorRedirectUrl
 }

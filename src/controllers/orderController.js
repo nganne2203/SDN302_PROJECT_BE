@@ -54,7 +54,7 @@ const getOrderByOrderNumber = async (req, res, next) => {
 const getMyOrders = async (req, res, next) => {
   try {
     const userId = req.user.id
-    const result = await ORDER_SERVICE.getMyOrders(userId, req.query)
+    const result = await ORDER_SERVICE.getMyOrders(userId, req.validated.query)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: result.data,
@@ -69,7 +69,7 @@ const getMyOrders = async (req, res, next) => {
 
 const getAllOrders = async (req, res, next) => {
   try {
-    const result = await ORDER_SERVICE.getAllOrders(req.query)
+    const result = await ORDER_SERVICE.getAllOrders(req.validated.query)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: result.data,

@@ -98,7 +98,7 @@ const getProductBySlug = async (req, res, next) => {
 
 const getProductsWithStock = async (req, res, next) => {
   try {
-    const result = await PRODUCT_SERVICE.getProductsWithStock(req.validated?.query || req.query)
+    const result = await PRODUCT_SERVICE.getProductsWithStock(req.validated?.query)
     res.status(StatusCodes.OK).json(responseSuccess({
       data: result.data,
       pagination: result.pagination,
@@ -109,7 +109,7 @@ const getProductsWithStock = async (req, res, next) => {
 
 const getProductsByDevice = async (req, res, next) => {
   try {
-    const result = await PRODUCT_SERVICE.getProductsByDevice(req.params.deviceId, req.query)
+    const result = await PRODUCT_SERVICE.getProductsByDevice(req.params.deviceId, req.validated.query)
     res.status(StatusCodes.OK).json(responseSuccess({
       data: result.data,
       pagination: result.pagination,
@@ -120,7 +120,7 @@ const getProductsByDevice = async (req, res, next) => {
 
 const getFeaturedProducts = async (req, res, next) => {
   try {
-    const result = await PRODUCT_SERVICE.getFeaturedProducts(req.query)
+    const result = await PRODUCT_SERVICE.getFeaturedProducts(req.validated.query)
     res.status(StatusCodes.OK).json(responseSuccess({
       data: result,
       message: 'Lấy sản phẩm nổi bật thành công'
@@ -130,7 +130,7 @@ const getFeaturedProducts = async (req, res, next) => {
 
 const getNewArrivals = async (req, res, next) => {
   try {
-    const result = await PRODUCT_SERVICE.getNewArrivals(req.query)
+    const result = await PRODUCT_SERVICE.getNewArrivals(req.validated.query)
     res.status(StatusCodes.OK).json(responseSuccess({
       data: result,
       message: 'Lấy sản phẩm mới thành công'
@@ -140,7 +140,7 @@ const getNewArrivals = async (req, res, next) => {
 
 const getRelatedProducts = async (req, res, next) => {
   try {
-    const result = await PRODUCT_SERVICE.getRelatedProducts(req.params.id, req.query)
+    const result = await PRODUCT_SERVICE.getRelatedProducts(req.params.id, req.validated.query)
     res.status(StatusCodes.OK).json(responseSuccess({
       data: result,
       message: 'Lấy sản phẩm liên quan thành công'

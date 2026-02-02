@@ -23,7 +23,6 @@ export const env = {
   CLOUD_NAME: process.env.CLOUD_NAME,
   API_KEY: process.env.API_KEY,
   API_SECRET: process.env.API_SECRET,
-  // VNPay Configuration
   VNPAY_TMN_CODE: process.env.VNPAY_TMN_CODE,
   VNPAY_HASH_SECRET: process.env.VNPAY_HASH_SECRET,
   VNPAY_URL: process.env.VNPAY_URL,
