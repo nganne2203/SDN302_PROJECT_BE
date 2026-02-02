@@ -115,44 +115,5 @@ export const AUTH_VALIDATION = {
       'string.empty': 'Refresh token không được để trống',
       'any.required': 'Refresh token là bắt buộc'
     }).trim()
-  }),
-  changePassword: joi.object({
-    currentPassword: joi.string().required().messages({
-      'string.empty': 'Mật khẩu hiện tại không được để trống',
-      'any.required': 'Mật khẩu hiện tại là bắt buộc'
-    }).trim(),
-    newPassword: joi.string().pattern(PASSWORD_REGEX).required().messages({
-      'string.empty': 'Mật khẩu mới không được để trống',
-      'string.pattern.base': 'Mật khẩu phải từ 8-20 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt',
-      'any.required': 'Mật khẩu mới là bắt buộc'
-    }).trim()
-  }),
-  resetPassword: joi.object({
-    email: joi.string().email().required().pattern(EMAIL_REGEX).messages({
-      'string.empty': 'Email không được để trống',
-      'string.email': 'Email không hợp lệ',
-      'any.required': 'Email là bắt buộc',
-      'string.pattern.base': 'Email không hợp lệ'
-    }).trim()
-  }),
-  setPassword: joi.object({
-    password: joi.string().pattern(PASSWORD_REGEX).required().messages({
-      'string.empty': 'Mật khẩu không được để trống',
-      'string.pattern.base': 'Mật khẩu phải từ 8-20 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt',
-      'any.required': 'Mật khẩu là bắt buộc'
-    }).trim()
-  }),
-  confirmResetPassword: joi.object({
-    email: joi.string().email().required().pattern(EMAIL_REGEX).messages({
-      'string.empty': 'Email không được để trống',
-      'string.email': 'Email không hợp lệ',
-      'any.required': 'Email là bắt buộc',
-      'string.pattern.base': 'Email không hợp lệ'
-    }).trim(),
-    password: joi.string().pattern(PASSWORD_REGEX).required().messages({
-      'string.empty': 'Mật khẩu không được để trống',
-      'string.pattern.base': 'Mật khẩu phải từ 8-20 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt',
-      'any.required': 'Mật khẩu là bắt buộc'
-    }).trim()
   })
 }

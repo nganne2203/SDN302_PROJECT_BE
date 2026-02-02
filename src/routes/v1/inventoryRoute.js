@@ -2,7 +2,7 @@ import express from 'express'
 import { INVENTORY_CONTROLLER } from '#controllers/inventoryController.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
 import { INVENTORY_CONSTANT } from '#constants/inventoryConstant.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 import { RoleEnum } from '#constants/roleConstant.js'
@@ -16,7 +16,7 @@ router.use(requireRoles(RoleEnum.ADMIN))
 
 /**
  * @swagger
- * /api/inventories:
+ * /api/v1/inventories:
  *   post:
  *     summary: Tạo tồn kho mới
  *     description: Tạo bản ghi tồn kho mới cho sản phẩm
@@ -60,13 +60,13 @@ router.use(requireRoles(RoleEnum.ADMIN))
 // POST - Tạo inventory mới
 router.post('/',
   sanitizeRequest(INVENTORY_CONSTANT.CREATE_INVENTORY_FIELDS, INVENTORY_CONSTANT.CREATE_INVENTORY_REQUIRED),
-  validationHandlingMiddleware(INVENTORY_VALIDATION.createInventory),
+  validationHandlingMiddleware({ body: INVENTORY_VALIDATION.createInventory }),
   INVENTORY_CONTROLLER.createInventory
 )
 
 /**
  * @swagger
- * /api/inventories:
+ * /api/v1/inventories:
  *   get:
  *     summary: Lấy danh sách tất cả tồn kho
  *     description: Lấy danh sách tồn kho với hỗ trợ phân trang và sắp xếp
@@ -116,7 +116,7 @@ router.get('/',
 
 /**
  * @swagger
- * /api/inventories/low-stock:
+ * /api/v1/inventories/low-stock:
  *   get:
  *     summary: Lấy danh sách sản phẩm sắp hết hàng
  *     description: Lấy danh sách sản phẩm có số lượng tồn kho dưới ngưỡng
@@ -172,7 +172,7 @@ router.get('/low-stock',
 
 /**
  * @swagger
- * /api/inventories/{inventoryId}:
+ * /api/v1/inventories/{inventoryId}:
  *   put:
  *     summary: Cập nhật thông tin tồn kho
  *     description: Cập nhật số lượng và vị trí kho của sản phẩm
@@ -226,7 +226,7 @@ router.put('/:inventoryId',
 
 /**
  * @swagger
- * /api/inventories/product/{productId}:
+ * /api/v1/inventories/product/{productId}:
  *   get:
  *     summary: Lấy thông tin tồn kho của sản phẩm
  *     description: Lấy chi tiết tồn kho theo ID sản phẩm
@@ -260,7 +260,7 @@ router.get('/product/:productId',
 
 /**
  * @swagger
- * /api/inventories/product/{productId}/adjust:
+ * /api/v1/inventories/product/{productId}/adjust:
  *   put:
  *     summary: Điều chỉnh tồn kho
  *     description: Điều chỉnh số lượng tồn kho của sản phẩm (cộng hoặc trừ)

@@ -2,7 +2,7 @@ import express from 'express'
 import { UPLOAD_CONTROLLER } from '#controllers/uploadController.js'
 import upload from '#middlewares/uploadHandlingMiddleware.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
-import { apiRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 
 const router = express.Router()
 
@@ -10,7 +10,7 @@ router.use(authorizationMiddleware)
 
 /**
  * @swagger
- * /api/uploads/images:
+ * /api/v1/uploads/images:
  *   post:
  *     summary: Upload image to Cloudinary
  *     description: Nhận multipart/form-data với field `image`, trả về publicId và metadata.
@@ -43,7 +43,7 @@ router.post('/images',
 
 /**
  * @swagger
- * /api/uploads/multiple-images:
+ * /api/v1/uploads/multiple-images:
  *   post:
  *     summary: Upload multiple images to Cloudinary
  *     description: Nhận multipart/form-data với field `images`, tải nhiều ảnh cùng lúc (tối đa 10 ảnh).
@@ -79,7 +79,7 @@ router.post('/multiple-images',
 
 /**
  * @swagger
- * /api/uploads/images/{publicId}:
+ * /api/v1/uploads/images/{publicId}:
  *   get:
  *     summary: Lấy thông tin ảnh
  *     description: Trả về thông tin ảnh theo publicId trên Cloudinary.
@@ -106,7 +106,7 @@ router.get('/images/:publicId',
 
 /**
  * @swagger
- * /api/uploads/images/{publicId}:
+ * /api/v1/uploads/images/{publicId}:
  *   delete:
  *     summary: Xóa ảnh trên Cloudinary
  *     description: Xóa ảnh bằng publicId và làm mới cache.

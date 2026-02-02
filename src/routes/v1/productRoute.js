@@ -1,7 +1,7 @@
 import express from 'express'
 import { PRODUCT_CONTROLLER } from '#controllers/productController.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 import { RoleEnum } from '#constants/roleConstant.js'
@@ -18,7 +18,7 @@ const router = express.Router()
 
 /**
  * @swagger
- * /api/products:
+ * /api/v1/products:
  *   get:
  *     summary: Get all products
  *     description: Retrieve a list of products with optional filtering, pagination, and sorting.
@@ -107,7 +107,98 @@ router.get(
 
 /**
  * @swagger
- * /api/products/search:
+ * /api/v1/products/with-stock:
+ *   get:
+ *     summary: Get products with stock information
+ *     description: Retrieve products with stock availability and pricing rules for ordering.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *     responses:
+ *       200:
+ *         description: Products with stock info retrieved successfully
+ */
+router.get(
+  '/with-stock',
+  apiRateLimiter,
+  validationHandlingMiddleware({ query: PRODUCT_VALIDATION.query }),
+  PRODUCT_CONTROLLER.getProductsWithStock
+)
+
+/**
+ * @swagger
+ * /api/v1/products/featured:
+ *   get:
+ *     summary: Get featured products
+ *     description: Retrieve top-rated and popular products.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 8
+ *     responses:
+ *       200:
+ *         description: Featured products retrieved successfully
+ */
+router.get(
+  '/featured',
+  apiRateLimiter,
+  PRODUCT_CONTROLLER.getFeaturedProducts
+)
+
+/**
+ * @swagger
+ * /api/v1/products/new-arrivals:
+ *   get:
+ *     summary: Get new arrival products
+ *     description: Retrieve latest products.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 8
+ *     responses:
+ *       200:
+ *         description: New arrivals retrieved successfully
+ */
+router.get(
+  '/new-arrivals',
+  apiRateLimiter,
+  PRODUCT_CONTROLLER.getNewArrivals
+)
+
+/**
+ * @swagger
+ * /api/v1/products/search:
  *   get:
  *     summary: Search products
  *     description: Search products by keyword with pagination and sorting.
@@ -160,7 +251,71 @@ router.get(
 
 /**
  * @swagger
- * /api/products/categories:
+ * /api/v1/products/by-device/{deviceId}:
+ *   get:
+ *     summary: Get products by device compatibility
+ *     description: Retrieve products compatible with a specific device.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: path
+ *         name: deviceId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Device ID (24 character hex string)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Products retrieved successfully
+ *       404:
+ *         description: Device not found
+ */
+router.get(
+  '/by-device/:deviceId',
+  apiRateLimiter,
+  validationHandlingMiddleware({ params: PRODUCT_VALIDATION.deviceIdParam }),
+  PRODUCT_CONTROLLER.getProductsByDevice
+)
+
+/**
+ * @swagger
+ * /api/v1/products/slug/{slug}:
+ *   get:
+ *     summary: Get product by slug
+ *     description: Retrieve a product using SEO-friendly slug.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product slug
+ *     responses:
+ *       200:
+ *         description: Product retrieved successfully
+ *       404:
+ *         description: Product not found
+ */
+router.get(
+  '/slug/:slug',
+  apiRateLimiter,
+  validationHandlingMiddleware({ params: PRODUCT_VALIDATION.slugParam }),
+  PRODUCT_CONTROLLER.getProductBySlug
+)
+
+/**
+ * @swagger
+ * /api/v1/products/categories:
  *   get:
  *     summary: Get product categories
  *     description: Retrieve all available product categories.
@@ -183,7 +338,7 @@ router.get(
 
 /**
  * @swagger
- * /api/products/{id}:
+ * /api/v1/products/{id}:
  *   get:
  *     summary: Get product by ID
  *     description: Retrieve a specific product by its ID.
@@ -252,14 +407,75 @@ router.get(
 
 /**
  * @swagger
- * /api/products:
+ * /api/v1/products/{id}/for-order:
+ *   get:
+ *     summary: Get product detail for ordering
+ *     description: Retrieve product with full stock info and pricing rules for order flow.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID (24 character hex string)
+ *     responses:
+ *       200:
+ *         description: Product order info retrieved successfully
+ *       400:
+ *         description: Product not available
+ *       404:
+ *         description: Product not found
+ */
+router.get(
+  '/:id/for-order',
+  apiRateLimiter,
+  validationHandlingMiddleware({ params: PRODUCT_VALIDATION.idParam }),
+  PRODUCT_CONTROLLER.getProductDetailForOrder
+)
+
+/**
+ * @swagger
+ * /api/v1/products/{id}/related:
+ *   get:
+ *     summary: Get related products
+ *     description: Retrieve products in the same category.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID (24 character hex string)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 4
+ *     responses:
+ *       200:
+ *         description: Related products retrieved successfully
+ *       404:
+ *         description: Product not found
+ */
+router.get(
+  '/:id/related',
+  apiRateLimiter,
+  validationHandlingMiddleware({ params: PRODUCT_VALIDATION.idParam }),
+  PRODUCT_CONTROLLER.getRelatedProducts
+)
+
+/**
+ * @swagger
+ * /api/v1/products:
  *   post:
  *     summary: Create a new product
  *     description: |
  *       Create a new product (Admin only).
  *
  *       **Image Upload Flow:**
- *       1. First, upload images using POST /api/uploads/multiple-images
+ *       1. First, upload images using POST /api/v1/uploads/multiple-images
  *       2. Get publicIds from the upload response
  *       3. Use those publicIds in the images array when creating product
  *     tags: [Product]
@@ -328,14 +544,14 @@ router.post(
 
 /**
  * @swagger
- * /api/products/{id}:
+ * /api/v1/products/{id}:
  *   put:
  *     summary: Update a product
  *     description: |
  *       Update an existing product by ID (Admin only).
  *
  *       **Image Update Flow:**
- *       - To add new images: Upload via POST /api/uploads/multiple-images first, then include all publicIds (old + new)
+ *       - To add new images: Upload via POST /api/v1/uploads/multiple-images first, then include all publicIds (old + new)
  *       - To remove images: Simply exclude their publicIds from the images array (they will be auto-deleted from Cloudinary)
  *       - To keep existing images: Include their publicIds in the array
  *     tags: [Product]
@@ -412,7 +628,7 @@ router.put(
 
 /**
  * @swagger
- * /api/products/{id}/status:
+ * /api/v1/products/{id}/status:
  *   patch:
  *     summary: Update product status
  *     description: Update the active status of a product (Admin only).
@@ -465,7 +681,7 @@ router.patch(
 
 /**
  * @swagger
- * /api/products/{id}:
+ * /api/v1/products/{id}:
  *   delete:
  *     summary: Delete a product
  *     description: |

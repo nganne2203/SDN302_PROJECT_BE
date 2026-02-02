@@ -3,3 +3,5 @@ export const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d])[^\s]{8,20}$/
 
 export const PHONE_REGEX = /^(0?)(3[2-9]|5[6|8|9]|7[0|6-9]|8[0-6|8|9]|9[0-4|6-9])[0-9]{7}$/
+export const OBJECT_ID_RULE = /^[0-9a-fA-F]{24}$/
+export const OBJECT_ID_RULE_MESSAGE = 'Id không hợp lệ'

@@ -92,6 +92,69 @@ const getAllUsersForManager = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getCurrentUser = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const result = await USER_SERVICE.getCurrentUser(userId)
+
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy thông tin người dùng thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const changePassword = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const result = await USER_SERVICE.changePassword(userId, req.body)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: null,
+      message: result.message || 'Đổi mật khẩu thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const requestInfo = {
+      ipAddress: req.ip || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent'] || ''
+    }
+    const result = await USER_SERVICE.resetPassword(req.body, requestInfo)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: null,
+      message: result.message || 'Đặt lại mật khẩu thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const setPassword = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const { password } = req.body
+
+    const result = await USER_SERVICE.setPassword(userId, { password })
+
+    res.json({
+      success: true,
+      message: result.message
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+const confirmResetPassword = async (req, res, next) => {
+  try {
+    const result = await USER_SERVICE.confirmPasswordReset(req.body)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: null,
+      message: result.message || 'Xác nhận đặt lại mật khẩu thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 export const USER_CONTROLLER = {
   getAllUsers,
   getUserById,
@@ -100,5 +163,10 @@ export const USER_CONTROLLER = {
   updateUserStatus,
   deleteUser,
   updateCurrentUser,
-  getAllUsersForManager
+  getAllUsersForManager,
+  getCurrentUser,
+  changePassword,
+  resetPassword,
+  confirmResetPassword,
+  setPassword
 }

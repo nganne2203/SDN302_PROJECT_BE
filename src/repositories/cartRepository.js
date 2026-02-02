@@ -40,7 +40,7 @@ const updateCart = async (cartId, updateData) => {
 }
 
 const clearCart = async (userId) => {
-  return await cartModel.findByIdAndUpdate(
+  return await cartModel.findOneAndUpdate(
     { user: userId },
     { items: [], totalPrice: 0 },
     { new: true }

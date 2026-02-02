@@ -8,7 +8,7 @@ import {
 import { DEVICE_VALIDATION } from '#validations/deviceValidation.js'
 import { DEVICE_CONTROLLER } from '#controllers/deviceController.js'
 import { validationHandlingMiddleware } from '#middlewares/validationHandlingMiddleware.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
@@ -21,7 +21,7 @@ const router = express.Router()
  * tags:
  *   name: Devices
  *   description: Device management
- * /api/devices:
+ * /api/v1/devices:
  *   post:
  *     summary: Create a new device
  *     tags: [Devices]
@@ -85,7 +85,7 @@ const router = express.Router()
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Device'
- * /api/devices/{id}:
+ * /api/v1/devices/{id}:
  *   get:
  *     summary: Get device by ID
  *     tags: [Devices]
@@ -146,7 +146,7 @@ const router = express.Router()
  *         description: Device deleted
  *       '404':
  *         description: Device not found
- * /api/devices/{id}/status:
+ * /api/v1/devices/{id}/status:
  *   patch:
  *     summary: Update device status
  *     tags: [Devices]
@@ -239,7 +239,7 @@ router.post(
   authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN),
   sanitizeRequest(DEVICE_FIELD_CREATE, REQUIRE_FIELD_CREATE_DEVICE),
-  validationHandlingMiddleware(DEVICE_VALIDATION.createDevice),
+  validationHandlingMiddleware({ body: DEVICE_VALIDATION.createDevice }),
   DEVICE_CONTROLLER.createDevice
 )
 

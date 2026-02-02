@@ -22,5 +22,10 @@ export const env = {
   VERIFY_CAPTCHA_URL: process.env.VERIFY_CAPTCHA_URL,
   CLOUD_NAME: process.env.CLOUD_NAME,
   API_KEY: process.env.API_KEY,
-  API_SECRET: process.env.API_SECRET
+  API_SECRET: process.env.API_SECRET,
+  VNPAY_TMN_CODE: process.env.VNPAY_TMN_CODE,
+  VNPAY_HASH_SECRET: process.env.VNPAY_HASH_SECRET,
+  VNPAY_URL: process.env.VNPAY_URL,
+  VNPAY_RETURN_URL: process.env.VNPAY_RETURN_URL,
+  VNPAY_API_URL: process.env.VNPAY_API_URL
 }

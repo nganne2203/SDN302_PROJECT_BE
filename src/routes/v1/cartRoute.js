@@ -6,14 +6,14 @@ import { CART_VALIDATION } from '#validations/cartValidation.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { CART_CONSTANT } from '#constants/cartConstant.js'
 import { RoleEnum } from '#constants/roleConstant.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 
 const router = express.Router()
 router.use(authorizationMiddleware)
 /**
  * @swagger
- * /api/carts:
+ * /api/v1/carts:
  *   get:
  *     summary: Get user's cart
  *     description: Get current user's shopping cart with all items
@@ -34,7 +34,7 @@ router.get(
 )
 /**
  * @swagger
- * /api/carts:
+ * /api/v1/carts:
  *   post:
  *     summary: Add product to cart
  *     description: Add a product with optional services to cart
@@ -78,13 +78,13 @@ router.post(
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
   sanitizeRequest(CART_CONSTANT.ADD_TO_CART_FIELDS, CART_CONSTANT.ADD_TO_CART_REQUIRED_FIELDS),
-  validationHandlingMiddleware(CART_VALIDATION.addToCart),
+  validationHandlingMiddleware({ body: CART_VALIDATION.addToCart }),
   CART_CONTROLLER.addToCart
 )
 
 /**
  * @swagger
- * /api/carts/clear:
+ * /api/v1/carts/clear:
  *   delete:
  *     summary: Clear entire cart
  *     description: Remove all items from cart
@@ -104,7 +104,7 @@ router.delete(
 
 /**
  * @swagger
- * /api/carts/validate-before-checkout:
+ * /api/v1/carts/validate-before-checkout:
  *   post:
  *     summary: Validate cart before checkout
  *     description: Validate cart items availability and prices
@@ -126,7 +126,7 @@ router.post(
 
 /**
  * @swagger
- * /api/carts/item:
+ * /api/v1/carts/item:
  *   delete:
  *     summary: Remove item from cart
  *     description: Remove a product from cart
@@ -153,13 +153,13 @@ router.delete(
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
   sanitizeRequest(CART_CONSTANT.REMOVE_CART_ITEM_FIELDS, CART_CONSTANT.REMOVE_CART_ITEM_FIELDS),
-  validationHandlingMiddleware(CART_VALIDATION.removeCartItem),
+  validationHandlingMiddleware({ body: CART_VALIDATION.removeCartItem }),
   CART_CONTROLLER.removeCartItem
 )
 
 /**
  * @swagger
- * /api/carts/item/quantity:
+ * /api/v1/carts/item/quantity:
  *   put:
  *     summary: Update cart item quantity
  *     description: Update quantity of a product in cart
@@ -189,13 +189,13 @@ router.put(
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
   sanitizeRequest(CART_CONSTANT.UPDATE_CART_ITEM_FIELDS, CART_CONSTANT.UPDATE_CART_ITEM_FIELDS),
-  validationHandlingMiddleware(CART_VALIDATION.updateCartItem),
+  validationHandlingMiddleware({ body: CART_VALIDATION.updateCartItem }),
   CART_CONTROLLER.updateCartItemQuantity
 )
 
 /**
  * @swagger
- * /api/carts/item/services:
+ * /api/v1/carts/item/services:
  *   put:
  *     summary: Update cart item services
  *     description: Update services for a product in cart
@@ -230,7 +230,7 @@ router.put(
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
   sanitizeRequest(CART_CONSTANT.UPDATE_CART_SERVICES_FIELDS, CART_CONSTANT.UPDATE_CART_SERVICES_FIELDS),
-  validationHandlingMiddleware(CART_VALIDATION.updateCartServices),
+  validationHandlingMiddleware({ body: CART_VALIDATION.updateCartItemServices }),
   CART_CONTROLLER.updateCartItemServices
 )
 

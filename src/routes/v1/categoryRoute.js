@@ -1,7 +1,7 @@
 import express from 'express'
 import { CATEGORY_CONTROLLER } from '#controllers/categoryController.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 import { RoleEnum } from '#constants/roleConstant.js'
@@ -20,7 +20,7 @@ const router = express.Router()
  *   - name: Category
  *     description: Quản lý danh mục sản phẩm
  *
- * /api/categories:
+ * /api/v1/categories:
  *   post:
  *     summary: Tạo danh mục mới
  *     description: Chỉ Admin mới có quyền tạo danh mục mới.
@@ -95,7 +95,7 @@ const router = express.Router()
  *       403:
  *         $ref: '#/components/responses/Forbidden'
  *
- * /api/categories/{id}:
+ * /api/v1/categories/{id}:
  *   get:
  *     summary: Lấy thông tin danh mục theo ID
  *     description: Lấy chi tiết một danh mục theo ID.
@@ -184,7 +184,7 @@ const router = express.Router()
  *         $ref: '#/components/responses/Forbidden'
  *       404:
  *         $ref: '#/components/responses/NotFound'
- * /api/categories/{id}/status:
+ * /api/v1/categories/{id}/status:
  *   patch:
  *    summary: Cập nhật trạng thái danh mục
  *    description: Chỉ Admin mới có quyền cập nhật trạng thái danh mục.
