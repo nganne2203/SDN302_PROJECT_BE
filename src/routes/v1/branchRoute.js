@@ -272,6 +272,7 @@ router.get(
 router.get(
   '/managers',
   apiRateLimiter,
+  requireRoles(RoleEnum.ADMIN),
   validationHandlingMiddleware({ query: BRANCH_VALIDATION.getAllManagerForBranch }),
   BRANCH_CONTROLLER.getAllManagerForBranch
 )
