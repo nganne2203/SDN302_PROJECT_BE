@@ -24,10 +24,10 @@ const generateOrderNumber = () => {
  */
 const calculatePricingDiscounts = async (items) => {
   const pricingApplied = []
-  
+
   for (const item of items) {
     const productId = item.product._id || item.product
-    
+
     // Find applicable pricing rules for this product
     const pricingRules = await pricingModel
       .find({
@@ -40,11 +40,11 @@ const calculatePricingDiscounts = async (items) => {
       })
       .sort({ minQuantity: -1 })
       .limit(1)
-    
+
     if (pricingRules.length > 0) {
       const rule = pricingRules[0]
       const discountAmount = (item.price * item.quantity * rule.discountPercentage) / 100
-      
+
       pricingApplied.push({
         product: productId,
         minQuantity: rule.minQuantity,
@@ -54,7 +54,7 @@ const calculatePricingDiscounts = async (items) => {
       })
     }
   }
-  
+
   return pricingApplied
 }
 
@@ -63,16 +63,16 @@ const calculatePricingDiscounts = async (items) => {
  */
 const calculateOrderTotals = (items, pricingApplied) => {
   let subtotal = 0
-  
+
   for (const item of items) {
     const productTotal = item.price * item.quantity
     const servicesTotal = item.services.reduce((sum, service) => sum + service.price * item.quantity, 0)
     subtotal += productTotal + servicesTotal
   }
-  
+
   const totalDiscount = pricingApplied.reduce((sum, pricing) => sum + pricing.discountAmount, 0)
   const totalAmount = subtotal - totalDiscount
-  
+
   return { subtotal, totalAmount }
 }
 
@@ -82,20 +82,20 @@ const calculateOrderTotals = (items, pricingApplied) => {
 const findBranchWithStock = async (items) => {
   // Get all store inventories for products in the order
   const productIds = items.map(item => item.product._id || item.product)
-  
+
   for (const item of items) {
     const productId = item.product._id || item.product
     const storeInventories = await STORE_INVENTORY_SERVICE.getStoreInventoriesByProduct(productId)
-    
+
     // Find branch with sufficient stock
     const availableBranch = storeInventories.find(inv => inv.quantity >= item.quantity)
-    
+
     if (!availableBranch) {
       const productName = item.product.name || 'Unknown Product'
       throw new ApiError(ERROR_CODES.BAD_REQUEST, [`Sản phẩm "${productName}" không đủ tồn kho tại bất kỳ chi nhánh nào`])
     }
   }
-  
+
   // Return first available branch (can be improved with better logic)
   const firstProductId = productIds[0]
   const inventories = await STORE_INVENTORY_SERVICE.getStoreInventoriesByProduct(firstProductId)
@@ -119,7 +119,7 @@ const restoreInventoryForOrder = async (order) => {
   if (!order.branch) {
     return
   }
-  
+
   for (const item of order.items) {
     const productId = item.product._id || item.product
     await STORE_INVENTORY_SERVICE.increaseStoreInventory(order.branch, productId, item.quantity)
@@ -127,41 +127,45 @@ const restoreInventoryForOrder = async (order) => {
 }
 
 /**
- * Create order from cart (COD only for Phase 1)
+ * Create order from cart (COD or VNPay)
  */
 const createOrder = async (userId, orderData) => {
   const { shippingAddress, paymentMethod, message = '', branchId = null } = orderData
-  
+
   // Validate cart and get items
   const cart = await CART_SERVICE.validateCartBeforeCheckout(userId)
-  
+
   if (!cart || cart.items.length === 0) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Giỏ hàng đang trống'])
   }
-  
+
   // Populate cart items to get full product details
   const populatedCart = await CART_SERVICE.getCart(userId)
-  
-  // Validate payment method (only COD for Phase 1)
-  if (paymentMethod !== PAYMENT_METHODS.COD) {
-    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Hiện tại chỉ hỗ trợ thanh toán COD (Thanh toán khi nhận hàng)'])
+
+  // Validate payment method
+  if (paymentMethod === PAYMENT_METHODS.VNPAY) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Vui lòng sử dụng API /api/payments/vnpay/create để thanh toán qua VNPay'])
   }
-  
+
+  if (paymentMethod !== PAYMENT_METHODS.COD && paymentMethod !== PAYMENT_METHODS.BANK_TRANSFER) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Phương thức thanh toán không hợp lệ'])
+  }
+
   // Calculate pricing discounts
   const pricingApplied = await calculatePricingDiscounts(populatedCart.items)
-  
+
   // Calculate totals
   const { subtotal, totalAmount } = calculateOrderTotals(populatedCart.items, pricingApplied)
-  
+
   // Find or use specified branch with available stock
   let selectedBranch = branchId
   if (!selectedBranch) {
     selectedBranch = await findBranchWithStock(populatedCart.items)
   }
-  
+
   // Generate order number
   const orderNumber = generateOrderNumber()
-  
+
   // Create order
   const order = await ORDER_REPOSITORY.createOrder({
     orderNumber,
@@ -188,19 +192,19 @@ const createOrder = async (userId, orderData) => {
     branch: selectedBranch,
     createdBy: userId
   })
-  
+
   // For COD, confirm order and decrease inventory immediately
   if (paymentMethod === PAYMENT_METHODS.COD) {
     await ORDER_REPOSITORY.updateOrderStatus(order._id, ORDER_STATUS.CONFIRMED, userId)
     await decreaseInventoryForOrder(selectedBranch, populatedCart.items)
   }
-  
+
   // Clear cart after successful order
   await CART_SERVICE.clearCart(userId)
-  
+
   // Get populated order
   const populatedOrder = await ORDER_REPOSITORY.getOrderById(order._id)
-  
+
   // Send confirmation email (don't fail if email fails)
   try {
     await EMAIL_SERVICE.sendOrderConfirmation(
@@ -209,9 +213,10 @@ const createOrder = async (userId, orderData) => {
       populatedOrder
     )
   } catch (emailError) {
+    // eslint-disable-next-line no-console
     console.error('Failed to send order confirmation email:', emailError.message)
   }
-  
+
   return populatedOrder
 }
 
@@ -220,16 +225,16 @@ const createOrder = async (userId, orderData) => {
  */
 const getOrderById = async (orderId, userId, userRole) => {
   const order = await ORDER_REPOSITORY.getOrderById(orderId)
-  
+
   if (!order) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Đơn hàng không tồn tại'])
   }
-  
+
   // Check permission: user can only view their own orders, admin/staff can view all
   if (userRole === 'customer' && order.user._id.toString() !== userId.toString()) {
     throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền xem đơn hàng này'])
   }
-  
+
   return order
 }
 
@@ -238,16 +243,16 @@ const getOrderById = async (orderId, userId, userRole) => {
  */
 const getOrderByOrderNumber = async (orderNumber, userId, userRole) => {
   const order = await ORDER_REPOSITORY.getOrderByOrderNumber(orderNumber)
-  
+
   if (!order) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Đơn hàng không tồn tại'])
   }
-  
+
   // Check permission
   if (userRole === 'customer' && order.user._id.toString() !== userId.toString()) {
     throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền xem đơn hàng này'])
   }
-  
+
   return order
 }
 
@@ -256,16 +261,16 @@ const getOrderByOrderNumber = async (orderNumber, userId, userRole) => {
  */
 const getMyOrders = async (userId, query = {}) => {
   const { page = 1, limit = 10, status, sortBy = 'createdAt', sortOrder = 'desc' } = query
-  
+
   const filter = {}
   if (status) {
     filter.orderStatus = status
   }
-  
+
   const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 }
-  
+
   const result = await ORDER_REPOSITORY.getOrdersByUser(userId, filter, { page, limit, sort })
-  
+
   return {
     data: result.docs,
     pagination: mapMongoosePagination(result)
@@ -277,16 +282,16 @@ const getMyOrders = async (userId, query = {}) => {
  */
 const getAllOrders = async (query = {}) => {
   const { page = 1, limit = 10, status, sortBy = 'createdAt', sortOrder = 'desc' } = query
-  
+
   const filter = {}
   if (status) {
     filter.orderStatus = status
   }
-  
+
   const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 }
-  
+
   const result = await ORDER_REPOSITORY.getAllOrders(filter, { page, limit, sort })
-  
+
   return {
     data: result.docs,
     pagination: mapMongoosePagination(result)
@@ -298,22 +303,22 @@ const getAllOrders = async (query = {}) => {
  */
 const updateOrderStatus = async (orderId, status, updatedBy) => {
   const order = await ORDER_REPOSITORY.getOrderById(orderId, { populate: false })
-  
+
   if (!order) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Đơn hàng không tồn tại'])
   }
-  
+
   // Validate status transition
   if (order.orderStatus === ORDER_STATUS.CANCELED) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể cập nhật đơn hàng đã hủy'])
   }
-  
+
   if (order.orderStatus === ORDER_STATUS.DELIVERED) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể cập nhật đơn hàng đã hoàn thành'])
   }
-  
+
   const updatedOrder = await ORDER_REPOSITORY.updateOrderStatus(orderId, status, updatedBy)
-  
+
   // Send email notification (don't fail if email fails)
   try {
     await EMAIL_SERVICE.sendOrderStatusUpdate(
@@ -322,9 +327,10 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
       updatedOrder
     )
   } catch (emailError) {
+    // eslint-disable-next-line no-console
     console.error('Failed to send order status update email:', emailError.message)
   }
-  
+
   return updatedOrder
 }
 
@@ -333,36 +339,36 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
  */
 const cancelOrder = async (orderId, cancelReason, userId, userRole) => {
   const order = await ORDER_REPOSITORY.getOrderById(orderId, { populate: false })
-  
+
   if (!order) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Đơn hàng không tồn tại'])
   }
-  
+
   // Check permission
   if (userRole === 'customer' && order.user.toString() !== userId.toString()) {
     throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền hủy đơn hàng này'])
   }
-  
+
   // Check if order can be canceled
   if (order.orderStatus === ORDER_STATUS.CANCELED) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Đơn hàng đã được hủy trước đó'])
   }
-  
+
   if (order.orderStatus === ORDER_STATUS.DELIVERED) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể hủy đơn hàng đã hoàn thành'])
   }
-  
+
   if (order.orderStatus === ORDER_STATUS.SHIPPED && userRole === 'customer') {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể hủy đơn hàng đang vận chuyển. Vui lòng liên hệ hỗ trợ'])
   }
-  
+
   const canceledOrder = await ORDER_REPOSITORY.cancelOrder(orderId, cancelReason, userId)
-  
+
   // Restore inventory if order was confirmed
   if (order.orderStatus !== ORDER_STATUS.PENDING) {
     await restoreInventoryForOrder(order)
   }
-  
+
   // Send cancellation email (don't fail if email fails)
   try {
     await EMAIL_SERVICE.sendOrderCancellation(
@@ -371,9 +377,10 @@ const cancelOrder = async (orderId, cancelReason, userId, userRole) => {
       canceledOrder
     )
   } catch (emailError) {
+    // eslint-disable-next-line no-console
     console.error('Failed to send order cancellation email:', emailError.message)
   }
-  
+
   return canceledOrder
 }
 
@@ -382,15 +389,15 @@ const cancelOrder = async (orderId, cancelReason, userId, userRole) => {
  */
 const updateDeliveryInfo = async (orderId, deliveryData, updatedBy) => {
   const order = await ORDER_REPOSITORY.getOrderById(orderId, { populate: false })
-  
+
   if (!order) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Đơn hàng không tồn tại'])
   }
-  
+
   if (order.orderStatus === ORDER_STATUS.CANCELED) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể cập nhật thông tin vận chuyển cho đơn hàng đã hủy'])
   }
-  
+
   const updateData = {
     delivery: {
       ...order.delivery,
@@ -398,9 +405,9 @@ const updateDeliveryInfo = async (orderId, deliveryData, updatedBy) => {
     },
     updatedBy
   }
-  
+
   const updatedOrder = await ORDER_REPOSITORY.updateOrderById(orderId, updateData)
-  
+
   return updatedOrder
 }
 
@@ -409,7 +416,7 @@ const updateDeliveryInfo = async (orderId, deliveryData, updatedBy) => {
  */
 const getOrderStatistics = async (userId = null) => {
   const stats = await ORDER_REPOSITORY.countOrdersByStatus(userId)
-  
+
   const result = {
     total: 0,
     pending: 0,
@@ -418,12 +425,12 @@ const getOrderStatistics = async (userId = null) => {
     delivered: 0,
     canceled: 0
   }
-  
+
   stats.forEach(stat => {
     result[stat._id] = stat.count
     result.total += stat.count
   })
-  
+
   return result
 }
 

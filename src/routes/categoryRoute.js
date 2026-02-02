@@ -1,7 +1,7 @@
 import express from 'express'
 import { CATEGORY_CONTROLLER } from '#controllers/categoryController.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 import { RoleEnum } from '#constants/roleConstant.js'

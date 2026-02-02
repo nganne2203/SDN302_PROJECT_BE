@@ -6,6 +6,8 @@ import { ERROR_CODES } from '#constants/errorCode.js'
 import { escapeRegex, slugify } from '#utils/formatterUtil.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
 import { DEVICE_SERVICE } from '#services/deviceService.js'
+import { storeInventoryModel } from '#models/storeInventoryModel.js'
+import { pricingModel } from '#models/pricingModel.js'
 
 const getProductById = async (productId) => {
   const product = await PRODUCT_REPOSITORY.getProductById(productId)
@@ -168,6 +170,195 @@ const getProductCategories = async () => {
   }))
 }
 
+/**
+ * Get product by slug (for SEO-friendly URLs)
+ */
+const getProductBySlug = async (slug) => {
+  const product = await PRODUCT_REPOSITORY.getProductBySlug(slug)
+  if (!product) throw new ApiError(ERROR_CODES.NOT_FOUND, ['Sản phẩm không tồn tại'])
+  return product
+}
+
+/**
+ * Get products with stock availability info
+ */
+const getProductsWithStock = async (query = {}) => {
+  const { page, limit, search, categoryId, minPrice, maxPrice, sortBy, sortOrder } = query
+  const filter = { isActive: true }
+
+  if (search) {
+    const escapedSearch = escapeRegex(search)
+    filter.$or = [
+      { name: { $regex: escapedSearch, $options: 'i' } },
+      { description: { $regex: escapedSearch, $options: 'i' } }
+    ]
+  }
+
+  if (categoryId) {
+    filter.category = categoryId
+  }
+
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    filter.price = {}
+    if (minPrice !== undefined) filter.price.$gte = minPrice
+    if (maxPrice !== undefined) filter.price.$lte = maxPrice
+  }
+
+  const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
+
+  const result = await PRODUCT_REPOSITORY.getAllProducts(filter, { page, limit, sort })
+
+  // Get stock info for each product
+  const productsWithStock = await Promise.all(result.docs.map(async (product) => {
+    const stockInfo = await storeInventoryModel.aggregate([
+      { $match: { product: product._id } },
+      { $group: { _id: null, totalStock: { $sum: '$quantity' } } }
+    ])
+
+    const totalStock = stockInfo.length > 0 ? stockInfo[0].totalStock : 0
+
+    // Get active pricing rules
+    const pricingRules = await pricingModel.find({
+      product: product._id,
+      isActive: true
+    }).sort({ minQuantity: 1 })
+
+    return {
+      ...product.toObject(),
+      totalStock,
+      inStock: totalStock > 0,
+      pricingRules: pricingRules.map(rule => ({
+        minQuantity: rule.minQuantity,
+        maxQuantity: rule.maxQuantity,
+        discountPercentage: rule.discountPercentage
+      }))
+    }
+  }))
+
+  return {
+    data: productsWithStock,
+    pagination: mapMongoosePagination(result)
+  }
+}
+
+/**
+ * Get products by device compatibility
+ */
+const getProductsByDevice = async (deviceId, query = {}) => {
+  const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = query
+
+  // Verify device exists
+  await DEVICE_SERVICE.getDeviceById(deviceId)
+
+  const filter = {
+    compatibility: deviceId,
+    isActive: true
+  }
+
+  const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 }
+
+  const result = await PRODUCT_REPOSITORY.getAllProducts(filter, { page, limit, sort })
+
+  return {
+    data: result.docs,
+    pagination: mapMongoosePagination(result)
+  }
+}
+
+/**
+ * Get featured/popular products (top rated or most sold)
+ */
+const getFeaturedProducts = async (query = {}) => {
+  const { limit = 8 } = query
+
+  const filter = { isActive: true }
+  const sort = { ratingAvg: -1, ratingCount: -1 }
+
+  const result = await PRODUCT_REPOSITORY.getAllProducts(filter, { page: 1, limit, sort })
+
+  return result.docs
+}
+
+/**
+ * Get new arrivals (latest products)
+ */
+const getNewArrivals = async (query = {}) => {
+  const { limit = 8 } = query
+
+  const filter = { isActive: true }
+  const sort = { createdAt: -1 }
+
+  const result = await PRODUCT_REPOSITORY.getAllProducts(filter, { page: 1, limit, sort })
+
+  return result.docs
+}
+
+/**
+ * Get related products (same category)
+ */
+const getRelatedProducts = async (productId, query = {}) => {
+  const { limit = 4 } = query
+
+  const product = await getProductById(productId)
+
+  const filter = {
+    category: product.category._id || product.category,
+    _id: { $ne: productId },
+    isActive: true
+  }
+
+  const result = await PRODUCT_REPOSITORY.getAllProducts(filter, { page: 1, limit, sort: { ratingAvg: -1 } })
+
+  return result.docs
+}
+
+/**
+ * Get product detail with full info for ordering
+ */
+const getProductDetailForOrder = async (productId) => {
+  const product = await getProductById(productId)
+
+  if (!product.isActive) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Sản phẩm hiện không khả dụng'])
+  }
+
+  // Get stock info
+  const stockInfo = await storeInventoryModel.aggregate([
+    { $match: { product: product._id } },
+    { $group: { _id: null, totalStock: { $sum: '$quantity' } } }
+  ])
+
+  const totalStock = stockInfo.length > 0 ? stockInfo[0].totalStock : 0
+
+  // Get pricing rules
+  const pricingRules = await pricingModel.find({
+    product: product._id,
+    isActive: true
+  }).sort({ minQuantity: 1 })
+
+  // Get stock by branch
+  const stockByBranch = await storeInventoryModel.find({ product: product._id })
+    .populate('branch', 'name address')
+    .select('branch quantity')
+
+  return {
+    ...product.toObject(),
+    totalStock,
+    inStock: totalStock > 0,
+    pricingRules: pricingRules.map(rule => ({
+      minQuantity: rule.minQuantity,
+      maxQuantity: rule.maxQuantity,
+      discountPercentage: rule.discountPercentage,
+      discountedPrice: product.price * (1 - rule.discountPercentage / 100)
+    })),
+    stockByBranch: stockByBranch.map(inv => ({
+      branch: inv.branch,
+      quantity: inv.quantity,
+      inStock: inv.quantity > 0
+    }))
+  }
+}
+
 export const PRODUCT_SERVICE = {
   getProductById,
   getAllProducts,
@@ -176,5 +367,12 @@ export const PRODUCT_SERVICE = {
   updateProductById,
   deleteProductById,
   updateProductStatus,
-  getProductCategories
+  getProductCategories,
+  getProductBySlug,
+  getProductsWithStock,
+  getProductsByDevice,
+  getFeaturedProducts,
+  getNewArrivals,
+  getRelatedProducts,
+  getProductDetailForOrder
 }

@@ -2,7 +2,7 @@ import express from 'express'
 import { UPLOAD_CONTROLLER } from '#controllers/uploadController.js'
 import upload from '#middlewares/uploadHandlingMiddleware.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
-import { apiRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 
 const router = express.Router()
 

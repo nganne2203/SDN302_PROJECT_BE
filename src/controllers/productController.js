@@ -86,6 +86,78 @@ const updateProductStatus = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getProductBySlug = async (req, res, next) => {
+  try {
+    const result = await PRODUCT_SERVICE.getProductBySlug(req.params.slug)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy thông tin sản phẩm thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const getProductsWithStock = async (req, res, next) => {
+  try {
+    const result = await PRODUCT_SERVICE.getProductsWithStock(req.validated?.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result.data,
+      pagination: result.pagination,
+      message: 'Lấy danh sách sản phẩm với thông tin tồn kho thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const getProductsByDevice = async (req, res, next) => {
+  try {
+    const result = await PRODUCT_SERVICE.getProductsByDevice(req.params.deviceId, req.validated.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result.data,
+      pagination: result.pagination,
+      message: 'Lấy sản phẩm theo thiết bị thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const getFeaturedProducts = async (req, res, next) => {
+  try {
+    const result = await PRODUCT_SERVICE.getFeaturedProducts(req.validated.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy sản phẩm nổi bật thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const getNewArrivals = async (req, res, next) => {
+  try {
+    const result = await PRODUCT_SERVICE.getNewArrivals(req.validated.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy sản phẩm mới thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const getRelatedProducts = async (req, res, next) => {
+  try {
+    const result = await PRODUCT_SERVICE.getRelatedProducts(req.params.id, req.validated.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy sản phẩm liên quan thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const getProductDetailForOrder = async (req, res, next) => {
+  try {
+    const result = await PRODUCT_SERVICE.getProductDetailForOrder(req.params.id)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy thông tin sản phẩm để đặt hàng thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 export const PRODUCT_CONTROLLER = {
   getProductById,
   getAllProducts,
@@ -94,5 +166,12 @@ export const PRODUCT_CONTROLLER = {
   createProduct,
   updateProduct,
   deleteProductById,
-  updateProductStatus
+  updateProductStatus,
+  getProductBySlug,
+  getProductsWithStock,
+  getProductsByDevice,
+  getFeaturedProducts,
+  getNewArrivals,
+  getRelatedProducts,
+  getProductDetailForOrder
 }

@@ -1,7 +1,7 @@
 import express from 'express'
 import { PRODUCT_CONTROLLER } from '#controllers/productController.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 import { RoleEnum } from '#constants/roleConstant.js'
@@ -107,6 +107,97 @@ router.get(
 
 /**
  * @swagger
+ * /api/products/with-stock:
+ *   get:
+ *     summary: Get products with stock information
+ *     description: Retrieve products with stock availability and pricing rules for ordering.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *     responses:
+ *       200:
+ *         description: Products with stock info retrieved successfully
+ */
+router.get(
+  '/with-stock',
+  apiRateLimiter,
+  validationHandlingMiddleware({ query: PRODUCT_VALIDATION.query }),
+  PRODUCT_CONTROLLER.getProductsWithStock
+)
+
+/**
+ * @swagger
+ * /api/products/featured:
+ *   get:
+ *     summary: Get featured products
+ *     description: Retrieve top-rated and popular products.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 8
+ *     responses:
+ *       200:
+ *         description: Featured products retrieved successfully
+ */
+router.get(
+  '/featured',
+  apiRateLimiter,
+  PRODUCT_CONTROLLER.getFeaturedProducts
+)
+
+/**
+ * @swagger
+ * /api/products/new-arrivals:
+ *   get:
+ *     summary: Get new arrival products
+ *     description: Retrieve latest products.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 8
+ *     responses:
+ *       200:
+ *         description: New arrivals retrieved successfully
+ */
+router.get(
+  '/new-arrivals',
+  apiRateLimiter,
+  PRODUCT_CONTROLLER.getNewArrivals
+)
+
+/**
+ * @swagger
  * /api/products/search:
  *   get:
  *     summary: Search products
@@ -156,6 +247,70 @@ router.get(
   apiRateLimiter,
   validationHandlingMiddleware({ query: PRODUCT_VALIDATION.searchQuery }),
   PRODUCT_CONTROLLER.searchProducts
+)
+
+/**
+ * @swagger
+ * /api/products/by-device/{deviceId}:
+ *   get:
+ *     summary: Get products by device compatibility
+ *     description: Retrieve products compatible with a specific device.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: path
+ *         name: deviceId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Device ID (24 character hex string)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Products retrieved successfully
+ *       404:
+ *         description: Device not found
+ */
+router.get(
+  '/by-device/:deviceId',
+  apiRateLimiter,
+  validationHandlingMiddleware({ params: PRODUCT_VALIDATION.deviceIdParam }),
+  PRODUCT_CONTROLLER.getProductsByDevice
+)
+
+/**
+ * @swagger
+ * /api/products/slug/{slug}:
+ *   get:
+ *     summary: Get product by slug
+ *     description: Retrieve a product using SEO-friendly slug.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product slug
+ *     responses:
+ *       200:
+ *         description: Product retrieved successfully
+ *       404:
+ *         description: Product not found
+ */
+router.get(
+  '/slug/:slug',
+  apiRateLimiter,
+  validationHandlingMiddleware({ params: PRODUCT_VALIDATION.slugParam }),
+  PRODUCT_CONTROLLER.getProductBySlug
 )
 
 /**
@@ -248,6 +403,67 @@ router.get(
   apiRateLimiter,
   validationHandlingMiddleware({ params: PRODUCT_VALIDATION.idParam }),
   PRODUCT_CONTROLLER.getProductById
+)
+
+/**
+ * @swagger
+ * /api/products/{id}/for-order:
+ *   get:
+ *     summary: Get product detail for ordering
+ *     description: Retrieve product with full stock info and pricing rules for order flow.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID (24 character hex string)
+ *     responses:
+ *       200:
+ *         description: Product order info retrieved successfully
+ *       400:
+ *         description: Product not available
+ *       404:
+ *         description: Product not found
+ */
+router.get(
+  '/:id/for-order',
+  apiRateLimiter,
+  validationHandlingMiddleware({ params: PRODUCT_VALIDATION.idParam }),
+  PRODUCT_CONTROLLER.getProductDetailForOrder
+)
+
+/**
+ * @swagger
+ * /api/products/{id}/related:
+ *   get:
+ *     summary: Get related products
+ *     description: Retrieve products in the same category.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID (24 character hex string)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 4
+ *     responses:
+ *       200:
+ *         description: Related products retrieved successfully
+ *       404:
+ *         description: Product not found
+ */
+router.get(
+  '/:id/related',
+  apiRateLimiter,
+  validationHandlingMiddleware({ params: PRODUCT_VALIDATION.idParam }),
+  PRODUCT_CONTROLLER.getRelatedProducts
 )
 
 /**

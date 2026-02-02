@@ -6,7 +6,7 @@ import { ORDER_VALIDATION } from '#validations/orderValidation.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { ORDER_CONSTANT } from '#constants/orderConstant.js'
 import { RoleEnum } from '#constants/roleConstant.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 
 const router = express.Router()
@@ -84,7 +84,7 @@ router.post(
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
   sanitizeRequest(ORDER_CONSTANT.CREATE_ORDER_FIELDS, ORDER_CONSTANT.CREATE_ORDER_REQUIRED_FIELDS),
-  validationHandlingMiddleware(ORDER_VALIDATION.createOrder),
+  validationHandlingMiddleware({ body: ORDER_VALIDATION.createOrder }),
   ORDER_CONTROLLER.createOrder
 )
 
@@ -135,7 +135,7 @@ router.get(
   '/my-orders',
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
-  validationHandlingMiddleware(ORDER_VALIDATION.getOrders, 'query'),
+  validationHandlingMiddleware({ query: ORDER_VALIDATION.getOrders }),
   ORDER_CONTROLLER.getMyOrders
 )
 
@@ -209,7 +209,7 @@ router.get(
   '/all',
   apiRateLimiter,
   requireRoles(RoleEnum.ADMIN, RoleEnum.STAFF),
-  validationHandlingMiddleware(ORDER_VALIDATION.getOrders, 'query'),
+  validationHandlingMiddleware({ query: ORDER_VALIDATION.getOrders }),
   ORDER_CONTROLLER.getAllOrders
 )
 
@@ -242,6 +242,7 @@ router.get(
 router.get(
   '/order-number/:orderNumber',
   apiRateLimiter,
+  validationHandlingMiddleware({ params: ORDER_VALIDATION.orderParam }),
   ORDER_CONTROLLER.getOrderByOrderNumber
 )
 
@@ -274,6 +275,7 @@ router.get(
 router.get(
   '/:orderId',
   apiRateLimiter,
+  validationHandlingMiddleware({ params: ORDER_VALIDATION.orderIdParam }),
   ORDER_CONTROLLER.getOrderById
 )
 
@@ -322,7 +324,10 @@ router.patch(
   '/:orderId/status',
   apiRateLimiter,
   requireRoles(RoleEnum.ADMIN, RoleEnum.STAFF),
-  validationHandlingMiddleware(ORDER_VALIDATION.updateOrderStatus),
+  validationHandlingMiddleware({
+    params: ORDER_VALIDATION.orderIdParam,
+    body: ORDER_VALIDATION.updateOrderStatus
+  }),
   ORDER_CONTROLLER.updateOrderStatus
 )
 
@@ -370,7 +375,10 @@ router.patch(
   '/:orderId/cancel',
   apiRateLimiter,
   sanitizeRequest(ORDER_CONSTANT.CANCEL_ORDER_FIELDS),
-  validationHandlingMiddleware(ORDER_VALIDATION.cancelOrder),
+  validationHandlingMiddleware({
+    params: ORDER_VALIDATION.orderIdParam,
+    body: ORDER_VALIDATION.cancelOrder
+  }),
   ORDER_CONTROLLER.cancelOrder
 )
 
@@ -432,7 +440,10 @@ router.patch(
   apiRateLimiter,
   requireRoles(RoleEnum.ADMIN, RoleEnum.STAFF),
   sanitizeRequest(ORDER_CONSTANT.UPDATE_DELIVERY_INFO_FIELDS),
-  validationHandlingMiddleware(ORDER_VALIDATION.updateDeliveryInfo),
+  validationHandlingMiddleware({
+    params: ORDER_VALIDATION.orderIdParam,
+    body: ORDER_VALIDATION.updateDeliveryInfo
+  }),
   ORDER_CONTROLLER.updateDeliveryInfo
 )
 

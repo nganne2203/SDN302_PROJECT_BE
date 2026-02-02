@@ -3,7 +3,7 @@ import { BRANCH_CONTROLLER } from '#controllers/branchController.js'
 import { BRANCH_VALIDATION } from '#validations/branchValidation.js'
 import { validationHandlingMiddleware } from '#middlewares/validationHandlingMiddleware.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import {
   CREATE_BRANCH_FIELDS,

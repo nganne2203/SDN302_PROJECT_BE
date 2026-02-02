@@ -6,7 +6,7 @@ import { CART_VALIDATION } from '#validations/cartValidation.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
 import { CART_CONSTANT } from '#constants/cartConstant.js'
 import { RoleEnum } from '#constants/roleConstant.js'
-import { apiRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 
 const router = express.Router()
@@ -78,7 +78,7 @@ router.post(
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
   sanitizeRequest(CART_CONSTANT.ADD_TO_CART_FIELDS, CART_CONSTANT.ADD_TO_CART_REQUIRED_FIELDS),
-  validationHandlingMiddleware(CART_VALIDATION.addToCart),
+  validationHandlingMiddleware({ body: CART_VALIDATION.addToCart }),
   CART_CONTROLLER.addToCart
 )
 
@@ -153,7 +153,7 @@ router.delete(
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
   sanitizeRequest(CART_CONSTANT.REMOVE_CART_ITEM_FIELDS, CART_CONSTANT.REMOVE_CART_ITEM_FIELDS),
-  validationHandlingMiddleware(CART_VALIDATION.removeCartItem),
+  validationHandlingMiddleware({ body: CART_VALIDATION.removeCartItem }),
   CART_CONTROLLER.removeCartItem
 )
 
@@ -189,7 +189,7 @@ router.put(
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
   sanitizeRequest(CART_CONSTANT.UPDATE_CART_ITEM_FIELDS, CART_CONSTANT.UPDATE_CART_ITEM_FIELDS),
-  validationHandlingMiddleware(CART_VALIDATION.updateCartItem),
+  validationHandlingMiddleware({ body: CART_VALIDATION.updateCartItem }),
   CART_CONTROLLER.updateCartItemQuantity
 )
 
@@ -230,7 +230,7 @@ router.put(
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
   sanitizeRequest(CART_CONSTANT.UPDATE_CART_SERVICES_FIELDS, CART_CONSTANT.UPDATE_CART_SERVICES_FIELDS),
-  validationHandlingMiddleware(CART_VALIDATION.updateCartServices),
+  validationHandlingMiddleware({ body: CART_VALIDATION.updateCartItemServices }),
   CART_CONTROLLER.updateCartItemServices
 )
 
