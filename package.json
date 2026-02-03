@@ -7,42 +7,18 @@
     "node": "20.x"
   },
   "imports": {
-    "#configs/*": {
-      "default": "./dist/configs/*"
-    },
-    "#constants/*": {
-      "default": "./dist/constants/*"
-    },
-    "#controllers/*": {
-      "default": "./dist/controllers/*"
-    },
-    "#middlewares/*": {
-      "default": "./dist/middlewares/*"
-    },
-    "#models/*": {
-      "default": "./dist/models/*"
-    },
-    "#providers/*": {
-      "default": "./dist/providers/*"
-    },
-    "#repositories/*": {
-      "default": "./dist/repositories/*"
-    },
-    "#routes/*": {
-      "default": "./dist/routes/*"
-    },
-    "#services/*": {
-      "default": "./dist/services/*"
-    },
-    "#sockets/*": {
-      "default": "./dist/sockets/*"
-    },
-    "#utils/*": {
-      "default": "./dist/utils/*"
-    },
-    "#validations/*": {
-      "default": "./dist/validations/*"
-    }
+    "#configs/*": "./src/configs/*",
+    "#constants/*": "./src/constants/*",
+    "#controllers/*": "./src/controllers/*",
+    "#middlewares/*": "./src/middlewares/*",
+    "#models/*": "./src/models/*",
+    "#providers/*": "./src/providers/*",
+    "#repositories/*": "./src/repositories/*",
+    "#routes/*": "./src/routes/*",
+    "#services/*": "./src/services/*",
+    "#sockets/*": "./src/sockets/*",
+    "#utils/*": "./src/utils/*",
+    "#validations/*": "./src/validations/*"
   },
   "scripts": {
     "build": "rimraf dist && copyfiles -u 1 \"src/**/*\" dist",
@@ -51,11 +27,8 @@
     "prod": "cross-env NODE_ENV=prod npm run start",
     "prestart": "npm run build",
     "start": "cross-env NODE_ENV=prod node dist/server.js",
-    "prestaging": "npm run build",
     "staging": "cross-env NODE_ENV=staging node dist/server.js",
-    "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand --detectOpenHandles --forceExit",
-    "test:watch": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --watch --runInBand",
-    "test:coverage": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --coverage --runInBand --detectOpenHandles --forceExit",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
@@ -88,15 +61,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@shelf/jest-mongodb": "^6.0.2",
-    "@types/jest": "^30.0.0",
     "concurrently": "^9.2.1",
     "copyfiles": "^2.4.1",
     "eslint": "^9.39.2",
     "globals": "^17.0.0",
-    "jest": "^30.2.0",
-    "mongodb-memory-server": "^11.0.1",
-    "nodemon": "^3.1.11",
-    "supertest": "^7.2.2"
+    "nodemon": "^3.1.11"
   }
 }
