@@ -1,8 +1,0 @@
-[phases.build]
-cmds = ["npm install", "npm run build"]
-
-[phases.start]
-cmd = "npm run staging"
-
-[variables]
-NODE_ENV = "staging"
