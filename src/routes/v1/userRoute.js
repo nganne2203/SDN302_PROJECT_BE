@@ -290,7 +290,6 @@ router.put('/me',
   USER_CONTROLLER.updateCurrentUser
 )
 
-
 /**
  * @swagger
  * /api/v1/users/change-password:
