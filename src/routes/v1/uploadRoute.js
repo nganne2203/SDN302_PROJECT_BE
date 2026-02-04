@@ -6,8 +6,6 @@ import { apiRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandling
 
 const router = express.Router()
 
-router.use(authorizationMiddleware)
-
 /**
  * @swagger
  * /api/v1/uploads/images:
@@ -37,6 +35,7 @@ router.use(authorizationMiddleware)
  */
 router.post('/images',
   writeRateLimiter,
+  authorizationMiddleware,
   upload.single('image'),
   UPLOAD_CONTROLLER.uploadImage
 )
@@ -73,6 +72,7 @@ router.post('/images',
  */
 router.post('/multiple-images',
   writeRateLimiter,
+  authorizationMiddleware,
   upload.array('images', 10),
   UPLOAD_CONTROLLER.uploadMultipleImages
 )
@@ -128,6 +128,7 @@ router.get('/images/:publicId',
  */
 router.delete('/images/:publicId',
   writeRateLimiter,
+  authorizationMiddleware,
   UPLOAD_CONTROLLER.deleteImage
 )
 
