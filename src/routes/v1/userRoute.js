@@ -290,158 +290,6 @@ router.put('/me',
   USER_CONTROLLER.updateCurrentUser
 )
 
-/**
- * @swagger
- * /api/v1/users/{id}:
- *   get:
- *     summary: Get user by ID
- *     description: Retrieve a user by their unique ID.
- *     tags: [User]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The unique identifier of the user
- *     responses:
- *       200:
- *         description: Get successfully
- */
-router.get('/:id',
-  apiRateLimiter,
-  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
-  validationHandlingMiddleware({ params: USER_VALIDATION.idParam }),
-  USER_CONTROLLER.getUserById
-)
-
-/**
- * @swagger
- * /api/v1/users/{id}:
- *   put:
- *     summary: Update user by ID
- *     description: Update a user's information by their unique ID.
- *     tags: [User]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The unique identifier of the user
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               fullname:
- *                 type: string
- *                 example: Nguyen Van A
- *               email:
- *                 type: string
- *                 format: email
- *                 example: example@gmail.com
- *               phone:
- *                 type: string
- *                 example: '0123456789'
- *               role:
- *                 type: string
- *                 enum: [admin, manager, staff, customer]
- *                 example: customer
- *               branch:
- *                 type: string
- *                 example: '60d0fe4f5311236168a109ca'
- *               avatar:
- *                 type: string
- *                 format: url
- *                 example: 'http://example.com/avatar.jpg'
- *               addresses:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     fullname:
- *                       type: string
- *                     phone:
- *                       type: string
- *                     addressLine:
- *                       type: string
- *                     city:
- *                       type: string
- *                     district:
- *                       type: string
- *                     ward:
- *                       type: string
- *                     isDefault:
- *                       type: boolean
- *                 example:
- *                   - fullname: 'Mai Thi Thanh Ngan'
- *                     phone: '0123456789'
- *                     addressLine: '123 Le Loi'
- *                     city: 'Ho Chi Minh'
- *                     district: 'District 1'
- *                     ward: 'Ben Nghe'
- *                     isDefault: true
- *     responses:
- *       200:
- *         description: Update successfully
- */
-router.put('/:id',
-  writeRateLimiter,
-  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
-  sanitizeRequest(UPDATE_USER_FIELDS, []),
-  validationHandlingMiddleware({
-    params: USER_VALIDATION.idParam,
-    body: USER_VALIDATION.updateUser
-  }),
-  USER_CONTROLLER.updateUser
-)
-
-/**
- * @swagger
- * /api/v1/users/{id}/status:
- *   put:
- *     summary: Update user status by ID
- *     description: Update a user's active status by their unique ID.
- *     tags: [User]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The unique identifier of the user
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               isActive:
- *                 type: boolean
- *                 example: true
- *     responses:
- *       200:
- *         description: Update successfully
- */
-router.put('/:id/status',
-  writeRateLimiter,
-  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
-  validationHandlingMiddleware({
-    params: USER_VALIDATION.idParam,
-    body: USER_VALIDATION.updateUserStatus
-  }),
-  USER_CONTROLLER.updateUserStatus
-)
 
 /**
  * @swagger
@@ -594,6 +442,159 @@ router.get('/profile',
   authRateLimiter,
   authorizationMiddleware,
   USER_CONTROLLER.getCurrentUser
+)
+
+/**
+ * @swagger
+ * /api/v1/users/{id}:
+ *   get:
+ *     summary: Get user by ID
+ *     description: Retrieve a user by their unique ID.
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique identifier of the user
+ *     responses:
+ *       200:
+ *         description: Get successfully
+ */
+router.get('/:id',
+  apiRateLimiter,
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
+  validationHandlingMiddleware({ params: USER_VALIDATION.idParam }),
+  USER_CONTROLLER.getUserById
+)
+
+/**
+ * @swagger
+ * /api/v1/users/{id}:
+ *   put:
+ *     summary: Update user by ID
+ *     description: Update a user's information by their unique ID.
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique identifier of the user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fullname:
+ *                 type: string
+ *                 example: Nguyen Van A
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: example@gmail.com
+ *               phone:
+ *                 type: string
+ *                 example: '0123456789'
+ *               role:
+ *                 type: string
+ *                 enum: [admin, manager, staff, customer]
+ *                 example: customer
+ *               branch:
+ *                 type: string
+ *                 example: '60d0fe4f5311236168a109ca'
+ *               avatar:
+ *                 type: string
+ *                 format: url
+ *                 example: 'http://example.com/avatar.jpg'
+ *               addresses:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     fullname:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                     addressLine:
+ *                       type: string
+ *                     city:
+ *                       type: string
+ *                     district:
+ *                       type: string
+ *                     ward:
+ *                       type: string
+ *                     isDefault:
+ *                       type: boolean
+ *                 example:
+ *                   - fullname: 'Mai Thi Thanh Ngan'
+ *                     phone: '0123456789'
+ *                     addressLine: '123 Le Loi'
+ *                     city: 'Ho Chi Minh'
+ *                     district: 'District 1'
+ *                     ward: 'Ben Nghe'
+ *                     isDefault: true
+ *     responses:
+ *       200:
+ *         description: Update successfully
+ */
+router.put('/:id',
+  writeRateLimiter,
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
+  sanitizeRequest(UPDATE_USER_FIELDS, []),
+  validationHandlingMiddleware({
+    params: USER_VALIDATION.idParam,
+    body: USER_VALIDATION.updateUser
+  }),
+  USER_CONTROLLER.updateUser
+)
+
+/**
+ * @swagger
+ * /api/v1/users/{id}/status:
+ *   put:
+ *     summary: Update user status by ID
+ *     description: Update a user's active status by their unique ID.
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique identifier of the user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               isActive:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Update successfully
+ */
+router.put('/:id/status',
+  writeRateLimiter,
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
+  validationHandlingMiddleware({
+    params: USER_VALIDATION.idParam,
+    body: USER_VALIDATION.updateUserStatus
+  }),
+  USER_CONTROLLER.updateUserStatus
 )
 
 export const USER_ROUTE = router
