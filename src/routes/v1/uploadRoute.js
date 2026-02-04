@@ -84,8 +84,6 @@ router.post('/multiple-images',
  *     summary: Lấy thông tin ảnh
  *     description: Trả về thông tin ảnh theo publicId trên Cloudinary.
  *     tags: [Upload]
- *     security:
- *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: publicId
