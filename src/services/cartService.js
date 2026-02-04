@@ -18,7 +18,7 @@ const validateServiceItems = async (productId, services) => {
   const validatedServices = []
 
   for (const serviceId of services) {
-    const service = await SERVICE_ITEM_SERVICE.getServiceDetails(serviceId)
+    const service = await SERVICE_ITEM_SERVICE.getServiceById(serviceId)
     if (service.product.toString() !== productId.toString()) {
       throw new ApiError(ERROR_CODES.BAD_REQUEST, [`Dịch vụ ${service.name} không thuộc về sản phẩm tương ứng`])
     }
@@ -163,7 +163,7 @@ const validateCartBeforeCheckout = async (userId) => {
       throw new ApiError(ERROR_CODES.BAD_REQUEST, [`Giá sản phẩm ${product.name} đã thay đổi, vui lòng kiểm tra lại giỏ hàng`])
     }
     for (const serviceItem of item.services) {
-      const service = await SERVICE_ITEM_SERVICE.getServiceDetails(serviceItem.service)
+      const service = await SERVICE_ITEM_SERVICE.getServiceById(serviceItem.service)
       if (!service || !service.isActive) {
         throw new ApiError(ERROR_CODES.BAD_REQUEST, [`Dịch vụ ${service.name} hiện không khả dụng`])
       }

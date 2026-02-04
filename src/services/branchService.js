@@ -147,6 +147,37 @@ const removeManagerFromBranch = async (branchId, updatedBy = null) => {
   return BRANCH_REPOSITORY.updateBranchById(branchId, { manager: null, updatedBy })
 }
 
+const deleteBranch = async (branchId, updatedBy = null) => {
+  const branch = await getBranchById(branchId)
+  if (branch.manager) {
+    await USER_REPOSITORY.updateUserById(branch.manager, { branch: null })
+  }
+  return BRANCH_REPOSITORY.updateBranchById(branchId, { isDeleted: true, updatedBy })
+}
+
+const getAllManagerForBranch = async (query = {}) => {
+  const { page, limit, search, sortBy, sortOrder } = query
+  const filter = { role: RoleEnum.MANAGER, branch: { $exists: false } }
+  if (search) {
+    const escapedSearch = escapeRegex(search)
+    filter.$or = [
+      { name: { $regex: escapedSearch, $options: 'i' } },
+      { email: { $regex: escapedSearch, $options: 'i' } }
+    ]
+  }
+  const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
+
+  const result = await USER_REPOSITORY.getAllUsers(filter, {
+    page,
+    limit,
+    sort
+  })
+  return {
+    data: result.docs,
+    pagination: mapMongoosePagination(result)
+  }
+}
+
 export const BRANCH_SERVICE = {
   getBranchById,
   getAllBranches,
@@ -154,5 +185,7 @@ export const BRANCH_SERVICE = {
   updateBranch,
   assignManagerToBranch,
   updateBranchStatus,
-  removeManagerFromBranch
+  removeManagerFromBranch,
+  deleteBranch,
+  getAllManagerForBranch
 }

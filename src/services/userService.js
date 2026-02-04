@@ -8,6 +8,12 @@ import { RoleEnum } from '#constants/roleConstant.js'
 import { BRANCH_REPOSITORY } from '#repositories/branchRepository.js'
 import { UPLOAD_SERVICE } from '#services/uploadService.js'
 import { CART_SERVICE } from '#services/cartService.js'
+import { maskEmail } from '#utils/formatterUtil.js'
+import { EMAIL_SERVICE } from '#services/emailService.js'
+import { VERIFICATION_REPOSITORY } from '#repositories/verificationRepository.js'
+import { VERIFY_TYPE } from '#constants/verificationConstant.js'
+import { GENERATE_UTILS } from '#utils/generateUtil.js'
+import { USER_PROVIDER } from '#constants/userConstant.js'
 
 const deleteOldAvatarIfNeeded = async (currentAvatarId, newAvatarId) => {
   if (!currentAvatarId || !newAvatarId) return
@@ -362,6 +368,144 @@ const getAllUsersForManager = async (managerId, query = {}) => {
   }
 }
 
+const getCurrentUser = async (userId) => {
+  const user = await USER_REPOSITORY.getUserById(userId)
+  if (!user) {
+    throw new ApiError(ERROR_CODES.NOT_FOUND, ['Người dùng không tồn tại'])
+  }
+
+  if (!user.isActive) {
+    throw new ApiError(ERROR_CODES.ACCOUNT_DISABLED, [
+      'Tài khoản của bạn đã bị vô hiệu hóa'
+    ])
+  }
+
+  return {
+    user
+  }
+}
+
+const changePassword = async (userId, data) => {
+  const { currentPassword, newPassword } = data
+  const user = await USER_REPOSITORY.getUserById(userId, { includePassword: true })
+  if (!user) {
+    throw new ApiError(ERROR_CODES.NOT_FOUND, ['Người dùng không tồn tại'])
+  }
+  if (!user.isActive) {
+    throw new ApiError(ERROR_CODES.ACCOUNT_DISABLED, [
+      'Tài khoản của bạn đã bị vô hiệu hóa'
+    ])
+  }
+  if (currentPassword === newPassword) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, [
+      'Mật khẩu mới không được trùng với mật khẩu hiện tại'
+    ])
+  }
+
+  const isPasswordValid = await BCRYPT_UTILS.comparePassword(currentPassword, user.password)
+  if (!isPasswordValid) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, [
+      'Mật khẩu hiện tại không chính xác'
+    ])
+  }
+
+  const hashedPassword = await BCRYPT_UTILS.hashPassword(newPassword)
+  await USER_REPOSITORY.updateUserById(user._id, {
+    password: hashedPassword
+  })
+
+  await EMAIL_SERVICE.changePasswordNotification(user.email)
+
+  return {
+    message: 'Đổi mật khẩu thành công'
+  }
+}
+
+const setPassword = async (userId, data) => {
+  const { password } = data
+  const user = await USER_REPOSITORY.getUserById(userId, { includePassword: true })
+  if (!user) {
+    throw new ApiError(ERROR_CODES.NOT_FOUND, ['Người dùng không tồn tại'])
+  }
+
+  if (!user.isActive) {
+    throw new ApiError(ERROR_CODES.ACCOUNT_DISABLED, [
+      'Tài khoản của bạn đã bị vô hiệu hóa'
+    ])
+  }
+
+  if (user.password) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, [
+      'Bạn đã có mật khẩu. Vui lòng dùng chức năng đổi mật khẩu'
+    ])
+  }
+
+  if (user.provider === USER_PROVIDER.LOCAL && user.password) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, [
+      'Chỉ người dùng OAuth mới có thể sử dụng chức năng này'
+    ])
+  }
+
+  const hashedPassword = await BCRYPT_UTILS.hashPassword(password)
+  await USER_REPOSITORY.updateUserById(user._id, {
+    password: hashedPassword
+  })
+
+  await EMAIL_SERVICE.changePasswordNotification(user.email)
+
+  return {
+    message: 'Đặt mật khẩu thành công'
+  }
+}
+
+const resetPassword = async (data, requestInfo = {}) => {
+  const { email } = data
+  const { ipAddress = '', userAgent = '' } = requestInfo
+  const user = await USER_REPOSITORY.getUserByEmail(email)
+  if (!user) throw new ApiError(ERROR_CODES.NOT_FOUND, ['Email không tồn tại'])
+  if (!user.isActive) throw new ApiError(ERROR_CODES.ACCOUNT_DISABLED, ['Tài khoản của bạn đã bị vô hiệu hóa'])
+  if (!user.isEmailVerified) throw new ApiError(ERROR_CODES.EMAIL_NOT_VERIFIED, ['Vui lòng xác nhận email trước khi đặt lại mật khẩu'])
+  await VERIFICATION_REPOSITORY.deleteVerificationCodesByUserId(user._id, VERIFY_TYPE.RESET_PASSWORD)
+  const code = GENERATE_UTILS.generateVerificationCode()
+  await VERIFICATION_REPOSITORY.createVerificationCode({
+    user: user._id,
+    type: VERIFY_TYPE.RESET_PASSWORD,
+    code,
+    expiresAt: GENERATE_UTILS.expiresInMinutes(),
+    ipAddress,
+    userAgent
+  })
+  await EMAIL_SERVICE.sendVerificationCode(user.email, code, VERIFY_TYPE.RESET_PASSWORD, GENERATE_UTILS.OTP_EXPIRES_IN_MINUTES)
+  return {
+    message: `Mã xác thực đặt lại mật khẩu đã được gửi đến email ${maskEmail(email)}`
+  }
+}
+
+const confirmPasswordReset = async (data) => {
+  const { email, password } = data
+  const user = await USER_REPOSITORY.getUserByEmail(email)
+  if (!user) {
+    throw new ApiError(ERROR_CODES.NOT_FOUND, ['Người dùng không tồn tại'])
+  }
+
+  if (!user.isActive) {
+    throw new ApiError(ERROR_CODES.ACCOUNT_DISABLED, [
+      'Tài khoản của bạn đã bị vô hiệu hóa'
+    ])
+  }
+
+  const hashedPassword = await BCRYPT_UTILS.hashPassword(password)
+  await USER_REPOSITORY.updateUserById(user._id, {
+    password: hashedPassword
+  })
+
+  await EMAIL_SERVICE.changePasswordNotification(user.email)
+
+  return {
+    message: 'Đặt lại mật khẩu thành công'
+  }
+}
+
 export const USER_SERVICE = {
   getUserById,
   getAllUsers,
@@ -375,5 +519,10 @@ export const USER_SERVICE = {
   updateEmailVerificationStatus,
   updateCurrentUser,
   getAllUsersForManager,
-  getManagerByBranch
+  getManagerByBranch,
+  getCurrentUser,
+  changePassword,
+  resetPassword,
+  confirmPasswordReset,
+  setPassword
 }

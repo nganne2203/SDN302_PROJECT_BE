@@ -32,15 +32,15 @@ export const REFRESH_TOKEN_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
 )
 
 export const CHANGE_PASSWORD_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
-  AUTH_VALIDATION.changePassword
+  USER_VALIDATION.changePassword
 )
 
 export const RESET_PASSWORD_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
-  AUTH_VALIDATION.resetPassword
+  USER_VALIDATION.resetPassword
 )
 
 export const CONFIRM_RESET_PASSWORD_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
-  AUTH_VALIDATION.confirmResetPassword
+  USER_VALIDATION.confirmResetPassword
 )
 
 export const CREATE_USER_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(

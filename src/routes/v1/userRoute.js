@@ -2,15 +2,18 @@ import express from 'express'
 import { USER_CONTROLLER } from '#controllers/userController.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
 import {
+  CHANGE_PASSWORD_FIELDS,
+  CONFIRM_RESET_PASSWORD_FIELDS,
   CREATE_USER_FIELDS,
   REQUIRE_FIELD_CREATE_USER,
+  RESET_PASSWORD_FIELDS,
   UPDATE_CURRENT_USER_FIELDS,
   UPDATE_USER_FIELDS
 } from '#constants/userConstant.js'
 import { RoleEnum } from '#constants/roleConstant.js'
 import { requireRoles } from '#middlewares/policiesHandlingMiddleware.js'
 import { sanitizeRequest } from '#middlewares/sanitizeRequestMiddleware.js'
-import { apiRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandlingmiddleware.js'
+import { apiRateLimiter, authRateLimiter, writeRateLimiter } from '#middlewares/rateLimitHandlingMiddleware.js'
 import { USER_VALIDATION } from '#validations/userValidation.js'
 import { validationHandlingMiddleware } from '#middlewares/validationHandlingMiddleware.js'
 
@@ -19,7 +22,7 @@ router.use(authorizationMiddleware)
 
 /**
  * @swagger
- * /api/users:
+ * /api/v1/users:
  *   get:
  *     summary: Get all users
  *     description: Retrieve a list of users with optional filtering, pagination, and sorting.
@@ -79,7 +82,7 @@ router.get('/',
 
 /**
  * @swagger
- * /api/users:
+ * /api/v1/users:
  *   post:
  *     summary: Create a new user
  *     description: Create a new user.
@@ -163,7 +166,7 @@ router.post('/',
 
 /**
  * @swagger
- * /api/users/manager:
+ * /api/v1/users/manager:
  *   get:
  *     summary: Get all users for manager
  *     description: Retrieve a list of users with optional filtering, pagination, and sorting.
@@ -221,7 +224,7 @@ router.get('/manager',
 
 /**
  * @swagger
- * /api/users/me:
+ * /api/v1/users/me:
  *   put:
  *     summary: Update current user profile
  *     description: Update the profile of the currently authenticated user.
@@ -289,7 +292,160 @@ router.put('/me',
 
 /**
  * @swagger
- * /api/users/{id}:
+ * /api/v1/users/change-password:
+ *   post:
+ *     summary: Change password
+ *     description: Handles changing of user password
+ *     tags: [User]
+ *     security:
+ *      - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                type: string
+ *                example: string
+ *               newPassword:
+ *                type: string
+ *                example: string
+ *     responses:
+ *       200:
+ *         description: Change password successful
+ */
+router.post('/change-password',
+  authRateLimiter,
+  authorizationMiddleware,
+  sanitizeRequest(CHANGE_PASSWORD_FIELDS, CHANGE_PASSWORD_FIELDS),
+  validationHandlingMiddleware({ body: USER_VALIDATION.changePassword }),
+  USER_CONTROLLER.changePassword
+)
+
+/**
+ * @swagger
+ * /api/v1/users/reset-password:
+ *   post:
+ *     summary: Reset password
+ *     description: Handles resetting of user password
+ *     tags: [User]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                type: string
+ *                example: string
+ *     responses:
+ *       200:
+ *         description: Reset password successful
+ */
+router.post('/reset-password',
+  authRateLimiter,
+  sanitizeRequest(RESET_PASSWORD_FIELDS, RESET_PASSWORD_FIELDS),
+  validationHandlingMiddleware({ body: USER_VALIDATION.resetPassword }),
+  USER_CONTROLLER.resetPassword
+)
+
+/**
+ * @swagger
+ * /api/v1/users/set-password:
+ *   post:
+ *     summary: Set password for OAuth users
+ *     description: Allows OAuth users without a password to set one
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password:
+ *                 type: string
+ *                 example: NewPassword@123
+ *     responses:
+ *       200:
+ *         description: Set password successful
+ */
+
+router.post('/set-password',
+  authRateLimiter,
+  authorizationMiddleware,
+  validationHandlingMiddleware({ body: USER_VALIDATION.setPassword }),
+  USER_CONTROLLER.setPassword
+)
+
+/**
+ * @swagger
+ * /api/v1/users/confirm-reset-password:
+ *   post:
+ *     summary: Confirm reset password
+ *     description: Confirm and finalize the password reset process
+ *     tags: [User]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 example: NewPassword@123
+ *     responses:
+ *       200:
+ *         description: Confirm reset password successful
+ */
+router.post('/confirm-reset-password',
+  authRateLimiter,
+  sanitizeRequest(CONFIRM_RESET_PASSWORD_FIELDS, CONFIRM_RESET_PASSWORD_FIELDS),
+  validationHandlingMiddleware({ body: USER_VALIDATION.confirmResetPassword }),
+  USER_CONTROLLER.confirmResetPassword
+)
+
+/**
+ * @swagger
+ * /api/v1/users/profile:
+ *   get:
+ *     summary: Get current user profile
+ *     description: Retrieves the profile of the currently authenticated user
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Get current user profile successful
+ */
+router.get('/profile',
+  authRateLimiter,
+  authorizationMiddleware,
+  USER_CONTROLLER.getCurrentUser
+)
+
+/**
+ * @swagger
+ * /api/v1/users/{id}:
  *   get:
  *     summary: Get user by ID
  *     description: Retrieve a user by their unique ID.
@@ -316,7 +472,7 @@ router.get('/:id',
 
 /**
  * @swagger
- * /api/users/{id}:
+ * /api/v1/users/{id}:
  *   put:
  *     summary: Update user by ID
  *     description: Update a user's information by their unique ID.
@@ -402,7 +558,7 @@ router.put('/:id',
 
 /**
  * @swagger
- * /api/users/{id}/status:
+ * /api/v1/users/{id}/status:
  *   put:
  *     summary: Update user status by ID
  *     description: Update a user's active status by their unique ID.
