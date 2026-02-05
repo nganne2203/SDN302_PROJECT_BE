@@ -11,7 +11,8 @@ import {
   REQUIRE_FIELD_REGISTER,
   VERIFY_OTP_FIELDS,
   RESEND_OTP_FIELDS,
-  REFRESH_TOKEN_FIELDS
+  REFRESH_TOKEN_FIELDS,
+  LOGIN_NO_CAPTCHA_FIELDS
 } from '#constants/userConstant.js'
 import { verifyRecaptchaMiddleware } from '#middlewares/verifyCaptchaMiddleware.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
@@ -131,6 +132,38 @@ router.post('/login',
   AUTH_CONTROLLER.login
 )
 
+/**
+ * @swagger
+ * /api/v1/auth/login/no-captcha:
+ *   post:
+ *     summary: Login with email and password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: ngan@gmail.com
+ *               password:
+ *                 type: string
+ *                 example: Password@123
+ *     responses:
+ *       200:
+ *         description: Login success
+ */
+router.post('/login/no-captcha',
+  authRateLimiter,
+  sanitizeRequest(LOGIN_NO_CAPTCHA_FIELDS, LOGIN_NO_CAPTCHA_FIELDS),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.loginUserNoCaptcha }),
+  AUTH_CONTROLLER.login
+)
 /**
  * @swagger
  * /api/v1/auth/google:
