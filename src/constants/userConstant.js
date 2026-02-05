@@ -11,6 +11,10 @@ export const LOGIN_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
   AUTH_VALIDATION.loginUser
 )
 
+export const LOGIN_NO_CAPTCHA_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
+  AUTH_VALIDATION.loginUserNoCaptcha
+)
+
 export const REGISTER_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
   AUTH_VALIDATION.registerUser
 )
