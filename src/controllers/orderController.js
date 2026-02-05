@@ -148,6 +148,21 @@ const getOrderStatistics = async (req, res, next) => {
   }
 }
 
+const createOfflineOrder = async (req, res, next) => {
+  try {
+    const staffId = req.user.id
+    const order = await ORDER_SERVICE.createOfflineOrder(staffId, req.body)
+    res.status(StatusCodes.CREATED).json(
+      responseSuccess({
+        data: order,
+        message: 'Tạo đơn hàng offline thành công'
+      })
+    )
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const ORDER_CONTROLLER = {
   createOrder,
   getOrderById,
@@ -157,5 +172,6 @@ export const ORDER_CONTROLLER = {
   updateOrderStatus,
   cancelOrder,
   updateDeliveryInfo,
-  getOrderStatistics
+  getOrderStatistics,
+  createOfflineOrder
 }

@@ -90,9 +90,112 @@ router.post(
 
 /**
  * @swagger
+ * /api/v1/orders/offline:
+ *   post:
+ *     summary: Create offline order (Staff/Manager)
+ *     description: Staff or Manager creates order for customer at branch (walk-in purchase)
+ *     tags: [Orders]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - type
+ *               - items
+ *               - paymentMethod
+ *               - branchId
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 enum: [offline]
+ *                 example: offline
+ *               customerId:
+ *                 type: string
+ *                 example: 507f1f77bcf86cd799439011
+ *                 description: Customer ID (optional, for registered customers)
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - product
+ *                     - quantity
+ *                   properties:
+ *                     product:
+ *                       type: string
+ *                       example: 507f1f77bcf86cd799439011
+ *                     quantity:
+ *                       type: integer
+ *                       example: 2
+ *                     services:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                         example: 507f1f77bcf86cd799439011
+ *               shippingAddress:
+ *                 type: object
+ *                 description: Required only if hasDelivery is true
+ *                 properties:
+ *                   fullname:
+ *                     type: string
+ *                     example: Nguyen Van A
+ *                   phone:
+ *                     type: string
+ *                     example: '0912345678'
+ *                   addressLine:
+ *                     type: string
+ *                     example: 123 Nguyen Trai
+ *                   city:
+ *                     type: string
+ *                     example: Ho Chi Minh
+ *                   district:
+ *                     type: string
+ *                     example: District 1
+ *                   ward:
+ *                     type: string
+ *                     example: Ward 1
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [cash, cod, bank_transfer, vnpay]
+ *                 example: cash
+ *               message:
+ *                 type: string
+ *                 example: Customer note
+ *               branchId:
+ *                 type: string
+ *                 example: 507f1f77bcf86cd799439011
+ *               hasDelivery:
+ *                 type: boolean
+ *                 default: false
+ *                 example: false
+ *     responses:
+ *       201:
+ *         description: Offline order created successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Only staff or manager can create offline orders
+ */
+router.post(
+  '/offline',
+  apiRateLimiter,
+  requireRoles(RoleEnum.STAFF, RoleEnum.MANAGER, RoleEnum.ADMIN),
+  sanitizeRequest(ORDER_CONSTANT.CREATE_OFFLINE_ORDER_FIELDS, ORDER_CONSTANT.CREATE_OFFLINE_ORDER_REQUIRED_FIELDS),
+  validationHandlingMiddleware({ body: ORDER_VALIDATION.createOfflineOrder }),
+  ORDER_CONTROLLER.createOfflineOrder
+)
+
+/**
+ * @swagger
  * /api/v1/orders/my-orders:
  *   get:
- *     summary: Get customer's orders
+ *     summary: Get customer's orders (Customer)
  *     description: Get all orders of the authenticated customer
  *     tags: [Orders]
  *     security:
@@ -164,7 +267,7 @@ router.get(
  * @swagger
  * /api/v1/orders/all:
  *   get:
- *     summary: Get all orders (Admin/Staff)
+ *     summary: Get all orders (Admin/Staff/Manager)
  *     description: Get all orders in the system with filters
  *     tags: [Orders]
  *     security:
@@ -208,7 +311,7 @@ router.get(
 router.get(
   '/all',
   apiRateLimiter,
-  requireRoles(RoleEnum.ADMIN, RoleEnum.STAFF),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.STAFF, RoleEnum.MANAGER),
   validationHandlingMiddleware({ query: ORDER_VALIDATION.getOrders }),
   ORDER_CONTROLLER.getAllOrders
 )
@@ -283,7 +386,7 @@ router.get(
  * @swagger
  * /api/v1/orders/{orderId}/status:
  *   patch:
- *     summary: Update order status (Admin/Staff)
+ *     summary: Update order status (Admin/Staff/Manager)
  *     description: Update the status of an order
  *     tags: [Orders]
  *     security:
@@ -323,7 +426,7 @@ router.get(
 router.patch(
   '/:orderId/status',
   apiRateLimiter,
-  requireRoles(RoleEnum.ADMIN, RoleEnum.STAFF),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.STAFF, RoleEnum.MANAGER),
   validationHandlingMiddleware({
     params: ORDER_VALIDATION.orderIdParam,
     body: ORDER_VALIDATION.updateOrderStatus
@@ -336,7 +439,7 @@ router.patch(
  * /api/v1/orders/{orderId}/cancel:
  *   patch:
  *     summary: Cancel order
- *     description: Cancel an order (customer can cancel their own orders, admin/staff can cancel any)
+ *     description: Cancel an order (customer can cancel their own orders, admin/staff/manager can cancel any)
  *     tags: [Orders]
  *     security:
  *       - BearerAuth: []
@@ -374,6 +477,7 @@ router.patch(
 router.patch(
   '/:orderId/cancel',
   apiRateLimiter,
+  requireRoles(RoleEnum.CUSTOMER, RoleEnum.ADMIN, RoleEnum.STAFF, RoleEnum.MANAGER),
   sanitizeRequest(ORDER_CONSTANT.CANCEL_ORDER_FIELDS),
   validationHandlingMiddleware({
     params: ORDER_VALIDATION.orderIdParam,
@@ -386,7 +490,7 @@ router.patch(
  * @swagger
  * /api/v1/orders/{orderId}/delivery:
  *   patch:
- *     summary: Update delivery information (Admin/Staff)
+ *     summary: Update delivery information (Admin/Staff/Manager)
  *     description: Update delivery tracking and status information
  *     tags: [Orders]
  *     security:
@@ -438,7 +542,7 @@ router.patch(
 router.patch(
   '/:orderId/delivery',
   apiRateLimiter,
-  requireRoles(RoleEnum.ADMIN, RoleEnum.STAFF),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.STAFF, RoleEnum.MANAGER),
   sanitizeRequest(ORDER_CONSTANT.UPDATE_DELIVERY_INFO_FIELDS),
   validationHandlingMiddleware({
     params: ORDER_VALIDATION.orderIdParam,

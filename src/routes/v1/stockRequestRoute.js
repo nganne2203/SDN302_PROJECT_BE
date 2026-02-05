@@ -17,7 +17,7 @@ router.use(authorizationMiddleware)
  * @swagger
  * /api/v1/stock-requests:
  *   post:
- *     summary: Tạo yêu cầu nhập hàng
+ *     summary: Tạo yêu cầu nhập hàng mới (Manager only)
  *     description: Tạo một yêu cầu nhập hàng mới từ chi nhánh
  *     tags: [Stock Request]
  *     security:
@@ -73,7 +73,7 @@ router.post('/',
  * @swagger
  * /api/v1/stock-requests:
  *   get:
- *     summary: Lấy danh sách tất cả yêu cầu nhập hàng
+ *     summary: Lấy danh sách tất cả yêu cầu nhập hàng (admin only)
  *     description: Lấy danh sách yêu cầu nhập hàng với hỗ trợ phân trang, lọc và sắp xếp
  *     tags: [Stock Request]
  *     security:
@@ -131,7 +131,7 @@ router.get('/',
  * @swagger
  * /api/v1/stock-requests/pending:
  *   get:
- *     summary: Lấy danh sách yêu cầu chưa xử lý
+ *     summary: Lấy danh sách yêu cầu chưa xử lý (pending) (admin only)
  *     description: Lấy danh sách yêu cầu nhập hàng có trạng thái chờ xử lý (pending)
  *     tags: [Stock Request]
  *     security:
@@ -183,7 +183,7 @@ router.get('/pending',
  * @swagger
  * /api/v1/stock-requests/branch/{branchId}:
  *   get:
- *     summary: Lấy danh sách yêu cầu của chi nhánh
+ *     summary: Lấy danh sách yêu cầu của chi nhánh (Manager và Admin)
  *     description: Lấy danh sách yêu cầu nhập hàng theo chi nhánh cụ thể
  *     tags: [Stock Request]
  *     security:
@@ -249,7 +249,7 @@ router.get('/branch/:branchId',
  * @swagger
  * /api/v1/stock-requests/{requestId}:
  *   get:
- *     summary: Lấy chi tiết yêu cầu nhập hàng
+ *     summary: Lấy chi tiết yêu cầu nhập hàng (Manager và Admin)
  *     description: Lấy thông tin chi tiết của một yêu cầu nhập hàng cụ thể
  *     tags: [Stock Request]
  *     security:
@@ -284,7 +284,7 @@ router.get('/:requestId',
  * @swagger
  * /api/v1/stock-requests/{requestId}/approve:
  *   patch:
- *     summary: Phê duyệt yêu cầu nhập hàng
+ *     summary: Phê duyệt yêu cầu nhập hàng (Admin only)
  *     description: Phê duyệt một yêu cầu nhập hàng và cập nhật trạng thái thành approved
  *     tags: [Stock Request]
  *     security:
@@ -336,7 +336,7 @@ router.patch('/:requestId/approve',
  * @swagger
  * /api/v1/stock-requests/{requestId}/reject:
  *   patch:
- *     summary: Từ chối yêu cầu nhập hàng
+ *     summary: Từ chối yêu cầu nhập hàng (Admin only)
  *     description: Từ chối một yêu cầu nhập hàng và cập nhật trạng thái thành rejected
  *     tags: [Stock Request]
  *     security:

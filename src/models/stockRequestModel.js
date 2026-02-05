@@ -9,6 +9,7 @@ const stockRequestSchema = new mongoose.Schema(
     quantity: { type: Number, required: true },
     requester: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     reason: { type: String, default: '' },
+    isDeleted: { type: Boolean, default: false },
     status: { type: String, enum: Object.values(STOCK_REQUEST_STATUS), default: STOCK_REQUEST_STATUS.PENDING },
     admin: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
     note: { type: String, default: '' }

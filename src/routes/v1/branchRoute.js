@@ -25,7 +25,7 @@ const router = express.Router()
  *
  * /api/v1/branches:
  *   post:
- *     summary: Tạo chi nhánh mới
+ *     summary: Tạo chi nhánh mới (admin only)
  *     tags: [Branch]
  *     security:
  *       - BearerAuth: []
@@ -68,7 +68,7 @@ const router = express.Router()
  *
  * /api/v1/branches/managers:
  *   get:
- *     summary: Lấy danh sách quản lý chi nhánh
+ *     summary: Lấy danh sách quản lý chi nhánh (admin only)
  *     tags: [Branch]
  *     parameters:
  *       - in: query
@@ -102,7 +102,7 @@ const router = express.Router()
  *
  * /api/v1/branches/{id}:
  *   get:
- *     summary: Lấy thông tin chi nhánh theo ID
+ *     summary: Lấy thông tin chi nhánh theo ID (admin, manager, staff only)
  *     tags: [Branch]
  *     parameters:
  *       - in: path
@@ -115,7 +115,7 @@ const router = express.Router()
  *       200:
  *         description: Lấy thông tin chi nhánh thành công
  *   put:
- *     summary: Cập nhật thông tin chi nhánh
+ *     summary: Cập nhật thông tin chi nhánh (admin)
  *     tags: [Branch]
  *     security:
  *       - BearerAuth: []
@@ -136,7 +136,7 @@ const router = express.Router()
  *       200:
  *         description: Cập nhật chi nhánh thành công
  *   delete:
- *     summary: Xóa chi nhánh
+ *     summary: Xóa chi nhánh (admin)
  *     tags: [Branch]
  *     security:
  *       - BearerAuth: []
@@ -153,7 +153,7 @@ const router = express.Router()
  *
  * /api/v1/branches/{id}/manager:
  *   patch:
- *     summary: Gán quản lý cho chi nhánh
+ *     summary: Gán quản lý cho chi nhánh (admin)
  *     tags: [Branch]
  *     security:
  *       - BearerAuth: []
@@ -180,7 +180,7 @@ const router = express.Router()
  *
  * /api/v1/branches/{id}/manager/remove:
  *   patch:
- *     summary: Gỡ quản lý khỏi chi nhánh
+ *     summary: Gỡ quản lý khỏi chi nhánh (admin)
  *     tags: [Branch]
  *     security:
  *       - BearerAuth: []
@@ -197,7 +197,7 @@ const router = express.Router()
  *
  * /api/v1/branches/{id}/status:
  *   patch:
- *     summary: Cập nhật trạng thái hoạt động của chi nhánh
+ *     summary: Cập nhật trạng thái hoạt động của chi nhánh (admin)
  *     tags: [Branch]
  *     security:
  *       - BearerAuth: []

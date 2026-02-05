@@ -24,7 +24,7 @@ router.use(authorizationMiddleware)
  * @swagger
  * /api/v1/users:
  *   get:
- *     summary: Get all users
+ *     summary: Get all users (admin only)
  *     description: Retrieve a list of users with optional filtering, pagination, and sorting.
  *     tags: [User]
  *     security:
@@ -84,7 +84,7 @@ router.get('/',
  * @swagger
  * /api/v1/users:
  *   post:
- *     summary: Create a new user
+ *     summary: Create a new user (admin, manager, staff)
  *     description: Create a new user.
  *     tags: [User]
  *     security:
@@ -168,7 +168,7 @@ router.post('/',
  * @swagger
  * /api/v1/users/manager:
  *   get:
- *     summary: Get all users for manager
+ *     summary: Get all users for manager role (manager only)
  *     description: Retrieve a list of users with optional filtering, pagination, and sorting.
  *     tags: [User]
  *     security:
@@ -447,7 +447,7 @@ router.get('/profile',
  * @swagger
  * /api/v1/users/{id}:
  *   get:
- *     summary: Get user by ID
+ *     summary: Get user by ID (admin, manager, staff)
  *     description: Retrieve a user by their unique ID.
  *     tags: [User]
  *     security:
@@ -474,7 +474,7 @@ router.get('/:id',
  * @swagger
  * /api/v1/users/{id}:
  *   put:
- *     summary: Update user by ID
+ *     summary: Update user by ID (admin, manager, staff)
  *     description: Update a user's information by their unique ID.
  *     tags: [User]
  *     security:
@@ -559,8 +559,8 @@ router.put('/:id',
 /**
  * @swagger
  * /api/v1/users/{id}/status:
- *   put:
- *     summary: Update user status by ID
+ *   patch:
+ *     summary: Update user status by ID (admin, manager)
  *     description: Update a user's active status by their unique ID.
  *     tags: [User]
  *     security:
@@ -586,7 +586,7 @@ router.put('/:id',
  *       200:
  *         description: Update successfully
  */
-router.put('/:id/status',
+router.patch('/:id/status',
   writeRateLimiter,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
   validationHandlingMiddleware({
