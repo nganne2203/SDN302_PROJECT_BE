@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, default: null, minLength: 6 },
     googleId: { type: String, default: null },
     provider: { type: String, enum: Object.values(USER_PROVIDER), default: USER_PROVIDER.LOCAL },
-    phone: { type: String, maxLength: 10 },
+    phone: { type: String, maxLength: 10, default: null },
     addresses: [
       {
         fullname: { type: String, required: true, maxLength: 100 },
