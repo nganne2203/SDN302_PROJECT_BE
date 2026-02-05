@@ -23,7 +23,7 @@ const router = express.Router()
  *   description: Device management
  * /api/v1/devices:
  *   post:
- *     summary: Create a new device
+ *     summary: Create a new device (admin only)
  *     tags: [Devices]
  *     security:
  *       - BearerAuth: []
@@ -105,7 +105,7 @@ const router = express.Router()
  *       '404':
  *         description: Device not found
  *   put:
- *     summary: Update device by ID
+ *     summary: Update device by ID (admin only)
  *     tags: [Devices]
  *     security:
  *       - BearerAuth: []
@@ -131,7 +131,7 @@ const router = express.Router()
  *       '400':
  *         description: Validation error
  *   delete:
- *     summary: Delete device by ID
+ *     summary: Delete device by ID (admin only)
  *     tags: [Devices]
  *     security:
  *       - BearerAuth: []
@@ -148,7 +148,7 @@ const router = express.Router()
  *         description: Device not found
  * /api/v1/devices/{id}/status:
  *   patch:
- *     summary: Update device status
+ *     summary: Update device status (admin only)
  *     tags: [Devices]
  *     security:
  *       - BearerAuth: []

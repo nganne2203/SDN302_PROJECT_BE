@@ -14,6 +14,7 @@ const productSchema = new mongoose.Schema(
     ratingAvg: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users' }
   },

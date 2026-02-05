@@ -47,6 +47,7 @@ const createCategory = async (data, createdBy = null) => {
   await assertCategoryNameUnique(name)
   return await CATEGORY_REPOSITORY.createCategory({ name, description, slug: slugify(name), createdBy })
 }
+
 const updateCategoryById = async (categoryId, data, updatedBy = null) => {
   const category = await getCategoryById(categoryId)
   const { name, description } = data
@@ -61,12 +62,16 @@ const updateCategoryById = async (categoryId, data, updatedBy = null) => {
   }
   return CATEGORY_REPOSITORY.updateCategoryById(categoryId, { ...updatedCategoryData, updatedBy })
 }
+
 const deleteCategoryById = async (categoryId) => {
   const category = await getCategoryById(categoryId)
   if (!category.isActive)
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ có thể xóa danh mục đang hoạt động'])
+  if (category.isDeleted)
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Danh mục đã bị xóa'])
   return CATEGORY_REPOSITORY.deleteCategoryById(categoryId)
 }
+
 const updateCategoryStatus = async (categoryId, isActive, updatedBy = null) => {
   await getCategoryById(categoryId)
   if (typeof isActive !== 'boolean') {

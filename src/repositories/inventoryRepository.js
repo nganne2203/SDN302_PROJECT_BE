@@ -1,18 +1,18 @@
 import { inventoryModel } from '#models/inventoryModel.js'
 
 const getInventoryByProductId = async (productId) => {
-  return inventoryModel.findOne({ product: productId }).populate('product')
+  return inventoryModel.findOne({ product: productId, isDeleted: false }).populate('product')
 }
 
 const getAllInventories = async (filter = {}, options = {}) => {
-  const { page = 1, limit = 10, sort = { createdAt: -1 } } = options
+  const { page = 1, limit = 10, sort = { createdAt: -1 }, isDeleted = false } = options
   const queryOptions = {
     page,
     limit,
     sort,
     populate: 'product'
   }
-  return inventoryModel.paginate(filter, queryOptions)
+  return inventoryModel.paginate({ ...filter, isDeleted }, queryOptions)
 }
 
 const createInventory = async (data) => {
@@ -60,19 +60,19 @@ const getLowStockProducts = async (threshold, filter = {}, options = {}) => {
 }
 
 const deleteInventory = async (productId) => {
-  return inventoryModel.deleteOne({ product: productId })
+  return inventoryModel.findOneAndUpdate({ product: productId }, { isDeleted: true }, { new: true, runValidators: true, timestamps: true })
 }
 
 const getInventoryByProductIdWithoutPopulate = async (productId) => {
-  return inventoryModel.findOne({ product: productId })
+  return inventoryModel.findOne({ product: productId, isDeleted: false })
 }
 
 const checkStockExists = async (productId) => {
-  return inventoryModel.findOne({ product: productId })
+  return inventoryModel.findOne({ product: productId, isDeleted: false })
 }
 
 const getInventoryById = async (inventoryId) => {
-  return inventoryModel.findById(inventoryId).populate('product')
+  return inventoryModel.findById(inventoryId, { isDeleted: false }).populate('product')
 }
 
 export const INVENTORY_REPOSITORY = {

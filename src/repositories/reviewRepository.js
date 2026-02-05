@@ -5,13 +5,13 @@ const createReview = async (reviewData) => {
 }
 
 const getReviewById = async (reviewId) => {
-  return await reviewModel.findById(reviewId)
+  return await reviewModel.findById(reviewId, { isDeleted: false })
     .populate('user', 'fullname email avatar')
     .populate('product', 'name slug images')
 }
 
 const getReviewsByProduct = async (productId, filter = {}, options = {}) => {
-  const query = { product: productId, ...filter }
+  const query = { product: productId, isDeleted: false, ...filter }
   const { page = 1, limit = 10, sort = { createdAt: -1 } } = options
 
   return await reviewModel.paginate(query, {
@@ -26,7 +26,7 @@ const getReviewsByProduct = async (productId, filter = {}, options = {}) => {
 }
 
 const getReviewsByUser = async (userId, filter = {}, options = {}) => {
-  const query = { user: userId, ...filter }
+  const query = { user: userId, isDeleted: false, ...filter }
   const { page = 1, limit = 10, sort = { createdAt: -1 } } = options
 
   return await reviewModel.paginate(query, {
@@ -41,9 +41,9 @@ const getReviewsByUser = async (userId, filter = {}, options = {}) => {
 }
 
 const getAllReviews = async (filter = {}, options = {}) => {
-  const { page = 1, limit = 10, sort = { createdAt: -1 } } = options
+  const { page = 1, limit = 10, sort = { createdAt: -1 }, isDeleted = false } = options
 
-  return await reviewModel.paginate(filter, {
+  return await reviewModel.paginate({ ...filter, isDeleted }, {
     page,
     limit,
     sort,
@@ -65,16 +65,16 @@ const updateReviewById = async (reviewId, updateData) => {
 }
 
 const deleteReviewById = async (reviewId) => {
-  return await reviewModel.findByIdAndDelete(reviewId)
+  return await reviewModel.findByIdAndUpdate(reviewId, { isDeleted: true }, { new: true, runValidators: true, timestamps: true })
 }
 
 const checkExistingReview = async (userId, productId) => {
-  return await reviewModel.findOne({ user: userId, product: productId })
+  return await reviewModel.findOne({ user: userId, product: productId, isDeleted: false })
 }
 
 const getReviewStats = async (productId) => {
   const stats = await reviewModel.aggregate([
-    { $match: { product: productId } },
+    { $match: { product: productId, isDeleted: false } },
     {
       $group: {
         _id: '$product',

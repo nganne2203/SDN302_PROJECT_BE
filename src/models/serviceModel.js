@@ -10,6 +10,7 @@ const serviceSchema = new mongoose.Schema(
     type: { type: String, required: true, enum: Object.values(SERVICE_TYPES) }, // Ví dụ: ENGRAVING, PRINTING, DRILLING, v.v
     price: { type: Number, required: true }, // Giá của dịch vụ
     isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users' }
   },

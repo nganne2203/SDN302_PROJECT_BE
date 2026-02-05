@@ -102,8 +102,8 @@ router.use(authorizationMiddleware)
  * @swagger
  * /api/v1/payments/vnpay/create:
  *   post:
- *     summary: Create VNPay payment
- *     description: Create a new VNPay payment for the cart items. Returns payment URL to redirect user.
+ *     summary: Create VNPay payment for cart (customer, staff, admin, manager)
+ *     description: Create a new VNPay payment for the cart items. Returns payment URL to redirect user .
  *     tags: [Payments]
  *     security:
  *       - BearerAuth: []
@@ -191,7 +191,7 @@ router.use(authorizationMiddleware)
 router.post(
   '/vnpay/create',
   apiRateLimiter,
-  requireRoles(RoleEnum.CUSTOMER),
+  requireRoles(RoleEnum.CUSTOMER, RoleEnum.STAFF, RoleEnum.ADMIN, RoleEnum.MANAGER),
   validationHandlingMiddleware({ body: PAYMENT_VALIDATION.createVNPayPayment }),
   PAYMENT_CONTROLLER.createVNPayPayment
 )
@@ -200,7 +200,7 @@ router.post(
  * @swagger
  * /api/v1/payments/my-payments:
  *   get:
- *     summary: Get user's payments
+ *     summary: Get user's payments (customer only)
  *     description: Get all payments of the authenticated user
  *     tags: [Payments]
  *     security:
@@ -299,7 +299,7 @@ router.get(
  * @swagger
  * /api/v1/payments/order/{orderId}:
  *   get:
- *     summary: Get payment by order ID
+ *     summary: Get payment by order ID (customer, staff, admin, manager)
  *     description: Get payment details for a specific order
  *     tags: [Payments]
  *     security:
@@ -322,7 +322,7 @@ router.get(
 router.get(
   '/order/:orderId',
   apiRateLimiter,
-  requireRoles(RoleEnum.CUSTOMER, RoleEnum.STAFF, RoleEnum.ADMIN),
+  requireRoles(RoleEnum.CUSTOMER, RoleEnum.STAFF, RoleEnum.ADMIN, RoleEnum.MANAGER),
   validationHandlingMiddleware({ params: PAYMENT_VALIDATION.orderIdParam }),
   PAYMENT_CONTROLLER.getPaymentByOrderId
 )
@@ -331,7 +331,7 @@ router.get(
  * @swagger
  * /api/v1/payments/{orderId}/cancel:
  *   post:
- *     summary: Cancel pending payment
+ *     summary: Cancel pending payment (customer, staff, admin, manager)
  *     description: Cancel a pending VNPay payment
  *     tags: [Payments]
  *     security:
@@ -356,7 +356,7 @@ router.get(
 router.post(
   '/:orderId/cancel',
   apiRateLimiter,
-  requireRoles(RoleEnum.CUSTOMER),
+  requireRoles(RoleEnum.CUSTOMER, RoleEnum.STAFF, RoleEnum.ADMIN, RoleEnum.MANAGER),
   validationHandlingMiddleware({ params: PAYMENT_VALIDATION.orderIdParam }),
   PAYMENT_CONTROLLER.cancelPayment
 )

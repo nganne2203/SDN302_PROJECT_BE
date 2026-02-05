@@ -5,8 +5,8 @@ const createDevice = async (data) => {
 }
 
 const getAllDevices = async (filter = {}, options = {}) => {
-  const { page = 1, limit = 10, sort = { createdAt: -1 } } = options
-  return await deviceModel.paginate(filter, {
+  const { page = 1, limit = 10, sort = { createdAt: -1 }, isDeleted = false } = options
+  return await deviceModel.paginate({ ...filter, isDeleted }, {
     page,
     limit,
     sort
@@ -18,15 +18,15 @@ const updateDeviceById = async (id, data) => {
 }
 
 const deleteDeviceById = async (id) => {
-  return await deviceModel.findByIdAndDelete(id)
+  return await deviceModel.findByIdAndUpdate(id, { isDeleted: true }, { new: true })
 }
 
 const getDeviceById = async (id) => {
-  return await deviceModel.findById(id)
+  return await deviceModel.findOne({ _id: id, isDeleted: false })
 }
 
 const getDeviceByName = async (name) => {
-  return await deviceModel.findOne({ name })
+  return await deviceModel.findOne({ name, isDeleted: false })
 }
 
 export const DEVICE_REPOSITORY = {

@@ -5,6 +5,7 @@ const getPricingRulesForProduct = async (productId, quantity) => {
     .find({
       product: productId,
       isActive: true,
+      isDeleted: false,
       $or: [
         { minQuantity: { $lte: quantity }, maxQuantity: { $gte: quantity } },
         { minQuantity: { $lte: quantity }, maxQuantity: null }
@@ -16,13 +17,13 @@ const getPricingRulesForProduct = async (productId, quantity) => {
 
 const getPricingByProduct = async (productId) => {
   return await pricingModel
-    .find({ product: productId, isActive: true })
+    .find({ product: productId, isActive: true, isDeleted: false })
     .sort({ minQuantity: 1 })
 }
 
 const getAllPricingByProduct = async (productId) => {
   return await pricingModel
-    .find({ product: productId })
+    .find({ product: productId, isDeleted: false })
     .populate('product', 'name sku basePrice')
     .populate('createdBy', 'fullname email')
     .populate('updatedBy', 'fullname email')
@@ -31,7 +32,7 @@ const getAllPricingByProduct = async (productId) => {
 
 const getPricingById = async (pricingId) => {
   return await pricingModel
-    .findById(pricingId)
+    .findById(pricingId, { isDeleted: false })
     .populate('product', 'name sku basePrice')
     .populate('createdBy', 'fullname email')
     .populate('updatedBy', 'fullname email')
@@ -60,6 +61,7 @@ const deleteManyByProduct = async (productId) => {
 const findOverlappingPricing = async (productId, minQuantity, maxQuantity, excludeId = null) => {
   const query = {
     product: productId,
+    isDeleted: false,
     $or: [
       // Overlap case 1: existing range contains new minQuantity
       { minQuantity: { $lte: minQuantity }, maxQuantity: { $gte: minQuantity } },
@@ -80,9 +82,9 @@ const findOverlappingPricing = async (productId, minQuantity, maxQuantity, exclu
 }
 
 const getPricingsWithPagination = async (filter = {}, options = {}) => {
-  const { page = 1, limit = 10, sort = { createdAt: -1 } } = options
+  const { page = 1, limit = 10, sort = { createdAt: -1 }, isDeleted = false } = options
 
-  return await pricingModel.paginate(filter, {
+  return await pricingModel.paginate({ ...filter, isDeleted }, {
     page,
     limit,
     sort,
@@ -95,7 +97,16 @@ const getPricingsWithPagination = async (filter = {}, options = {}) => {
 }
 
 const countByProduct = async (productId) => {
-  return await pricingModel.countDocuments({ product: productId })
+  return await pricingModel.countDocuments({ product: productId, isDeleted: false })
+}
+
+const getPricingRule = async (productId) => {
+  const pricing = pricingModel.find({
+    product: productId,
+    isActive: true,
+    isDeleted: false
+  }).sort({ minQuantity: -1 })
+  return pricing
 }
 
 export const PRICING_REPOSITORY = {
@@ -110,5 +121,6 @@ export const PRICING_REPOSITORY = {
   deleteManyByProduct,
   findOverlappingPricing,
   getPricingsWithPagination,
-  countByProduct
+  countByProduct,
+  getPricingRule
 }

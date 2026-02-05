@@ -6,6 +6,9 @@ const storeInventorySchema = new mongoose.Schema(
     branch: { type: mongoose.Schema.Types.ObjectId, ref: 'branches', required: true },
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'products', required: true },
     quantity: { type: Number, default: 0 },
+    minThreshold: { type: Number, default: 0 },
+    maxThreshold: { type: Number, default: 0 },
+    isDeleted: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users' }
   },

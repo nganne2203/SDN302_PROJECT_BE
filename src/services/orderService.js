@@ -9,6 +9,8 @@ import { PAYMENT_METHODS } from '#constants/paymentConstant.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
 import { pricingModel } from '#models/pricingModel.js'
 import crypto from 'crypto'
+import { PRODUCT_SERVICE } from '#services/productService.js'
+import { SERVICE_ITEM_SERVICE } from '#services/serviceItemService.js'
 
 /**
  * Generate unique order number
@@ -169,6 +171,7 @@ const createOrder = async (userId, orderData) => {
   // Create order
   const order = await ORDER_REPOSITORY.createOrder({
     orderNumber,
+    type: 'online',
     user: userId,
     items: populatedCart.items.map(item => ({
       product: item.product._id,
@@ -434,6 +437,113 @@ const getOrderStatistics = async (userId = null) => {
   return result
 }
 
+/**
+ * Create offline order (for walk-in customers at branch)
+ */
+const createOfflineOrder = async (staffId, orderData) => {
+  const {
+    customerId = null,
+    items,
+    shippingAddress = null,
+    paymentMethod,
+    message = '',
+    branchId,
+    hasDelivery = false
+  } = orderData
+
+  // Validate items and get product details
+  if (!items || items.length === 0) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Đơn hàng phải có ít nhất 1 sản phẩm'])
+  }
+
+  // Validate and populate items with product details
+  const populatedItems = []
+  for (const item of items) {
+    const product = await PRODUCT_SERVICE.getProductById(item.product)
+
+    if (!product) {
+      throw new ApiError(ERROR_CODES.NOT_FOUND, ['Sản phẩm không tồn tại'])
+    }
+
+    const itemData = {
+      product: product._id,
+      quantity: item.quantity,
+      price: product.price,
+      services: []
+    }
+
+    // Validate and populate services
+    if (item.services && item.services.length > 0) {
+      for (const serviceId of item.services) {
+        const service = await SERVICE_ITEM_SERVICE.getServiceById(serviceId)
+        if (service) {
+          itemData.services.push({
+            service: service._id,
+            price: service.price
+          })
+        }
+      }
+    }
+
+    populatedItems.push(itemData)
+  }
+
+  // Check inventory availability at branch
+  for (const item of populatedItems) {
+    const storeInventory = await STORE_INVENTORY_SERVICE.getStoreInventoryByBranchAndProduct(branchId, item.product)
+    if (!storeInventory || storeInventory.quantity < item.quantity) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Sản phẩm không đủ tồn kho tại chi nhánh'])
+    }
+  }
+
+  // Calculate pricing discounts
+  const itemsWithProduct = populatedItems.map(item => ({
+    ...item,
+    product: { _id: item.product }
+  }))
+  const pricingApplied = await calculatePricingDiscounts(itemsWithProduct)
+
+  // Calculate totals
+  const { subtotal, totalAmount } = calculateOrderTotals(populatedItems, pricingApplied)
+
+  // Generate order number
+  const orderNumber = generateOrderNumber()
+
+  // Determine the user for the order (customer or staff if no customer)
+  const orderUserId = customerId || staffId
+
+  // Create order
+  const order = await ORDER_REPOSITORY.createOrder({
+    orderNumber,
+    type: 'offline',
+    user: orderUserId,
+    items: populatedItems,
+    shippingAddress: hasDelivery && shippingAddress ? shippingAddress : null,
+    orderStatus: ORDER_STATUS.CONFIRMED, // Offline orders are confirmed immediately
+    subtotal,
+    totalAmount,
+    pricingApplied,
+    paymentMethod,
+    delivery: hasDelivery
+      ? {
+        status: DELIVERY_STATUS.PENDING,
+        recipientName: shippingAddress?.fullname || ''
+      }
+      : null,
+    message,
+    branch: branchId,
+    createdBy: staffId
+  })
+
+  // Decrease inventory immediately for offline orders
+  await decreaseInventoryForOrder(branchId, populatedItems)
+
+  // Get populated order
+  const populatedOrder = await ORDER_REPOSITORY.getOrderById(order._id)
+
+  return populatedOrder
+}
+
 export const ORDER_SERVICE = {
   createOrder,
   getOrderById,
@@ -443,5 +553,6 @@ export const ORDER_SERVICE = {
   updateOrderStatus,
   cancelOrder,
   updateDeliveryInfo,
-  getOrderStatistics
+  getOrderStatistics,
+  createOfflineOrder
 }
