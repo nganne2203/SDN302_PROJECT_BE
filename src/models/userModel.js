@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema(
     emailVerifiedAt: { type: Date },
     avatar: { type: String },
     isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', default: null },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', default: null }
   },

@@ -5,12 +5,12 @@ const createBranch = async (data) => {
 }
 
 const getBranchById = async (id) => {
-  return await branchModel.findById(id)
+  return await branchModel.findById(id, { isDeleted: false })
 }
 
 const getAllBranches = async (filter = {}, options = {}) => {
-  const { page = 1, limit = 10, sort = { createdAt: -1 } } = options
-  return await branchModel.paginate(filter, {
+  const { page = 1, limit = 10, sort = { createdAt: -1 }, isDeleted = false } = options
+  return await branchModel.paginate({ ...filter, isDeleted }, {
     page,
     limit,
     sort
@@ -22,11 +22,11 @@ const updateBranchById = async (id, data) => {
 }
 
 const deleteBranchById = async (id) => {
-  return await branchModel.findByIdAndDelete(id)
+  return await branchModel.findByIdAndUpdate(id, { isDeleted: true }, { new: true, runValidators: true, timestamps: true })
 }
 
 const getBranchByName = async (name) => {
-  return await branchModel.findOne({ name })
+  return await branchModel.findOne({ name, isDeleted: false })
 }
 
 export const BRANCH_REPOSITORY = {

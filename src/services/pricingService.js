@@ -301,6 +301,11 @@ const calculatePrice = async (productId, quantity) => {
   }
 }
 
+const getPricingRule = async (productId) => {
+  const pricing = await PRICING_REPOSITORY.getPricingRule(productId)
+  return pricing
+}
+
 export const PRICING_SERVICE = {
   getAllPricings,
   getPricingsByProduct,
@@ -311,5 +316,6 @@ export const PRICING_SERVICE = {
   togglePricingStatus,
   deletePricing,
   deleteProductPricings,
-  calculatePrice
+  calculatePrice,
+  getPricingRule
 }

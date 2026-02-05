@@ -6,13 +6,57 @@ import { ERROR_CODES } from '#constants/errorCode.js'
 import { escapeRegex, slugify } from '#utils/formatterUtil.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
 import { DEVICE_SERVICE } from '#services/deviceService.js'
-import { storeInventoryModel } from '#models/storeInventoryModel.js'
-import { pricingModel } from '#models/pricingModel.js'
+import { PRICING_SERVICE } from '#services/pricingService.js'
+import { STORE_INVENTORY_SERVICE } from '#services/storeInventoryService.js'
 
-const getProductById = async (productId) => {
+const mapImagePublicIdsToInfo = async (imagePublicIds = []) => {
+  if (!Array.isArray(imagePublicIds) || imagePublicIds.length === 0) return []
+
+  const results = await Promise.all(imagePublicIds.map(async (publicId) => {
+    try {
+      const image = await UPLOAD_SERVICE.getImage(publicId)
+      return {
+        publicId: image.publicId ?? publicId,
+        imageUrl: image.imageUrl
+      }
+    } catch {
+      return {
+        publicId,
+        imageUrl: null
+      }
+    }
+  }))
+
+  return results
+}
+
+const mapProductImages = async (product) => {
+  if (!product) return product
+  const productObj = product.toObject ? product.toObject() : product
+  const images = await mapImagePublicIdsToInfo(productObj.images || [])
+  return {
+    ...productObj,
+    images
+  }
+}
+
+const mapProductsImages = async (products = []) => {
+  return Promise.all(products.map((product) => mapProductImages(product)))
+}
+
+const getProductByIdRaw = async (productId) => {
   const product = await PRODUCT_REPOSITORY.getProductById(productId)
   if (!product) throw new ApiError(ERROR_CODES.NOT_FOUND, ['Sản phẩm không tồn tại'])
   return product
+}
+
+const getProductById = async (productId) => {
+  return getProductByIdRaw(productId)
+}
+
+const getProductByIdWithImages = async (productId) => {
+  const product = await getProductByIdRaw(productId)
+  return mapProductImages(product)
 }
 
 const getAllProducts = async (query = {}) => {
@@ -44,8 +88,9 @@ const getAllProducts = async (query = {}) => {
   const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
 
   const result = await PRODUCT_REPOSITORY.getAllProducts(filter, { page, limit, sort })
+  const mappedDocs = await mapProductsImages(result.docs)
   return {
-    data: result.docs,
+    data: mappedDocs,
     pagination: mapMongoosePagination(result)
   }
 }
@@ -78,7 +123,7 @@ const createProduct = async (data, createdBy = null) => {
     }
   }
 
-  return await PRODUCT_REPOSITORY.createProduct({
+  const createdProduct = await PRODUCT_REPOSITORY.createProduct({
     name,
     slug: slugify(name),
     description,
@@ -89,10 +134,12 @@ const createProduct = async (data, createdBy = null) => {
     compatibility,
     createdBy
   })
+
+  return mapProductImages(createdProduct)
 }
 
 const updateProductById = async (productId, data, updatedBy = null) => {
-  const product = await getProductById(productId)
+  const product = await getProductByIdRaw(productId)
   const { name, description, categoryId, price, images = [], material, compatibility = [] } = data
   const updatedData = {}
 
@@ -138,11 +185,12 @@ const updateProductById = async (productId, data, updatedBy = null) => {
     updatedData.compatibility = compatibility
   }
 
-  return PRODUCT_REPOSITORY.updateProductById(productId, { ...updatedData, updatedBy })
+  const updatedProduct = await PRODUCT_REPOSITORY.updateProductById(productId, { ...updatedData, updatedBy })
+  return mapProductImages(updatedProduct)
 }
 
 const deleteProductById = async (productId) => {
-  const product = await getProductById(productId)
+  const product = await getProductByIdRaw(productId)
   if (!product.isActive) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ có thể xóa sản phẩm đang hoạt động'])
   }
@@ -155,11 +203,12 @@ const deleteProductById = async (productId) => {
 }
 
 const updateProductStatus = async (productId, isActive, updatedBy = null) => {
-  await getProductById(productId)
+  await getProductByIdRaw(productId)
   if (typeof isActive !== 'boolean') {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Trạng thái không hợp lệ'])
   }
-  return PRODUCT_REPOSITORY.updateProductById(productId, { isActive, updatedBy })
+  const updatedProduct = await PRODUCT_REPOSITORY.updateProductById(productId, { isActive, updatedBy })
+  return mapProductImages(updatedProduct)
 }
 
 const getProductCategories = async () => {
@@ -176,7 +225,7 @@ const getProductCategories = async () => {
 const getProductBySlug = async (slug) => {
   const product = await PRODUCT_REPOSITORY.getProductBySlug(slug)
   if (!product) throw new ApiError(ERROR_CODES.NOT_FOUND, ['Sản phẩm không tồn tại'])
-  return product
+  return mapProductImages(product)
 }
 
 /**
@@ -210,21 +259,17 @@ const getProductsWithStock = async (query = {}) => {
 
   // Get stock info for each product
   const productsWithStock = await Promise.all(result.docs.map(async (product) => {
-    const stockInfo = await storeInventoryModel.aggregate([
-      { $match: { product: product._id } },
-      { $group: { _id: null, totalStock: { $sum: '$quantity' } } }
-    ])
+    const stockInfo = await STORE_INVENTORY_SERVICE.getStoreInventoryInfo(product._id)
 
     const totalStock = stockInfo.length > 0 ? stockInfo[0].totalStock : 0
 
     // Get active pricing rules
-    const pricingRules = await pricingModel.find({
-      product: product._id,
-      isActive: true
-    }).sort({ minQuantity: 1 })
+    const pricingRules = await PRICING_SERVICE.getPricingRule(product._id)
+
+    const productWithImages = await mapProductImages(product)
 
     return {
-      ...product.toObject(),
+      ...productWithImages,
       totalStock,
       inStock: totalStock > 0,
       pricingRules: pricingRules.map(rule => ({
@@ -258,9 +303,10 @@ const getProductsByDevice = async (deviceId, query = {}) => {
   const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 }
 
   const result = await PRODUCT_REPOSITORY.getAllProducts(filter, { page, limit, sort })
+  const mappedDocs = await mapProductsImages(result.docs)
 
   return {
-    data: result.docs,
+    data: mappedDocs,
     pagination: mapMongoosePagination(result)
   }
 }
@@ -276,7 +322,7 @@ const getFeaturedProducts = async (query = {}) => {
 
   const result = await PRODUCT_REPOSITORY.getAllProducts(filter, { page: 1, limit, sort })
 
-  return result.docs
+  return mapProductsImages(result.docs)
 }
 
 /**
@@ -290,7 +336,7 @@ const getNewArrivals = async (query = {}) => {
 
   const result = await PRODUCT_REPOSITORY.getAllProducts(filter, { page: 1, limit, sort })
 
-  return result.docs
+  return mapProductsImages(result.docs)
 }
 
 /**
@@ -299,7 +345,7 @@ const getNewArrivals = async (query = {}) => {
 const getRelatedProducts = async (productId, query = {}) => {
   const { limit = 4 } = query
 
-  const product = await getProductById(productId)
+  const product = await getProductByIdRaw(productId)
 
   const filter = {
     category: product.category._id || product.category,
@@ -309,40 +355,34 @@ const getRelatedProducts = async (productId, query = {}) => {
 
   const result = await PRODUCT_REPOSITORY.getAllProducts(filter, { page: 1, limit, sort: { ratingAvg: -1 } })
 
-  return result.docs
+  return mapProductsImages(result.docs)
 }
 
 /**
  * Get product detail with full info for ordering
  */
 const getProductDetailForOrder = async (productId) => {
-  const product = await getProductById(productId)
+  const product = await getProductByIdRaw(productId)
 
   if (!product.isActive) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Sản phẩm hiện không khả dụng'])
   }
 
   // Get stock info
-  const stockInfo = await storeInventoryModel.aggregate([
-    { $match: { product: product._id } },
-    { $group: { _id: null, totalStock: { $sum: '$quantity' } } }
-  ])
+  const stockInfo = await STORE_INVENTORY_SERVICE.getStoreInventoryInfo(product._id)
 
   const totalStock = stockInfo.length > 0 ? stockInfo[0].totalStock : 0
 
   // Get pricing rules
-  const pricingRules = await pricingModel.find({
-    product: product._id,
-    isActive: true
-  }).sort({ minQuantity: 1 })
+  const pricingRules = await PRICING_SERVICE.getPricingRule(product._id)
 
   // Get stock by branch
-  const stockByBranch = await storeInventoryModel.find({ product: product._id })
-    .populate('branch', 'name address')
-    .select('branch quantity')
+  const stockByBranch = await STORE_INVENTORY_SERVICE.stockBranch(product._id)
+
+  const productWithImages = await mapProductImages(product)
 
   return {
-    ...product.toObject(),
+    ...productWithImages,
     totalStock,
     inStock: totalStock > 0,
     pricingRules: pricingRules.map(rule => ({
@@ -361,6 +401,7 @@ const getProductDetailForOrder = async (productId) => {
 
 export const PRODUCT_SERVICE = {
   getProductById,
+  getProductByIdWithImages,
   getAllProducts,
   searchProducts,
   createProduct,

@@ -20,7 +20,7 @@ const router = express.Router()
  * @swagger
  * /api/v1/products:
  *   get:
- *     summary: Get all products
+ *     summary: Get all products with filtering and pagination (public)
  *     description: Retrieve a list of products with optional filtering, pagination, and sorting.
  *     tags: [Product]
  *     parameters:
@@ -109,7 +109,7 @@ router.get(
  * @swagger
  * /api/v1/products/with-stock:
  *   get:
- *     summary: Get products with stock information
+ *     summary: Get products with stock information (for ordering) (public)
  *     description: Retrieve products with stock availability and pricing rules for ordering.
  *     tags: [Product]
  *     parameters:
@@ -154,7 +154,7 @@ router.get(
  * @swagger
  * /api/v1/products/featured:
  *   get:
- *     summary: Get featured products
+ *     summary: Get featured products (public)
  *     description: Retrieve top-rated and popular products.
  *     tags: [Product]
  *     parameters:
@@ -177,7 +177,7 @@ router.get(
  * @swagger
  * /api/v1/products/new-arrivals:
  *   get:
- *     summary: Get new arrival products
+ *     summary: Get new arrival products (public)
  *     description: Retrieve latest products.
  *     tags: [Product]
  *     parameters:
@@ -200,7 +200,7 @@ router.get(
  * @swagger
  * /api/v1/products/search:
  *   get:
- *     summary: Search products
+ *     summary: Search products (public)
  *     description: Search products by keyword with pagination and sorting.
  *     tags: [Product]
  *     parameters:
@@ -253,7 +253,7 @@ router.get(
  * @swagger
  * /api/v1/products/by-device/{deviceId}:
  *   get:
- *     summary: Get products by device compatibility
+ *     summary: Get products by device compatibility (public)
  *     description: Retrieve products compatible with a specific device.
  *     tags: [Product]
  *     parameters:
@@ -290,7 +290,7 @@ router.get(
  * @swagger
  * /api/v1/products/slug/{slug}:
  *   get:
- *     summary: Get product by slug
+ *     summary: Get product by slug (public)
  *     description: Retrieve a product using SEO-friendly slug.
  *     tags: [Product]
  *     parameters:
@@ -317,7 +317,7 @@ router.get(
  * @swagger
  * /api/v1/products/categories:
  *   get:
- *     summary: Get product categories
+ *     summary: Get product categories (public)
  *     description: Retrieve all available product categories.
  *     tags: [Product]
  *     responses:
@@ -340,7 +340,7 @@ router.get(
  * @swagger
  * /api/v1/products/{id}:
  *   get:
- *     summary: Get product by ID
+ *     summary: Get product by ID (public)
  *     description: Retrieve a specific product by its ID.
  *     tags: [Product]
  *     parameters:
@@ -409,7 +409,7 @@ router.get(
  * @swagger
  * /api/v1/products/{id}/for-order:
  *   get:
- *     summary: Get product detail for ordering
+ *     summary: Get product detail for ordering (public)
  *     description: Retrieve product with full stock info and pricing rules for order flow.
  *     tags: [Product]
  *     parameters:
@@ -438,7 +438,7 @@ router.get(
  * @swagger
  * /api/v1/products/{id}/related:
  *   get:
- *     summary: Get related products
+ *     summary: Get related products (public)
  *     description: Retrieve products in the same category.
  *     tags: [Product]
  *     parameters:
@@ -470,7 +470,7 @@ router.get(
  * @swagger
  * /api/v1/products:
  *   post:
- *     summary: Create a new product
+ *     summary: Create a new product (admin)
  *     description: |
  *       Create a new product (Admin only).
  *
@@ -546,7 +546,7 @@ router.post(
  * @swagger
  * /api/v1/products/{id}:
  *   put:
- *     summary: Update a product
+ *     summary: Update a product (admin)
  *     description: |
  *       Update an existing product by ID (Admin only).
  *
@@ -630,7 +630,7 @@ router.put(
  * @swagger
  * /api/v1/products/{id}/status:
  *   patch:
- *     summary: Update product status
+ *     summary: Update product status (admin only)
  *     description: Update the active status of a product (Admin only).
  *     tags: [Product]
  *     security:
@@ -683,7 +683,7 @@ router.patch(
  * @swagger
  * /api/v1/products/{id}:
  *   delete:
- *     summary: Delete a product
+ *     summary: Delete a product (admin only)
  *     description: |
  *       Delete a product by ID (Admin only).
  *

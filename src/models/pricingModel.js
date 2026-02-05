@@ -10,6 +10,7 @@ const pricingSchema = new mongoose.Schema(
     discountPercentage: { type: Number, default: 0 }, // Chiết khấu theo phần trăm
     description: { type: String, default: '' }, // Mô tả về mức giá
     isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users' }
   },

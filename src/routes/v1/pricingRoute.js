@@ -19,7 +19,7 @@ const router = express.Router()
  * @swagger
  * /api/v1/pricings:
  *   get:
- *     summary: Get all pricing rules
+ *     summary: Get all pricing rules with pagination (admin, manager)
  *     description: Retrieve all pricing rules with pagination. Accessible by Admin and Manager.
  *     tags: [Pricing]
  *     security:
@@ -78,7 +78,7 @@ router.get(
  * @swagger
  * /api/v1/pricings/product/{productId}:
  *   get:
- *     summary: Get pricing rules by product
+ *     summary: Get pricing rules by product (public)
  *     description: Get all pricing tiers for a specific product. Public access.
  *     tags: [Pricing]
  *     parameters:
@@ -120,7 +120,7 @@ router.get(
  * @swagger
  * /api/v1/pricings/calculate/{productId}:
  *   get:
- *     summary: Calculate price for a product
+ *     summary: Calculate price for a product (public)
  *     description: Calculate the final price for a product based on quantity and applicable pricing rules. Public access.
  *     tags: [Pricing]
  *     parameters:
@@ -180,7 +180,7 @@ router.get(
  * @swagger
  * /api/v1/pricings/{id}:
  *   get:
- *     summary: Get pricing by ID
+ *     summary: Get pricing by ID (admin, manager)
  *     description: Get a specific pricing rule by ID. Accessible by Admin and Manager.
  *     tags: [Pricing]
  *     security:
@@ -219,7 +219,7 @@ router.get(
  * @swagger
  * /api/v1/pricings:
  *   post:
- *     summary: Create a pricing rule
+ *     summary: Create a pricing rule (admin, manager)
  *     description: Create a new pricing rule for a product. Accessible by Admin and Manager.
  *     tags: [Pricing]
  *     security:
@@ -287,7 +287,7 @@ router.post(
  * @swagger
  * /api/v1/pricings/bulk:
  *   post:
- *     summary: Create bulk pricing tiers
+ *     summary: Create bulk pricing tiers (admin, manager)
  *     description: Create multiple pricing tiers for a product at once. This will replace all existing pricing rules for the product. Accessible by Admin and Manager.
  *     tags: [Pricing]
  *     security:
@@ -363,7 +363,7 @@ router.post(
  * @swagger
  * /api/v1/pricings/{id}:
  *   put:
- *     summary: Update a pricing rule
+ *     summary: Update a pricing rule (admin, manager)
  *     description: Update an existing pricing rule. Accessible by Admin and Manager.
  *     tags: [Pricing]
  *     security:
@@ -419,7 +419,7 @@ router.put(
  * @swagger
  * /api/v1/pricings/{id}/toggle:
  *   patch:
- *     summary: Toggle pricing active status
+ *     summary: Toggle pricing active status (admin, manager)
  *     description: Toggle the active status of a pricing rule. Accessible by Admin and Manager.
  *     tags: [Pricing]
  *     security:
@@ -449,7 +449,7 @@ router.patch(
  * @swagger
  * /api/v1/pricings/{id}:
  *   delete:
- *     summary: Delete a pricing rule
+ *     summary: Delete a pricing rule (admin, manager)
  *     description: Delete a specific pricing rule. Accessible by Admin and Manager.
  *     tags: [Pricing]
  *     security:
@@ -479,7 +479,7 @@ router.delete(
  * @swagger
  * /api/v1/pricings/product/{productId}:
  *   delete:
- *     summary: Delete all pricing rules for a product
+ *     summary: Delete all pricing rules for a product (admin only)
  *     description: Delete all pricing rules associated with a product. Accessible by Admin only.
  *     tags: [Pricing]
  *     security:

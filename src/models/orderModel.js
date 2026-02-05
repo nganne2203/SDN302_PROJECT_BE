@@ -1,11 +1,12 @@
 import mongoose from 'mongoose'
-import { ORDER_STATUS, DELIVERY_STATUS } from '#constants/orderConstant.js'
+import { ORDER_STATUS, DELIVERY_STATUS, ORDER_TYPE } from '#constants/orderConstant.js'
 import { PAYMENT_METHODS } from '#constants/paymentConstant.js'
 import mongoosePaginate from 'mongoose-paginate-v2'
 
 const orderSchema = new mongoose.Schema(
   {
     orderNumber: { type: String, required: true, unique: true },
+    type: { type: String, enum: Object.values(ORDER_TYPE), default: ORDER_TYPE.ONLINE },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     items: [
       {

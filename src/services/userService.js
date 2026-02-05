@@ -318,7 +318,7 @@ const updateCurrentUser = async (userId, updateData) => {
   const updatedUserData = { updatedBy: userId }
   if (email) {
     updatedUserData.email = email
-    updateData.isEmailVerified = false
+    updatedUserData.isEmailVerified = false
     updatedUserData.emailVerifiedAt = null
   }
   if (fullname) updatedUserData.fullname = fullname

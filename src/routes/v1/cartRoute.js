@@ -15,7 +15,7 @@ router.use(authorizationMiddleware)
  * @swagger
  * /api/v1/carts:
  *   get:
- *     summary: Get user's cart
+ *     summary: Get user's cart (customer only)
  *     description: Get current user's shopping cart with all items
  *     tags: [Cart]
  *     security:
@@ -36,7 +36,7 @@ router.get(
  * @swagger
  * /api/v1/carts:
  *   post:
- *     summary: Add product to cart
+ *     summary: Add product to cart (customer only)
  *     description: Add a product with optional services to cart
  *     tags: [Cart]
  *     security:
@@ -86,7 +86,7 @@ router.post(
  * @swagger
  * /api/v1/carts/clear:
  *   delete:
- *     summary: Clear entire cart
+ *     summary: Clear entire cart (customer only)
  *     description: Remove all items from cart
  *     tags: [Cart]
  *     security:
@@ -120,7 +120,6 @@ router.delete(
 router.post(
   '/validate-before-checkout',
   apiRateLimiter,
-  requireRoles(RoleEnum.CUSTOMER),
   CART_CONTROLLER.validateCart
 )
 
@@ -128,7 +127,7 @@ router.post(
  * @swagger
  * /api/v1/carts/item:
  *   delete:
- *     summary: Remove item from cart
+ *     summary: Remove item from cart (customer only)
  *     description: Remove a product from cart
  *     tags: [Cart]
  *     security:
@@ -161,7 +160,7 @@ router.delete(
  * @swagger
  * /api/v1/carts/item/quantity:
  *   put:
- *     summary: Update cart item quantity
+ *     summary: Update cart item quantity (customer only)
  *     description: Update quantity of a product in cart
  *     tags: [Cart]
  *     security:
@@ -197,7 +196,7 @@ router.put(
  * @swagger
  * /api/v1/carts/item/services:
  *   put:
- *     summary: Update cart item services
+ *     summary: Update cart item services (customer only)
  *     description: Update services for a product in cart
  *     tags: [Cart]
  *     security:
@@ -230,7 +229,7 @@ router.put(
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
   sanitizeRequest(CART_CONSTANT.UPDATE_CART_SERVICES_FIELDS, CART_CONSTANT.UPDATE_CART_SERVICES_FIELDS),
-  validationHandlingMiddleware({ body: CART_VALIDATION.updateCartItemServices }),
+  validationHandlingMiddleware({ body: CART_VALIDATION.updateCartItem }),
   CART_CONTROLLER.updateCartItemServices
 )
 

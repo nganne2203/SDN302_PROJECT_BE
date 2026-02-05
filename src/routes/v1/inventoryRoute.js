@@ -18,7 +18,7 @@ router.use(requireRoles(RoleEnum.ADMIN))
  * @swagger
  * /api/v1/inventories:
  *   post:
- *     summary: Tạo tồn kho mới
+ *     summary: Tạo tồn kho mới (admin only)
  *     description: Tạo bản ghi tồn kho mới cho sản phẩm
  *     tags: [Inventory]
  *     security:
@@ -68,7 +68,7 @@ router.post('/',
  * @swagger
  * /api/v1/inventories:
  *   get:
- *     summary: Lấy danh sách tất cả tồn kho
+ *     summary: Lấy danh sách tất cả tồn kho (admin only)
  *     description: Lấy danh sách tồn kho với hỗ trợ phân trang và sắp xếp
  *     tags: [Inventory]
  *     security:
@@ -118,7 +118,7 @@ router.get('/',
  * @swagger
  * /api/v1/inventories/low-stock:
  *   get:
- *     summary: Lấy danh sách sản phẩm sắp hết hàng
+ *     summary: Lấy danh sách sản phẩm sắp hết hàng (admin only)
  *     description: Lấy danh sách sản phẩm có số lượng tồn kho dưới ngưỡng
  *     tags: [Inventory]
  *     security:
@@ -174,7 +174,7 @@ router.get('/low-stock',
  * @swagger
  * /api/v1/inventories/{inventoryId}:
  *   put:
- *     summary: Cập nhật thông tin tồn kho
+ *     summary: Cập nhật thông tin tồn kho (admin only)
  *     description: Cập nhật số lượng và vị trí kho của sản phẩm
  *     tags: [Inventory]
  *     security:
@@ -228,7 +228,7 @@ router.put('/:inventoryId',
  * @swagger
  * /api/v1/inventories/product/{productId}:
  *   get:
- *     summary: Lấy thông tin tồn kho của sản phẩm
+ *     summary: Lấy thông tin tồn kho của sản phẩm (admin only)
  *     description: Lấy chi tiết tồn kho theo ID sản phẩm
  *     tags: [Inventory]
  *     security:
@@ -252,7 +252,7 @@ router.put('/:inventoryId',
  *       404:
  *         description: Không tìm thấy sản phẩm
  */
-// GET - Lấy thông tin tồn kho của sản phẩm
+// GET - Lấy thông tin tồn kho của sản phẩm (admin only)
 router.get('/product/:productId',
   validationHandlingMiddleware({ params: INVENTORY_VALIDATION.productIdParam }),
   INVENTORY_CONTROLLER.getInventory
@@ -262,7 +262,7 @@ router.get('/product/:productId',
  * @swagger
  * /api/v1/inventories/product/{productId}/adjust:
  *   put:
- *     summary: Điều chỉnh tồn kho
+ *     summary: Điều chỉnh tồn kho của sản phẩm (admin only)
  *     description: Điều chỉnh số lượng tồn kho của sản phẩm (cộng hoặc trừ)
  *     tags: [Inventory]
  *     security:

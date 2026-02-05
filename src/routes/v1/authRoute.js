@@ -125,7 +125,7 @@ router.post('/register',
  */
 router.post('/login',
   authRateLimiter,
-  // verifyRecaptchaMiddleware,
+  verifyRecaptchaMiddleware,
   sanitizeRequest(LOGIN_FIELDS, LOGIN_FIELDS),
   validationHandlingMiddleware({ body: AUTH_VALIDATION.loginUser }),
   AUTH_CONTROLLER.login
