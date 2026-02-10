@@ -118,10 +118,19 @@ const logoutAll = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const googleError = async (req, res) => {
+  res.status(StatusCodes.UNAUTHORIZED).json({
+    success: false,
+    message: 'Xác thực Google thất bại',
+    error: 'GOOGLE_AUTH_FAILED'
+  })
+}
+
 export const AUTH_CONTROLLER = {
   register,
   login,
   googleCallback,
+  googleError,
   verifyOtp,
   resendVerificationCode,
   refreshToken,

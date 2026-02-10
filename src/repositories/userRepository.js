@@ -73,6 +73,10 @@ const getUserByBranch = async (branchId, role) => {
   return await userModel.findOne({ branch: branchId, role, isDeleted: false }).select('-password')
 }
 
+const getAllUsersWithoutPagination = async (filter = {}, sort = { createdAt: -1 }) => {
+  return await userModel.find({ ...filter, isDeleted: false }).sort(sort).select('-password')
+}
+
 export const USER_REPOSITORY = {
   createUser,
   getUserByEmail,
@@ -84,5 +88,6 @@ export const USER_REPOSITORY = {
   getAllUsers,
   getAllUsersForManager,
   updateEmailVerificationStatusById,
-  getUserByBranch
+  getUserByBranch,
+  getAllUsersWithoutPagination
 }

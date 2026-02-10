@@ -120,6 +120,34 @@ export const PRODUCT_VALIDATION = {
       'any.only': 'Thứ tự sắp xếp phải là "asc" hoặc "desc"'
     })
   }),
+  queryNoPagination: joi.object({
+    search: joi.string().allow('').messages({
+      'string.base': 'Từ khóa tìm kiếm phải là chuỗi'
+    }).trim(),
+    categoryId: joi.string().hex().length(24).messages({
+      'string.hex': 'Danh mục không hợp lệ',
+      'string.length': 'Danh mục không hợp lệ'
+    }).trim(),
+    minPrice: joi.number().min(0).messages({
+      'number.base': 'Giá tối thiểu phải là số',
+      'number.min': 'Giá tối thiểu phải lớn hơn hoặc bằng 0'
+    }),
+    maxPrice: joi.number().min(0).messages({
+      'number.base': 'Giá tối đa phải là số',
+      'number.min': 'Giá tối đa phải lớn hơn hoặc bằng 0'
+    }),
+    isActive: joi.boolean().messages({
+      'boolean.base': 'Trạng thái hoạt động phải là giá trị boolean'
+    }),
+    sortBy: joi.string().valid('name', 'price', 'createdAt', 'updatedAt', 'ratingAvg', 'ratingCount').messages({
+      'string.base': 'Sắp xếp theo phải là chuỗi',
+      'any.only': 'Sắp xếp theo không hợp lệ'
+    }),
+    sortOrder: joi.string().valid('asc', 'desc').default('desc').messages({
+      'string.base': 'Thứ tự sắp xếp phải là chuỗi',
+      'any.only': 'Thứ tự sắp xếp phải là "asc" hoặc "desc"'
+    })
+  }),
   searchQuery: joi.object({
     q: joi.string().required().messages({
       'string.empty': 'Từ khóa tìm kiếm không được để trống',

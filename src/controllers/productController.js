@@ -23,6 +23,16 @@ const getAllProducts = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getAllProductsWithoutPagination = async (req, res, next) => {
+  try {
+    const result = await PRODUCT_SERVICE.getAllProductsWithoutPagination(req.validated.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy danh sách sản phẩm thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 const searchProducts = async (req, res, next) => {
   try {
     const result = await PRODUCT_SERVICE.searchProducts(req.validated.query)
@@ -173,5 +183,6 @@ export const PRODUCT_CONTROLLER = {
   getFeaturedProducts,
   getNewArrivals,
   getRelatedProducts,
-  getProductDetailForOrder
+  getProductDetailForOrder,
+  getAllProductsWithoutPagination
 }

@@ -160,8 +160,8 @@ router.post(
  *                     example: Ward 1
  *               paymentMethod:
  *                 type: string
- *                 enum: [cash, cod, bank_transfer, vnpay]
- *                 example: cash
+ *                 enum: [cod, vnpay]
+ *                 example: cod
  *               message:
  *                 type: string
  *                 example: Customer note
@@ -432,6 +432,58 @@ router.patch(
     body: ORDER_VALIDATION.updateOrderStatus
   }),
   ORDER_CONTROLLER.updateOrderStatus
+)
+
+/**
+ * @swagger
+ * /api/v1/orders/{orderId}/shipping-fee:
+ *   patch:
+ *     summary: Update shipping fee (Admin/Manager)
+ *     description: Update shipping fee for an order
+ *     tags: [Orders]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: 507f1f77bcf86cd799439011
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - shippingFee
+ *             properties:
+ *               shippingFee:
+ *                 type: number
+ *                 example: 50000
+ *     responses:
+ *       200:
+ *         description: Shipping fee updated successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Order not found
+ */
+router.patch(
+  '/:orderId/shipping-fee',
+  apiRateLimiter,
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
+  sanitizeRequest(ORDER_CONSTANT.UPDATE_SHIPPING_FEE_FIELDS),
+  validationHandlingMiddleware({
+    params: ORDER_VALIDATION.orderIdParam,
+    body: ORDER_VALIDATION.updateShippingFee
+  }),
+  ORDER_CONTROLLER.updateShippingFee
 )
 
 /**

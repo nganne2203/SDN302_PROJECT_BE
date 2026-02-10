@@ -31,6 +31,7 @@ const orderSchema = new mongoose.Schema(
     },
     orderStatus: { type: String, enum: Object.values(ORDER_STATUS), default: ORDER_STATUS.PENDING },
     subtotal: { type: Number, required: true },
+    shippingFee: { type: Number, default: 0 },
     totalAmount: { type: Number, required: true },
     pricingApplied: [
       {

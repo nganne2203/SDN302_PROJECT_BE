@@ -84,6 +84,22 @@ export const SERVICE_VALIDATION = {
       'boolean.base': 'Trạng thái hoạt động phải là giá trị boolean'
     })
   }),
+  queryNoPagination: joi.object({
+    search: joi.string().allow('').messages({
+      'string.base': 'Từ khóa tìm kiếm phải là chuỗi'
+    }).trim(),
+    sortBy: joi.string().valid('name', 'price', 'type', 'createdAt', 'updatedAt').messages({
+      'string.base': 'Sắp xếp theo phải là chuỗi',
+      'any.only': 'Sắp xếp theo phải là một trong các giá trị: name, price, createdAt, updatedAt'
+    }),
+    sortOrder: joi.string().valid('asc', 'desc').default('desc').messages({
+      'string.base': 'Thứ tự sắp xếp phải là chuỗi',
+      'any.only': 'Thứ tự sắp xếp phải là "asc" hoặc "desc"'
+    }),
+    isActive: joi.boolean().optional().messages({
+      'boolean.base': 'Trạng thái hoạt động phải là giá trị boolean'
+    })
+  }),
   updateServiceStatus: joi.object({
     isActive: joi.boolean().required().messages({
       'boolean.base': 'Trạng thái hoạt động phải là giá trị boolean',

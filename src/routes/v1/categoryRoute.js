@@ -372,6 +372,13 @@ router.get(
 )
 
 router.get(
+  '/all',
+  apiRateLimiter,
+  validationHandlingMiddleware({ query: CATEGORY_VALIDATION.queryNoPagination }),
+  CATEGORY_CONTROLLER.getAllCategoriesWithoutPagination
+)
+
+router.get(
   '/:id',
   apiRateLimiter,
   validationHandlingMiddleware({ params: CATEGORY_VALIDATION.idParam }),

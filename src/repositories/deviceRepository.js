@@ -13,6 +13,10 @@ const getAllDevices = async (filter = {}, options = {}) => {
   })
 }
 
+const getAllDevicesWithoutPagination = async (filter = {}, sort = { createdAt: -1 }) => {
+  return await deviceModel.find({ ...filter, isDeleted: false }).sort(sort)
+}
+
 const updateDeviceById = async (id, data) => {
   return await deviceModel.findByIdAndUpdate(id, data, { new: true, runValidators: true, timestamps: true })
 }
@@ -32,6 +36,7 @@ const getDeviceByName = async (name) => {
 export const DEVICE_REPOSITORY = {
   createDevice,
   getAllDevices,
+  getAllDevicesWithoutPagination,
   updateDeviceById,
   deleteDeviceById,
   getDeviceById,

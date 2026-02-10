@@ -347,8 +347,13 @@ const getRelatedProducts = async (productId, query = {}) => {
 
   const product = await getProductByIdRaw(productId)
 
+  const categoryId = product?.category?._id || product?.category
+  if (!categoryId) {
+    throw new ApiError(ERROR_CODES.NOT_FOUND, ['Danh mục sản phẩm không tồn tại'])
+  }
+
   const filter = {
-    category: product.category._id || product.category,
+    category: categoryId,
     _id: { $ne: productId },
     isActive: true
   }
@@ -399,6 +404,33 @@ const getProductDetailForOrder = async (productId) => {
   }
 }
 
+const getAllProductsWithoutPagination = async (query = {}) => {
+  const { search, categoryId, minPrice, maxPrice, isActive, sortBy, sortOrder } = query
+  const filter = {}
+  if (search) {
+    const escapedSearch = escapeRegex(search)
+    filter.$or = [
+      { name: { $regex: escapedSearch, $options: 'i' } },
+      { description: { $regex: escapedSearch, $options: 'i' } }
+    ]
+  }
+  if (categoryId) {
+    filter.category = categoryId
+  }
+  if (typeof isActive === 'boolean') {
+    filter.isActive = isActive
+  }
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    filter.price = {}
+    if (minPrice !== undefined) filter.price.$gte = minPrice
+    if (maxPrice !== undefined) filter.price.$lte = maxPrice
+  }
+  const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
+
+  const products = await PRODUCT_REPOSITORY.getAllProductsWithoutPagination(filter, sort)
+  return mapProductsImages(products)
+}
+
 export const PRODUCT_SERVICE = {
   getProductById,
   getProductByIdWithImages,
@@ -415,5 +447,6 @@ export const PRODUCT_SERVICE = {
   getFeaturedProducts,
   getNewArrivals,
   getRelatedProducts,
-  getProductDetailForOrder
+  getProductDetailForOrder,
+  getAllProductsWithoutPagination
 }
