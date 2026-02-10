@@ -35,6 +35,23 @@ const getAllCategories = async (query = {}) => {
   }
 }
 
+const getAllCategoriesWithoutPagination = async (query = {}) => {
+  const { search, isActive, sortBy, sortOrder } = query
+  const filter = {}
+  if (search) {
+    const escapedSearch = escapeRegex(search)
+    filter.$or = [
+      { name: { $regex: escapedSearch, $options: 'i' } }
+    ]
+  }
+  if (typeof isActive === 'boolean') {
+    filter.isActive = isActive
+  }
+  const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
+
+  return await CATEGORY_REPOSITORY.getAllCategoriesWithoutPagination(filter, sort)
+}
+
 const assertCategoryNameUnique = async (name) => {
   const existingCategory = await CATEGORY_REPOSITORY.getCategoryByName(name)
   if (existingCategory) {
@@ -86,5 +103,6 @@ export const CATEGORY_SERVICE = {
   updateCategoryById,
   deleteCategoryById,
   updateCategoryStatus,
-  getAllCategories
+  getAllCategories,
+  getAllCategoriesWithoutPagination
 }

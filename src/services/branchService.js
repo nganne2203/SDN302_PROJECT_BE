@@ -38,6 +38,24 @@ const getAllBranches = async (query = {}) => {
   }
 }
 
+const getAllBranchesWithoutPagination = async (query = {}) => {
+  const { search, isActive, sortBy, sortOrder } = query
+  const filter = {}
+  if (search) {
+    const escapedSearch = escapeRegex(search)
+    filter.$or = [
+      { name: { $regex: escapedSearch, $options: 'i' } },
+      { address: { $regex: escapedSearch, $options: 'i' } }
+    ]
+  }
+  if (typeof isActive === 'boolean') {
+    filter.isActive = isActive
+  }
+  const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
+
+  return await BRANCH_REPOSITORY.getAllBranchesWithoutPagination(filter, sort)
+}
+
 const assertBranchNameUnique = async (name) => {
   const existingBranch = await BRANCH_REPOSITORY.getBranchByName(name)
   if (existingBranch) {
@@ -156,7 +174,7 @@ const deleteBranch = async (branchId, updatedBy = null) => {
 }
 
 const getAllManagerForBranch = async (query = {}) => {
-  const { page, limit, search, sortBy, sortOrder } = query
+  const { search, sortBy, sortOrder } = query
   const filter = { role: RoleEnum.MANAGER, branch: { $exists: false } }
   if (search) {
     const escapedSearch = escapeRegex(search)
@@ -167,20 +185,16 @@ const getAllManagerForBranch = async (query = {}) => {
   }
   const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
 
-  const result = await USER_REPOSITORY.getAllUsers(filter, {
-    page,
-    limit,
-    sort
-  })
+  const result = await USER_REPOSITORY.getAllUsersWithoutPagination(filter, sort)
   return {
-    data: result.docs,
-    pagination: mapMongoosePagination(result)
+    data: result
   }
 }
 
 export const BRANCH_SERVICE = {
   getBranchById,
   getAllBranches,
+  getAllBranchesWithoutPagination,
   createBranch,
   updateBranch,
   assignManagerToBranch,

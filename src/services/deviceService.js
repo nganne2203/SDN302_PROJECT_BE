@@ -97,11 +97,31 @@ const getAllDevices = async (query = {}) => {
   }
 }
 
+const getAllDevicesWithoutPagination = async (query = {}) => {
+  const { search, isActive, sortBy, sortOrder } = query
+  const filter = {}
+  if (search) {
+    const escapedSearch = escapeRegex(search)
+    filter.$or = [
+      { name: { $regex: escapedSearch, $options: 'i' } },
+      { brand: { $regex: escapedSearch, $options: 'i' } },
+      { model: { $regex: escapedSearch, $options: 'i' } }
+    ]
+  }
+  if (typeof isActive === 'boolean') {
+    filter.isActive = isActive
+  }
+  const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
+
+  return await DEVICE_REPOSITORY.getAllDevicesWithoutPagination(filter, sort)
+}
+
 export const DEVICE_SERVICE = {
   getDeviceById,
   createDevice,
   updateDevice,
   updateDeviceStatus,
   deleteDevice,
-  getAllDevices
+  getAllDevices,
+  getAllDevicesWithoutPagination
 }

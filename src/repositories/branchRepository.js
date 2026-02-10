@@ -17,6 +17,10 @@ const getAllBranches = async (filter = {}, options = {}) => {
   })
 }
 
+const getAllBranchesWithoutPagination = async (filter = {}, sort = { createdAt: -1 }) => {
+  return await branchModel.find({ ...filter, isDeleted: false }).sort(sort)
+}
+
 const updateBranchById = async (id, data) => {
   return await branchModel.findByIdAndUpdate(id, data, { new: true, runValidators: true, timestamps: true })
 }
@@ -33,6 +37,7 @@ export const BRANCH_REPOSITORY = {
   createBranch,
   getBranchById,
   getAllBranches,
+  getAllBranchesWithoutPagination,
   updateBranchById,
   deleteBranchById,
   getBranchByName

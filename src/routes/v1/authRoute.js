@@ -199,10 +199,23 @@ router.get('/google',
 router.get('/google/callback',
   passport.authenticate('google', {
     session: false,
-    failureRedirect: '/auth/google/error'
+    failureRedirect: '/api/v1/auth/google/error'
   }),
   AUTH_CONTROLLER.googleCallback
 )
+
+/**
+ * @swagger
+ * /api/v1/auth/google/error:
+ *   get:
+ *     summary: Google OAuth error handler
+ *     description: Handles Google OAuth authentication failures
+ *     tags: [Auth]
+ *     responses:
+ *       302:
+ *         description: Redirect to frontend with error
+ */
+router.get('/google/error', AUTH_CONTROLLER.googleError)
 
 /**
  * @swagger

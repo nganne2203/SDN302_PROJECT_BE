@@ -24,6 +24,15 @@ const findAllServices = async (filter = {}, options = {}) => {
   })
 }
 
+const findAllServicesWithoutPagination = async (filter = {}, sort = { createdAt: -1 }) => {
+  return await serviceModel.find({ ...filter, isDeleted: false }).sort(sort).populate([
+    {
+      path: 'product',
+      select: 'name images price'
+    }
+  ])
+}
+
 const findServiceByProductId = async (productId) => {
   return await serviceModel.find({ product: productId, isDeleted: false }, { product: 0 })
 }
@@ -48,6 +57,7 @@ export const SERVICE_REPOSITORY = {
   createService,
   findServiceByNameInProduct,
   findAllServices,
+  findAllServicesWithoutPagination,
   findServiceByProductId,
   findByIdProduct,
   findByIdService,

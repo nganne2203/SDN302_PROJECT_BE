@@ -83,6 +83,22 @@ export const DEVICE_VALIDATION = {
       'string.base': 'Thứ tự sắp xếp phải là chuỗi',
       'any.only': 'Thứ tự sắp xếp phải là "asc" hoặc "desc"'
     })
+  }),
+  queryNoPagination: joi.object({
+    search: joi.string().allow('').messages({
+      'string.base': 'Từ khóa tìm kiếm phải là chuỗi'
+    }).trim(),
+    isActive: joi.boolean().optional().messages({
+      'boolean.base': 'Trạng thái hoạt động phải là giá trị boolean'
+    }),
+    sortBy: joi.string().valid('name', 'createdAt', 'updatedAt').messages({
+      'string.base': 'Sắp xếp theo phải là chuỗi',
+      'any.only': 'Sắp xếp theo phải là một trong các giá trị: name, createdAt, updatedAt'
+    }),
+    sortOrder: joi.string().valid('asc', 'desc').default('desc').messages({
+      'string.base': 'Thứ tự sắp xếp phải là chuỗi',
+      'any.only': 'Thứ tự sắp xếp phải là "asc" hoặc "desc"'
+    })
   })
 }
 

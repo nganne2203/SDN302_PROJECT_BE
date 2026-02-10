@@ -176,11 +176,20 @@ router.get(
   SERVICE_CONTROLLER.getAllServices
 )
 
+router.get(
+  '/all',
+  apiRateLimiter,
+  authorizationMiddleware,
+  requireRoles(RoleEnum.ADMIN),
+  validationHandlingMiddleware({ query: SERVICE_VALIDATION.queryNoPagination }),
+  SERVICE_CONTROLLER.getAllServicesWithoutPagination
+)
+
 /**
  * @swagger
  * /api/v1/services/{id}:
  *   get:
- *     summary: Get a service by ID (admin only)
+ *     summary: Get a service by ID
  *     description: Retrieve a service by its ID. Only admins can view this service.
  *     tags: [Services]
  *     parameters:
@@ -458,8 +467,6 @@ router.delete(
  *     summary: Get services by product ID
  *     description: Retrieve all services for a specific product. Only admins can view this service.
  *     tags: [Services]
- *     security:
- *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: productId
@@ -551,7 +558,6 @@ router.delete(
  */
 router.get('/product/:productId',
   apiRateLimiter,
-  authorizationMiddleware,
   validationHandlingMiddleware({ params: SERVICE_VALIDATION.productIdParam }),
   SERVICE_CONTROLLER.getServiceByProductId
 )

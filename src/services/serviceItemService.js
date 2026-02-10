@@ -49,6 +49,23 @@ const getAllServices = async (query = {}) => {
   }
 }
 
+const getAllServicesWithoutPagination = async (query = {}) => {
+  const { search, isActive, sortBy, sortOrder } = query
+  const filter = {}
+  if (search) {
+    const escapedSearch = escapeRegex(search)
+    filter.$or = [
+      { name: { $regex: escapedSearch, $options: 'i' } }
+    ]
+  }
+  if (typeof isActive === 'boolean') {
+    filter.isActive = isActive
+  }
+  const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
+
+  return await SERVICE_REPOSITORY.findAllServicesWithoutPagination(filter, sort)
+}
+
 const getServiceById = async (serviceId) => {
   const service = await SERVICE_REPOSITORY.findByIdService(serviceId)
   if (!service) {
@@ -104,6 +121,7 @@ const deleteServiceById = async (serviceId) => {
 export const SERVICE_ITEM_SERVICE = {
   createService,
   getAllServices,
+  getAllServicesWithoutPagination,
   getServiceById,
   getServiceByProductId,
   updateServiceById,

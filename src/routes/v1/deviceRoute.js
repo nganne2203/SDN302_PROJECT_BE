@@ -251,6 +251,13 @@ router.get(
 )
 
 router.get(
+  '/all',
+  apiRateLimiter,
+  validationHandlingMiddleware({ query: DEVICE_VALIDATION.queryNoPagination }),
+  DEVICE_CONTROLLER.getAllDevicesWithoutPagination
+)
+
+router.get(
   '/:id',
   apiRateLimiter,
   validationHandlingMiddleware({ params: DEVICE_VALIDATION.idParam }),

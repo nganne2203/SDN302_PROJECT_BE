@@ -24,6 +24,16 @@ const getAllDevices = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getAllDevicesWithoutPagination = async (req, res, next) => {
+  try {
+    const result = await DEVICE_SERVICE.getAllDevicesWithoutPagination(req.validated.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy danh sách thiết bị thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 const getDeviceById = async (req, res, next) => {
   try {
     const result = await DEVICE_SERVICE.getDeviceById(req.params.id)
@@ -69,6 +79,7 @@ const deleteDevice = async (req, res, next) => {
 export const DEVICE_CONTROLLER = {
   createDevice,
   getAllDevices,
+  getAllDevicesWithoutPagination,
   getDeviceById,
   updateDevice,
   updateDeviceStatus,
