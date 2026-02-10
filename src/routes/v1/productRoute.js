@@ -105,6 +105,13 @@ router.get(
   PRODUCT_CONTROLLER.getAllProducts
 )
 
+router.get(
+  '/all',
+  apiRateLimiter,
+  validationHandlingMiddleware({ query: PRODUCT_VALIDATION.queryNoPagination }),
+  PRODUCT_CONTROLLER.getAllProductsWithoutPagination
+)
+
 /**
  * @swagger
  * /api/v1/products/with-stock:

@@ -27,6 +27,13 @@ const getAllProducts = async (filter = {}, options = {}) => {
   })
 }
 
+const getAllProductsWithoutPagination = async (filter = {}, sort = { createdAt: -1 }) => {
+  return await productModel.find({ ...filter, isDeleted: false })
+    .sort(sort)
+    .populate('category', 'name')
+    .populate('compatibility', 'name')
+}
+
 const createProduct = async (data) => {
   return await productModel.create(data)
 }
@@ -50,5 +57,6 @@ export const PRODUCT_REPOSITORY = {
   getAllProducts,
   createProduct,
   updateProductById,
-  deleteProductById
+  deleteProductById,
+  getAllProductsWithoutPagination
 }

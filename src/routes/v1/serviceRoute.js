@@ -176,6 +176,15 @@ router.get(
   SERVICE_CONTROLLER.getAllServices
 )
 
+router.get(
+  '/all',
+  apiRateLimiter,
+  authorizationMiddleware,
+  requireRoles(RoleEnum.ADMIN),
+  validationHandlingMiddleware({ query: SERVICE_VALIDATION.queryNoPagination }),
+  SERVICE_CONTROLLER.getAllServicesWithoutPagination
+)
+
 /**
  * @swagger
  * /api/v1/services/{id}:

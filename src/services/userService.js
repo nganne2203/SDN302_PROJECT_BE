@@ -67,6 +67,43 @@ const getAllUsers = async (query = {}) => {
   }
 }
 
+const getAllStaffForAdmin = async (query = {}) => {
+  const { page, limit, search, isActive, role, sortBy, sortOrder } = query
+  const filter = {}
+
+  if (search) {
+    const escapedSearch = escapeRegex(search)
+    filter.$or = [
+      { fullname: { $regex: escapedSearch, $options: 'i' } },
+      { email: { $regex: escapedSearch, $options: 'i' } },
+      { phone: { $regex: escapedSearch, $options: 'i' } }
+    ]
+  }
+
+  if (typeof isActive === 'boolean') {
+    filter.isActive = isActive
+  }
+
+  if (role && [RoleEnum.STAFF, RoleEnum.MANAGER].includes(role)) {
+    filter.role = role
+  } else {
+    filter.role = { $in: [RoleEnum.STAFF, RoleEnum.MANAGER] }
+  }
+
+  const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
+
+  const result = await USER_REPOSITORY.getAllUsers(filter, {
+    page,
+    limit,
+    sort
+  })
+
+  return {
+    data: result.docs,
+    pagination: mapMongoosePagination(result)
+  }
+}
+
 const getUserByEmail = async (email) => {
   const user = await USER_REPOSITORY.getUserByEmail(email)
   if (!user) throw new ApiError(ERROR_CODES.NOT_FOUND, ['Người dùng không tồn tại'])
@@ -509,6 +546,7 @@ const confirmPasswordReset = async (data) => {
 export const USER_SERVICE = {
   getUserById,
   getAllUsers,
+  getAllStaffForAdmin,
   getUserByEmail,
   assertEmailNotExists,
   createUserInternal,

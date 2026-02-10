@@ -23,6 +23,16 @@ const getAllBranches = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getAllBranchesWithoutPagination = async (req, res, next) => {
+  try {
+    const result = await BRANCH_SERVICE.getAllBranchesWithoutPagination(req.validated.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy danh sách chi nhánh thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 const createBranch = async (req, res, next) => {
   try {
     const userId = req.user.id
@@ -93,7 +103,7 @@ const getAllManagerForBranch = async (req, res, next) => {
   try {
     const result = await BRANCH_SERVICE.getAllManagerForBranch(req.validated.query)
     res.status(StatusCodes.OK).json(responseSuccess({
-      data: result,
+      data: result.data,
       message: 'Lấy danh sách quản lý chi nhánh thành công'
     }))
   } catch (error) { next(error) }
@@ -102,6 +112,7 @@ const getAllManagerForBranch = async (req, res, next) => {
 export const BRANCH_CONTROLLER = {
   getBranchById,
   getAllBranches,
+  getAllBranchesWithoutPagination,
   createBranch,
   updateBranch,
   assignManager,

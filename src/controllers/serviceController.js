@@ -24,6 +24,16 @@ const getAllServices = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getAllServicesWithoutPagination = async (req, res, next) => {
+  try {
+    const result = await SERVICE_ITEM_SERVICE.getAllServicesWithoutPagination(req.validated.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy danh sách dịch vụ thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 const getServiceById = async (req, res, next) => {
   try {
     const result = await SERVICE_ITEM_SERVICE.getServiceById(req.params.id)
@@ -78,6 +88,7 @@ const deleteServiceById = async (req, res, next) => {
 export const SERVICE_CONTROLLER = {
   createService,
   getAllServices,
+  getAllServicesWithoutPagination,
   getServiceById,
   getServiceByProductId,
   updateService,

@@ -62,6 +62,22 @@ export const BRANCH_VALIDATION = {
       'boolean.base': 'Trạng thái hoạt động phải là giá trị boolean'
     })
   }),
+  queryNoPagination: joi.object({
+    search: joi.string().allow('').messages({
+      'string.base': 'Từ khóa tìm kiếm phải là chuỗi'
+    }).trim(),
+    sortBy: joi.string().valid('name', 'createdAt', 'updatedAt').messages({
+      'string.base': 'Sắp xếp theo phải là chuỗi',
+      'any.only': 'Sắp xếp theo phải là một trong các giá trị: name, createdAt, updatedAt'
+    }),
+    sortOrder: joi.string().valid('asc', 'desc').default('desc').messages({
+      'string.base': 'Thứ tự sắp xếp phải là chuỗi',
+      'any.only': 'Thứ tự sắp xếp phải là "asc" hoặc "desc"'
+    }),
+    isActive: joi.boolean().messages({
+      'boolean.base': 'Trạng thái hoạt động phải là giá trị boolean'
+    })
+  }),
   assignManager: joi.object({
     manager: joi.string().hex().length(24).required().messages({
       'string.empty': 'ID quản lý không được để trống',
@@ -77,17 +93,6 @@ export const BRANCH_VALIDATION = {
     })
   }),
   getAllManagerForBranch: joi.object({
-    page: joi.number().integer().min(1).default(1).messages({
-      'number.base': 'Trang phải là số',
-      'number.integer': 'Trang phải là số nguyên',
-      'number.min': 'Trang phải lớn hơn hoặc bằng 1'
-    }),
-    limit: joi.number().integer().min(1).max(100).default(10).messages({
-      'number.base': 'Giới hạn phải là số',
-      'number.integer': 'Giới hạn phải là số nguyên',
-      'number.min': 'Giới hạn phải lớn hơn hoặc bằng 1',
-      'number.max': 'Giới hạn không được vượt quá 100'
-    }),
     search: joi.string().allow('').messages({
       'string.base': 'Từ khóa tìm kiếm phải là chuỗi'
     }).trim(),

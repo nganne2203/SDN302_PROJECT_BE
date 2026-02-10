@@ -270,8 +270,16 @@ router.get(
 )
 
 router.get(
+  '/all',
+  apiRateLimiter,
+  validationHandlingMiddleware({ query: BRANCH_VALIDATION.queryNoPagination }),
+  BRANCH_CONTROLLER.getAllBranchesWithoutPagination
+)
+
+router.get(
   '/managers',
   apiRateLimiter,
+  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN),
   validationHandlingMiddleware({ query: BRANCH_VALIDATION.getAllManagerForBranch }),
   BRANCH_CONTROLLER.getAllManagerForBranch
@@ -280,6 +288,7 @@ router.get(
 router.get(
   '/:id',
   apiRateLimiter,
+  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   validationHandlingMiddleware({ params: BRANCH_VALIDATION.idParam }),
   BRANCH_CONTROLLER.getBranchById

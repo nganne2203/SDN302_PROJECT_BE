@@ -14,6 +14,18 @@ const getAllUsers = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getAllStaffForAdmin = async (req, res, next) => {
+  try {
+    const result = await USER_SERVICE.getAllStaffForAdmin(req.validated.query)
+
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result.data,
+      pagination: result.pagination,
+      message: 'Lấy danh sách nhân sự thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 const getUserById = async (req, res, next) => {
   try {
     const result = await USER_SERVICE.getUserById(req.params.id)
@@ -157,6 +169,7 @@ const confirmResetPassword = async (req, res, next) => {
 
 export const USER_CONTROLLER = {
   getAllUsers,
+  getAllStaffForAdmin,
   getUserById,
   createUser,
   updateUser,
