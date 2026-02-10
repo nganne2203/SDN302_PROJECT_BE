@@ -54,9 +54,9 @@ export const ORDER_VALIDATION = {
       }),
       otherwise: joi.optional().allow(null)
     }),
-    paymentMethod: joi.string().valid('cod', 'bank_transfer', 'vnpay').required().messages({
+    paymentMethod: joi.string().valid('cod').required().messages({
       'string.empty': 'Phương thức thanh toán không được để trống',
-      'any.only': 'Phương thức thanh toán không hợp lệ (cod, bank_transfer, vnpay)',
+      'any.only': 'Phương thức thanh toán không hợp lệ (cod)',
       'any.required': 'Phương thức thanh toán là bắt buộc'
     }),
     message: joi.string().trim().max(500).optional().allow('').messages({
@@ -140,8 +140,14 @@ export const ORDER_VALIDATION = {
         'string.empty': 'Phường/Xã không được để trống',
         'any.required': 'Phường/Xã là bắt buộc'
       })
-    }).optional().allow(null),
-    paymentMethod: joi.string().valid('cod', 'cash', 'bank_transfer', 'vnpay').required().messages({
+    }).when('hasDelivery', {
+      is: true,
+      then: joi.required().messages({
+        'any.required': 'Địa chỉ giao hàng là bắt buộc khi có giao hàng'
+      }),
+      otherwise: joi.optional().allow(null)
+    }),
+    paymentMethod: joi.string().valid('cod', 'vnpay').required().messages({
       'string.empty': 'Phương thức thanh toán không được để trống',
       'any.only': 'Phương thức thanh toán không hợp lệ',
       'any.required': 'Phương thức thanh toán là bắt buộc'
@@ -181,6 +187,14 @@ export const ORDER_VALIDATION = {
     estimatedDeliveryDate: joi.date().optional().allow(null),
     deliveredAt: joi.date().optional().allow(null),
     recipientName: joi.string().trim().optional().allow('')
+  }),
+
+  updateShippingFee: joi.object({
+    shippingFee: joi.number().min(0).required().messages({
+      'number.base': 'Phí ship phải là số',
+      'number.min': 'Phí ship không được nhỏ hơn 0',
+      'any.required': 'Phí ship là bắt buộc'
+    })
   }),
 
   getOrders: joi.object({

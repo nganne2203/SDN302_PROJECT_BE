@@ -347,8 +347,13 @@ const getRelatedProducts = async (productId, query = {}) => {
 
   const product = await getProductByIdRaw(productId)
 
+  const categoryId = product?.category?._id || product?.category
+  if (!categoryId) {
+    throw new ApiError(ERROR_CODES.NOT_FOUND, ['Danh mục sản phẩm không tồn tại'])
+  }
+
   const filter = {
-    category: product.category._id || product.category,
+    category: categoryId,
     _id: { $ne: productId },
     isActive: true
   }

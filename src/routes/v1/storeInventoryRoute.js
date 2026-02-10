@@ -11,7 +11,6 @@ import { STORE_INVENTORY_CONSTANT } from '#constants/storeInventoryConstant.js'
 
 const router = Router()
 router.use(apiRateLimiter)
-router.use(authorizationMiddleware)
 
 /**
  * @swagger
@@ -72,6 +71,7 @@ router.use(authorizationMiddleware)
  */
 // POST - Tạo tồn kho cho chi nhánh
 router.post('/',
+  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN),
   sanitizeRequest(STORE_INVENTORY_CONSTANT.CREATE_STORE_INVENTORY, STORE_INVENTORY_CONSTANT.CREATE_STORE_INVENTORY_REQUIRED),
   validationHandlingMiddleware({ body: STORE_INVENTORY_VALIDATION.createStoreInventory }),
@@ -133,6 +133,7 @@ router.post('/',
  */
 // GET - Lấy danh sách sản phẩm hết hàng tại chi nhánh
 router.get('/:branchId/out-of-stock',
+  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   validationHandlingMiddleware({ params: STORE_INVENTORY_VALIDATION.branchIdParam, query: STORE_INVENTORY_VALIDATION.query }),
   STORE_INVENTORY_CONTROLLER.getOutOfStockProductsAtBranch
@@ -193,6 +194,7 @@ router.get('/:branchId/out-of-stock',
  */
 // GET - Lấy danh sách sản phẩm tồn kho thấp tại chi nhánh
 router.get('/:branchId/low-stock',
+  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
   validationHandlingMiddleware({ params: STORE_INVENTORY_VALIDATION.branchIdParam, query: STORE_INVENTORY_VALIDATION.query }),
   STORE_INVENTORY_CONTROLLER.getLowStockProductsAtBranch
@@ -253,6 +255,7 @@ router.get('/:branchId/low-stock',
  */
 // GET - Lấy danh sách sản phẩm cần bổ sung tồn kho
 router.get('/:branchId/need-restock',
+  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
   validationHandlingMiddleware({ params: STORE_INVENTORY_VALIDATION.branchIdParam, query: STORE_INVENTORY_VALIDATION.query }),
   STORE_INVENTORY_CONTROLLER.getNeedRestockProducts
@@ -313,6 +316,7 @@ router.get('/:branchId/need-restock',
  */
 // GET - Lấy danh sách sản phẩm tồn kho quá mức
 router.get('/:branchId/overstock',
+  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
   validationHandlingMiddleware({ params: STORE_INVENTORY_VALIDATION.branchIdParam, query: STORE_INVENTORY_VALIDATION.query }),
   STORE_INVENTORY_CONTROLLER.getOverstockProducts
@@ -322,7 +326,7 @@ router.get('/:branchId/overstock',
  * @swagger
  * /api/v1/store-inventories/{branchId}:
  *   get:
- *     summary: Lấy danh sách tồn kho tại chi nhánh (admin, manager, staff)
+ *     summary: Lấy danh sách tồn kho tại chi nhánh
  *     description: Lấy danh sách tất cả sản phẩm có tồn kho tại chi nhánh cụ thể
  *     tags: [Store Inventory]
  *     security:
@@ -373,6 +377,7 @@ router.get('/:branchId/overstock',
  */
 // GET - Lấy danh sách tồn kho tại chi nhánh
 router.get('/:branchId',
+  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   validationHandlingMiddleware({ params: STORE_INVENTORY_VALIDATION.branchIdParam, query: STORE_INVENTORY_VALIDATION.query }),
   STORE_INVENTORY_CONTROLLER.getStoreInventoriesByBranch
@@ -431,6 +436,7 @@ router.get('/:branchId',
  */
 // PATCH - Cập nhật ngưỡng tồn kho
 router.patch('/:branchId/:productId/thresholds',
+  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
   validationHandlingMiddleware({
     params: STORE_INVENTORY_VALIDATION.branchAndProductIdParam,
@@ -446,8 +452,6 @@ router.patch('/:branchId/:productId/thresholds',
  *     summary: Lấy tồn kho sản phẩm tại chi nhánh (admin, manager, staff)
  *     description: Lấy chi tiết tồn kho của một sản phẩm cụ thể tại chi nhánh
  *     tags: [Store Inventory]
- *     security:
- *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: branchId
@@ -475,7 +479,6 @@ router.patch('/:branchId/:productId/thresholds',
  */
 // GET - Lấy tồn kho sản phẩm tại chi nhánh
 router.get('/:branchId/:productId',
-  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   validationHandlingMiddleware({ params: STORE_INVENTORY_VALIDATION.branchAndProductIdParam }),
   STORE_INVENTORY_CONTROLLER.getStoreInventory
 )
@@ -510,6 +513,7 @@ router.get('/:branchId/:productId',
  */
 // DELETE - Xóa tồn kho (soft delete)
 router.delete('/:inventoryId',
+  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN),
   validationHandlingMiddleware({ params: STORE_INVENTORY_VALIDATION.inventoryIdParam }),
   STORE_INVENTORY_CONTROLLER.deleteStoreInventory
