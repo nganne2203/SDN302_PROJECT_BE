@@ -72,16 +72,6 @@ const router = express.Router()
  *     tags: [Branch]
  *     parameters:
  *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *         description: Trang hiện tại
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *         description: Số lượng mỗi trang
- *       - in: query
  *         name: search
  *         schema:
  *           type: string
