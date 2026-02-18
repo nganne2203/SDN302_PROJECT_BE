@@ -1,4 +1,5 @@
 import { STATISTICS_REPOSITORY } from '#repositories/statisticsRepository.js'
+import { orderModel } from '#models/orderModel.js'
 
 /**
  * Get date range filter based on period
@@ -98,13 +99,14 @@ const getDashboardOverview = async (branchId = null, period = 'this_month', cust
   const matchStage = STATISTICS_REPOSITORY.buildMatchStage(branchId, startDate, endDate)
 
   // Fetch all data in parallel
-  const [orderStats, productsSold, newCustomers, activeProducts, lowStockProducts, outOfStockProducts] = await Promise.all([
+  const [orderStats, productsSold, newCustomers, activeProducts, lowStockProducts, outOfStockProducts, recentOrders] = await Promise.all([
     STATISTICS_REPOSITORY.getOrderOverviewStats(matchStage),
     STATISTICS_REPOSITORY.getProductsSoldStats(matchStage),
     STATISTICS_REPOSITORY.getNewCustomersCount(startDate, endDate),
     STATISTICS_REPOSITORY.getActiveProductsCount(),
     STATISTICS_REPOSITORY.getLowStockProductsCount(),
-    STATISTICS_REPOSITORY.getOutOfStockProductsCount()
+    STATISTICS_REPOSITORY.getOutOfStockProductsCount(),
+    STATISTICS_REPOSITORY.getRecentOrders(matchStage, 5)
   ])
 
   const stats = orderStats[0] || {
@@ -118,16 +120,31 @@ const getDashboardOverview = async (branchId = null, period = 'this_month', cust
     averageOrderValue: 0
   }
 
+  // Calculate completion rate
+  const totalConfirmed = stats.confirmedOrders + stats.shippedOrders + stats.deliveredOrders
+  const completionRate = stats.totalOrders > 0 ? Math.round((totalConfirmed / stats.totalOrders) * 100) : 0
+
+  // Count active transactions (non-pending, non-canceled)
+  const activeTransactions = totalConfirmed
+
   return {
     period,
     dateRange: { startDate, endDate },
+    overview: {
+      totalOrders: stats.totalOrders,
+      totalRevenue: Math.round(stats.totalRevenue),
+      totalProductsSold: productsSold[0]?.totalQuantity || 0,
+      totalCustomers: newCustomers,
+      averageOrderValue: Math.round(stats.averageOrderValue || 0)
+    },
     orders: {
       total: stats.totalOrders,
       pending: stats.pendingOrders,
       confirmed: stats.confirmedOrders,
       shipped: stats.shippedOrders,
       delivered: stats.deliveredOrders,
-      canceled: stats.canceledOrders
+      canceled: stats.canceledOrders,
+      activeTransactions: activeTransactions
     },
     revenue: {
       total: Math.round(stats.totalRevenue),
@@ -141,7 +158,20 @@ const getDashboardOverview = async (branchId = null, period = 'this_month', cust
     },
     customers: {
       newCustomers
-    }
+    },
+    performance: {
+      completionRate: completionRate,
+      successRate: completionRate
+    },
+    recentOrders: recentOrders.map(order => ({
+      orderNumber: order.orderNumber,
+      customer: order.user?.fullname || 'N/A',
+      status: order.orderStatus,
+      totalAmount: order.totalAmount,
+      paymentMethod: order.paymentMethod,
+      branch: order.branch?.name || 'N/A',
+      createdAt: order.createdAt
+    }))
   }
 }
 
@@ -317,6 +347,39 @@ const getBranchStatistics = async (period = 'this_month', customStart = null, cu
 }
 
 /**
+ * Branch Performance Statistics with detailed metrics
+ * For: Admin
+ * Returns: Branch name, revenue, orders, quantities, manager, status
+ */
+const getBranchPerformanceMetrics = async (period = 'this_month', customStart = null, customEnd = null, limit = 10) => {
+  const { startDate, endDate } = getDateRange(period, customStart, customEnd)
+
+  const branchPerformance = await STATISTICS_REPOSITORY.getBranchPerformance(startDate, endDate, limit)
+
+  return {
+    period,
+    dateRange: { startDate, endDate },
+    branches: branchPerformance.map(branch => ({
+      branchId: branch._id,
+      branchName: branch.branchName,
+      address: branch.address,
+      manager: branch.manager || 'Chưa gán',
+      managerEmail: branch.managerEmail || '',
+      revenue: Math.round(branch.totalRevenue),
+      orders: branch.totalOrders,
+      quantity: branch.totalQuantity,
+      status: branch.status ? 'Hoạt động' : 'Không hoạt động'
+    })),
+    summary: {
+      totalBranches: branchPerformance.length,
+      totalRevenue: Math.round(branchPerformance.reduce((sum, b) => sum + (b.totalRevenue || 0), 0)),
+      totalOrders: branchPerformance.reduce((sum, b) => sum + (b.totalOrders || 0), 0),
+      totalQuantity: branchPerformance.reduce((sum, b) => sum + (b.totalQuantity || 0), 0)
+    }
+  }
+}
+
+/**
  * Customer Statistics
  * For: Admin, Manager
  */
@@ -455,14 +518,91 @@ const getComparisonStatistics = async (branchId = null, currentPeriod = 'this_mo
   }
 }
 
+/**
+ * Get Recent/Pinned Orders for Dashboard
+ * For: Admin, Manager
+ */
+const getRecentOrdersForDashboard = async (branchId = null, period = 'this_month', limit = 10, page = 1, customStart = null, customEnd = null) => {
+  const { startDate, endDate } = getDateRange(period, customStart, customEnd)
+  const matchStage = STATISTICS_REPOSITORY.buildMatchStage(branchId, startDate, endDate)
+
+  // Get total count
+  const totalCount = await orderModel.countDocuments(matchStage)
+
+  // Get paginated orders
+  const skip = (page - 1) * limit
+  const recentOrders = await orderModel
+    .find(matchStage)
+    .populate('user', 'fullname email phone')
+    .populate('branch', 'name')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .select('orderNumber user orderStatus totalAmount paymentMethod createdAt branch')
+    .lean()
+
+  return {
+    period,
+    dateRange: { startDate, endDate },
+    data: recentOrders.map(order => ({
+      orderNumber: order.orderNumber,
+      customer: order.user?.fullname || 'N/A',
+      email: order.user?.email || '',
+      phone: order.user?.phone || '',
+      status: order.orderStatus,
+      totalAmount: order.totalAmount,
+      paymentMethod: order.paymentMethod,
+      branch: order.branch?.name || 'N/A',
+      createdAt: order.createdAt
+    })),
+    pagination: {
+      page,
+      limit,
+      total: totalCount,
+      totalPages: Math.ceil(totalCount / limit)
+    }
+  }
+}
+
+/**
+ * Get Order count by status for Dashboard
+ * For: Admin, Manager, Staff
+ */
+const getOrderStatusSummary = async (branchId = null, period = 'this_month', customStart = null, customEnd = null) => {
+  const { startDate, endDate } = getDateRange(period, customStart, customEnd)
+  const matchStage = STATISTICS_REPOSITORY.buildMatchStage(branchId, startDate, endDate)
+
+  const ordersByStatus = await STATISTICS_REPOSITORY.getOrdersByStatus(matchStage)
+
+  const totalOrders = ordersByStatus.reduce((sum, item) => sum + item.count, 0)
+
+  return {
+    period,
+    dateRange: { startDate, endDate },
+    statuses: ordersByStatus.map(item => ({
+      status: item._id,
+      count: item.count,
+      percentage: totalOrders > 0 ? Math.round((item.count / totalOrders) * 100) : 0,
+      totalAmount: Math.round(item.totalAmount)
+    })),
+    summary: {
+      total: totalOrders,
+      totalRevenue: Math.round(ordersByStatus.reduce((sum, item) => sum + item.totalAmount, 0))
+    }
+  }
+}
+
 export const STATISTICS_SERVICE = {
   getDashboardOverview,
   getRevenueStatistics,
   getOrderStatistics,
   getProductStatistics,
   getBranchStatistics,
+  getBranchPerformanceMetrics,
   getCustomerStatistics,
   getPaymentStatistics,
   getInventoryStatistics,
-  getComparisonStatistics
+  getComparisonStatistics,
+  getRecentOrdersForDashboard,
+  getOrderStatusSummary
 }

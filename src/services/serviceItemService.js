@@ -113,8 +113,8 @@ const updateServiceStatus = async (serviceId, isActive, updatedBy = null) => {
 
 const deleteServiceById = async (serviceId) => {
   const service = await getServiceById(serviceId)
-  if (!service.isActive)
-    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ có thể xóa dịch vụ đang hoạt động'])
+  if (service.isActive)
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ có thể xóa dịch vụ không hoạt động'])
   return SERVICE_REPOSITORY.deleteServiceById(serviceId)
 }
 
