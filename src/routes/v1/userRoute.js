@@ -224,6 +224,59 @@ router.get('/manager',
 
 /**
  * @swagger
+ * /api/v1/users/customers:
+ *   get:
+ *     summary: Get all customers (staff only)
+ *     description: Retrieve a list of all customers with optional filtering, pagination, and sorting.
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of users per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term to filter customers by name, email, or phone
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *         description: Filter customers by active status
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           default: desc
+ *         description: Sort order, either 'asc' or 'desc'
+ *     responses:
+ *       200:
+ *         description: Get successfully
+ */
+router.get('/customers',
+  apiRateLimiter,
+  requireRoles(RoleEnum.STAFF),
+  validationHandlingMiddleware({ query: USER_VALIDATION.query }),
+  USER_CONTROLLER.getAllCustomersForStaff
+)
+
+/**
+ * @swagger
  * /api/v1/users/staff:
  *   get:
  *     summary: Get all staff users (admin only)

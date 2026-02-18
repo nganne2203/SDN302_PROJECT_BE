@@ -228,14 +228,95 @@ const getComparisonStatistics = async (req, res, next) => {
   }
 }
 
+/**
+ * Get Branch Performance Metrics
+ * GET /api/statistics/branches/performance
+ * For: Admin only
+ */
+const getBranchPerformanceMetrics = async (req, res, next) => {
+  try {
+    const { period = 'this_month', limit = 10, startDate, endDate } = req.validated.query
+
+    const result = await STATISTICS_SERVICE.getBranchPerformanceMetrics(period, startDate, endDate, parseInt(limit))
+
+    res.status(StatusCodes.OK).json(
+      responseSuccess({
+        data: result,
+        message: 'Lấy thống kê hiệu suất chi nhánh thành công'
+      })
+    )
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Get Recent Orders for Dashboard
+ * GET /api/statistics/recent-orders
+ * For: Admin, Manager, Staff
+ */
+const getRecentOrdersForDashboard = async (req, res, next) => {
+  try {
+    const branchId = getBranchFilter(req)
+    const { period = 'this_month', limit = 10, page = 1, startDate, endDate } = req.validated.query
+
+    const result = await STATISTICS_SERVICE.getRecentOrdersForDashboard(
+      branchId,
+      period,
+      parseInt(limit),
+      parseInt(page),
+      startDate,
+      endDate
+    )
+
+    res.status(StatusCodes.OK).json(
+      responseSuccess({
+        data: result.data,
+        pagination: result.pagination,
+        period: result.period,
+        dateRange: result.dateRange,
+        message: 'Lấy danh sách đơn hàng gần đây thành công'
+      })
+    )
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Get Order Status Summary
+ * GET /api/statistics/order-status-summary
+ * For: Admin, Manager, Staff
+ */
+const getOrderStatusSummary = async (req, res, next) => {
+  try {
+    const branchId = getBranchFilter(req)
+    const { period = 'this_month', startDate, endDate } = req.validated.query
+
+    const result = await STATISTICS_SERVICE.getOrderStatusSummary(branchId, period, startDate, endDate)
+
+    res.status(StatusCodes.OK).json(
+      responseSuccess({
+        data: result,
+        message: 'Lấy tóm tắt trạng thái đơn hàng thành công'
+      })
+    )
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const STATISTICS_CONTROLLER = {
   getDashboardOverview,
   getRevenueStatistics,
   getOrderStatistics,
   getProductStatistics,
   getBranchStatistics,
+  getBranchPerformanceMetrics,
   getCustomerStatistics,
   getPaymentStatistics,
   getInventoryStatistics,
-  getComparisonStatistics
+  getComparisonStatistics,
+  getRecentOrdersForDashboard,
+  getOrderStatusSummary
 }

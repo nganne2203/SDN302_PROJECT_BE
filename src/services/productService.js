@@ -191,8 +191,8 @@ const updateProductById = async (productId, data, updatedBy = null) => {
 
 const deleteProductById = async (productId) => {
   const product = await getProductByIdRaw(productId)
-  if (!product.isActive) {
-    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ có thể xóa sản phẩm đang hoạt động'])
+  if (product.isActive) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ có thể xóa sản phẩm không hoạt động'])
   }
 
   if (product.images && product.images.length > 0) {
