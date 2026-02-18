@@ -70,6 +70,8 @@ const router = express.Router()
  *   get:
  *     summary: Lấy danh sách quản lý chi nhánh (admin only)
  *     tags: [Branch]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
  *         name: search
@@ -94,6 +96,8 @@ const router = express.Router()
  *   get:
  *     summary: Lấy thông tin chi nhánh theo ID (admin, manager, staff only)
  *     tags: [Branch]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
