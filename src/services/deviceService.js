@@ -65,7 +65,7 @@ const updateDeviceStatus = async (deviceId, isActive, updatedBy = null) => {
 const deleteDevice = async (deviceId) => {
   const device = await DEVICE_REPOSITORY.getDeviceById(deviceId)
   if (!device) throw new ApiError(ERROR_CODES.NOT_FOUND, ['Thiết bị không tồn tại'])
-  if (!device.isActive) throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ có thể xoá thiết bị đang hoạt động'])
+  if (device.isActive) throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ có thể xoá thiết bị không hoạt động'])
   if (device.isDeleted) throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Thiết bị đã bị xoá'])
   return DEVICE_REPOSITORY.deleteDeviceById(deviceId)
 }

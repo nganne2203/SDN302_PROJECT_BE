@@ -85,10 +85,34 @@ const deleteImage = async (publicId) => {
   throw new ApiError(ERROR_CODES.SERVER_ERROR, ['Xóa ảnh không thành công'])
 }
 
+const deleteImagesFromCloudinary = async (images) => {
+  if (!images || images.length === 0) {
+    return { deletedCount: 0, failedCount: 0 }
+  }
+
+  const publicIds = images.map(img =>
+    typeof img === 'string' ? img : img.publicId
+  ).filter(Boolean)
+
+  if (publicIds.length === 0) {
+    return { deletedCount: 0, failedCount: 0 }
+  }
+
+  const results = await Promise.allSettled(
+    publicIds.map(publicId => deleteImage(publicId))
+  )
+
+  const deletedCount = results.filter(r => r.status === 'fulfilled').length
+  const failedCount = results.filter(r => r.status === 'rejected').length
+
+  return { deletedCount, failedCount }
+}
+
 export const UPLOAD_SERVICE = {
   uploadImage,
   uploadMultipleImages,
   getImage,
-  deleteImage
+  deleteImage,
+  deleteImagesFromCloudinary
 }
 

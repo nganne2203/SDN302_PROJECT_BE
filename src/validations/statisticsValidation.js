@@ -141,5 +141,50 @@ export const STATISTICS_VALIDATION = {
       'string.hex': 'Branch ID không hợp lệ',
       'string.length': 'Branch ID không hợp lệ'
     })
+  }),
+
+  periodQuery: joi.object({
+    period: joi.string().valid(...periodEnum).default('this_month').messages({
+      'any.only': 'Khoảng thời gian không hợp lệ'
+    }),
+    branchId: joi.string().hex().length(24).optional().messages({
+      'string.hex': 'Branch ID không hợp lệ',
+      'string.length': 'Branch ID không hợp lệ'
+    }),
+    startDate: joi.date().iso().optional().messages({
+      'date.base': 'Ngày bắt đầu không hợp lệ'
+    }),
+    endDate: joi.date().iso().optional().messages({
+      'date.base': 'Ngày kết thúc không hợp lệ'
+    }),
+    limit: joi.number().integer().min(1).max(100).optional().messages({
+      'number.base': 'Limit phải là số',
+      'number.min': 'Limit phải lớn hơn 0'
+    })
+  }),
+
+  paginationQuery: joi.object({
+    period: joi.string().valid(...periodEnum).default('this_month').messages({
+      'any.only': 'Khoảng thời gian không hợp lệ'
+    }),
+    branchId: joi.string().hex().length(24).optional().messages({
+      'string.hex': 'Branch ID không hợp lệ',
+      'string.length': 'Branch ID không hợp lệ'
+    }),
+    startDate: joi.date().iso().optional().messages({
+      'date.base': 'Ngày bắt đầu không hợp lệ'
+    }),
+    endDate: joi.date().iso().optional().messages({
+      'date.base': 'Ngày kết thúc không hợp lệ'
+    }),
+    limit: joi.number().integer().min(1).max(100).default(10).messages({
+      'number.base': 'Limit phải là số',
+      'number.min': 'Limit phải lớn hơn 0',
+      'number.max': 'Limit không được vượt quá 100'
+    }),
+    page: joi.number().integer().min(1).default(1).messages({
+      'number.base': 'Page phải là số',
+      'number.min': 'Page phải lớn hơn hoặc bằng 1'
+    })
   })
 }

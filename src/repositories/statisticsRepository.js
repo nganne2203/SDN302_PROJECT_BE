@@ -407,6 +407,63 @@ const getActiveBranches = async () => {
 }
 
 /**
+ * Get detailed branch performance statistics including manager and quantities
+ */
+const getBranchPerformance = async (startDate = null, endDate = null, limit = 10) => {
+  const matchStage = {
+    orderStatus: { $in: [ORDER_STATUS.CONFIRMED, ORDER_STATUS.SHIPPED, ORDER_STATUS.DELIVERED] }
+  }
+
+  if (startDate && endDate) {
+    matchStage.createdAt = { $gte: startDate, $lte: endDate }
+  }
+
+  return await orderModel.aggregate([
+    { $match: matchStage },
+    {
+      $group: {
+        _id: '$branch',
+        totalRevenue: { $sum: '$totalAmount' },
+        totalOrders: { $sum: 1 },
+        totalQuantity: { $sum: { $sum: '$items.quantity' } }
+      }
+    },
+    {
+      $lookup: {
+        from: 'branches',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'branchInfo'
+      }
+    },
+    { $unwind: '$branchInfo' },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'branchInfo.manager',
+        foreignField: '_id',
+        as: 'managerInfo'
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        branchName: '$branchInfo.name',
+        address: '$branchInfo.address',
+        manager: { $arrayElemAt: ['$managerInfo.fullname', 0] },
+        managerEmail: { $arrayElemAt: ['$managerInfo.email', 0] },
+        totalRevenue: 1,
+        totalOrders: 1,
+        totalQuantity: 1,
+        status: '$branchInfo.isActive'
+      }
+    },
+    { $sort: { totalRevenue: -1 } },
+    { $limit: limit }
+  ])
+}
+
+/**
  * Get order stats for a specific branch
  */
 const getBranchOrderStats = async (branchId, startDate, endDate) => {
@@ -733,6 +790,7 @@ export const STATISTICS_REPOSITORY = {
   getActiveBranches,
   getBranchOrderStats,
   getBranchInventoryValue,
+  getBranchPerformance,
 
   // Payment
   getPaymentsByStatus,
