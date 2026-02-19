@@ -10,7 +10,7 @@ const getAllInventories = async (filter = {}, options = {}) => {
     page,
     limit,
     sort,
-    populate: 'product'
+    populate: [{ path: 'product', populate: { path: 'category', select: 'name' } }]
   }
   return inventoryModel.paginate({ ...filter, isDeleted }, queryOptions)
 }
@@ -53,7 +53,7 @@ const getLowStockProducts = async (threshold, filter = {}, options = {}) => {
     page,
     limit,
     sort,
-    populate: 'product'
+    populate: [{ path: 'product', populate: { path: 'category', select: 'name' } }]
   }
   const lowStockFilter = { ...filter, quantity: { $lt: threshold } }
   return inventoryModel.paginate(lowStockFilter, queryOptions)
