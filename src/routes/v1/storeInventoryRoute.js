@@ -16,7 +16,7 @@ router.use(apiRateLimiter)
  * @swagger
  * /api/v1/store-inventories:
  *   post:
- *     summary: Tạo tồn kho cho chi nhánh (admin only)
+ *     summary: Tạo tồn kho cho chi nhánh (admin, manager only)
  *     description: Tạo bản ghi tồn kho mới cho sản phẩm tại chi nhánh cụ thể với ngưỡng tối thiểu và tối đa
  *     tags: [Store Inventory]
  *     security:
@@ -65,14 +65,14 @@ router.use(apiRateLimiter)
  *       401:
  *         description: Chưa xác thực
  *       403:
- *         description: Không có quyền truy cập (chỉ Admin)
+ *         description: Không có quyền truy cập (chỉ Admin, Manager)
  *       409:
  *         description: Tồn kho đã tồn tại cho sản phẩm này tại chi nhánh
  */
 // POST - Tạo tồn kho cho chi nhánh
 router.post('/',
   authorizationMiddleware,
-  requireRoles(RoleEnum.ADMIN),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
   sanitizeRequest(STORE_INVENTORY_CONSTANT.CREATE_STORE_INVENTORY, STORE_INVENTORY_CONSTANT.CREATE_STORE_INVENTORY_REQUIRED),
   validationHandlingMiddleware({ body: STORE_INVENTORY_VALIDATION.createStoreInventory }),
   STORE_INVENTORY_CONTROLLER.createStoreInventory
