@@ -171,6 +171,9 @@ const createUserInternal = async ({
     createdBy,
     isEmailVerified
   }
+  if (isEmailVerified) {
+    newUser.emailVerifiedAt = new Date()
+  }
   const createdUser = await USER_REPOSITORY.createUser(newUser)
 
   if (role === RoleEnum.CUSTOMER) {
@@ -216,6 +219,8 @@ const createUser = async (userData, createdBy = null) => {
 
   return await createUserInternal({
     ...userData,
+    isEmailVerified: true,
+
     createdBy
   })
 }
