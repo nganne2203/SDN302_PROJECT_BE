@@ -11,7 +11,8 @@ import {
   REQUIRE_FIELD_REGISTER,
   VERIFY_OTP_FIELDS,
   RESEND_OTP_FIELDS,
-  REFRESH_TOKEN_FIELDS
+  REFRESH_TOKEN_FIELDS,
+  LOGIN_NO_CAPTCHA_FIELDS
 } from '#constants/userConstant.js'
 import { verifyRecaptchaMiddleware } from '#middlewares/verifyCaptchaMiddleware.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
@@ -125,12 +126,44 @@ router.post('/register',
  */
 router.post('/login',
   authRateLimiter,
-  // verifyRecaptchaMiddleware,
+  verifyRecaptchaMiddleware,
   sanitizeRequest(LOGIN_FIELDS, LOGIN_FIELDS),
   validationHandlingMiddleware({ body: AUTH_VALIDATION.loginUser }),
   AUTH_CONTROLLER.login
 )
 
+/**
+ * @swagger
+ * /api/v1/auth/login/no-captcha:
+ *   post:
+ *     summary: Login with email and password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: ngan@gmail.com
+ *               password:
+ *                 type: string
+ *                 example: Password@123
+ *     responses:
+ *       200:
+ *         description: Login success
+ */
+router.post('/login/no-captcha',
+  authRateLimiter,
+  sanitizeRequest(LOGIN_NO_CAPTCHA_FIELDS, LOGIN_NO_CAPTCHA_FIELDS),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.loginUserNoCaptcha }),
+  AUTH_CONTROLLER.login
+)
 /**
  * @swagger
  * /api/v1/auth/google:
@@ -166,10 +199,23 @@ router.get('/google',
 router.get('/google/callback',
   passport.authenticate('google', {
     session: false,
-    failureRedirect: '/auth/google/error'
+    failureRedirect: '/api/v1/auth/google/error'
   }),
   AUTH_CONTROLLER.googleCallback
 )
+
+/**
+ * @swagger
+ * /api/v1/auth/google/error:
+ *   get:
+ *     summary: Google OAuth error handler
+ *     description: Handles Google OAuth authentication failures
+ *     tags: [Auth]
+ *     responses:
+ *       302:
+ *         description: Redirect to frontend with error
+ */
+router.get('/google/error', AUTH_CONTROLLER.googleError)
 
 /**
  * @swagger

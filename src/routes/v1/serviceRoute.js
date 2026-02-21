@@ -15,7 +15,7 @@ const router = express.Router()
  * @swagger
  * /api/v1/services:
  *   post:
- *     summary: Create a new service
+ *     summary: Create a new service (admin only)
  *     description: Create a new service for a specific product. Only admins can create services.
  *     tags: [Services]
  *     security:
@@ -77,7 +77,7 @@ router.post(
  * @swagger
  * /api/v1/services:
  *   get:
- *     summary: Get all services
+ *     summary: Get all services (admin only)
  *     description: Retrieve a list of services with pagination, filtering, and sorting. Only admins can view this list.
  *     tags: [Services]
  *     security:
@@ -174,6 +174,15 @@ router.get(
   requireRoles(RoleEnum.ADMIN),
   validationHandlingMiddleware({ query: SERVICE_VALIDATION.query }),
   SERVICE_CONTROLLER.getAllServices
+)
+
+router.get(
+  '/all',
+  apiRateLimiter,
+  authorizationMiddleware,
+  requireRoles(RoleEnum.ADMIN),
+  validationHandlingMiddleware({ query: SERVICE_VALIDATION.queryNoPagination }),
+  SERVICE_CONTROLLER.getAllServicesWithoutPagination
 )
 
 /**
@@ -279,7 +288,7 @@ router.get(
  * @swagger
  * /api/v1/services/{id}:
  *   put:
- *     summary: Update a service
+ *     summary: Update a service (admin only)
  *     description: Update service details. Only admins can update services.
  *     tags: [Services]
  *     security:
@@ -352,7 +361,7 @@ router.put(
  * @swagger
  * /api/v1/services/{id}/status:
  *   patch:
- *     summary: Update a service status
+ *     summary: Update a service status (admin only)
  *     description: Update service status. Only admins can update service status.
  *     tags: [Services]
  *     security:
@@ -412,7 +421,7 @@ router.patch(
  * @swagger
  * /api/v1/services/{id}:
  *   delete:
- *     summary: Delete a service
+ *     summary: Delete a service (admin only)
  *     description: Delete a service by ID. Only admins can delete services.
  *     tags: [Services]
  *     security:
@@ -458,8 +467,6 @@ router.delete(
  *     summary: Get services by product ID
  *     description: Retrieve all services for a specific product. Only admins can view this service.
  *     tags: [Services]
- *     security:
- *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: productId
@@ -551,8 +558,6 @@ router.delete(
  */
 router.get('/product/:productId',
   apiRateLimiter,
-  authorizationMiddleware,
-  requireRoles(RoleEnum.ADMIN),
   validationHandlingMiddleware({ params: SERVICE_VALIDATION.productIdParam }),
   SERVICE_CONTROLLER.getServiceByProductId
 )

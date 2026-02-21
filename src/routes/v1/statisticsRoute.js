@@ -215,7 +215,7 @@ Router.use(authorizationMiddleware)
  *     summary: Lấy tổng quan dashboard
  *     tags: [Statistics]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
  *         name: period
@@ -267,7 +267,7 @@ Router.get(
  *     summary: Thống kê doanh thu
  *     tags: [Statistics]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
  *         name: period
@@ -319,7 +319,7 @@ Router.get(
  *     summary: Thống kê đơn hàng
  *     tags: [Statistics]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
  *         name: period
@@ -363,7 +363,7 @@ Router.get(
  *     summary: Thống kê sản phẩm
  *     tags: [Statistics]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
  *         name: period
@@ -415,7 +415,7 @@ Router.get(
  *     summary: Thống kê theo chi nhánh (chỉ Admin)
  *     tags: [Statistics]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
  *         name: period
@@ -455,7 +455,7 @@ Router.get(
  *     summary: Thống kê khách hàng
  *     tags: [Statistics]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
  *         name: period
@@ -503,7 +503,7 @@ Router.get(
  *     summary: Thống kê thanh toán
  *     tags: [Statistics]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
  *         name: period
@@ -547,7 +547,7 @@ Router.get(
  *     summary: Thống kê tồn kho
  *     tags: [Statistics]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
  *         name: branchId
@@ -576,7 +576,7 @@ Router.get(
  *     summary: So sánh thống kê giữa các khoảng thời gian
  *     tags: [Statistics]
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
  *         name: currentPeriod
@@ -610,6 +610,248 @@ Router.get(
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
   validationHandlingMiddleware({ query: STATISTICS_VALIDATION.comparisonQuery }),
   STATISTICS_CONTROLLER.getComparisonStatistics
+)
+
+/**
+ * @swagger
+ * /api/v1/statistics/branches/performance:
+ *   get:
+ *     summary: Lấy thống kê hiệu suất chi nhánh với chi tiết (FE-11)
+ *     tags: [Statistics]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *           enum: [today, yesterday, this_week, last_week, this_month, last_month, this_quarter, this_year, last_year, custom, all]
+ *           default: this_month
+ *         description: Khoảng thời gian thống kê
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Số lượng chi nhánh tối đa
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Ngày bắt đầu (dùng khi period=custom)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Ngày kết thúc (dùng khi period=custom)
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 period:
+ *                   type: string
+ *                 dateRange:
+ *                   type: object
+ *                 branches:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       branchId:
+ *                         type: string
+ *                       branchName:
+ *                         type: string
+ *                       address:
+ *                         type: string
+ *                       manager:
+ *                         type: string
+ *                       managerEmail:
+ *                         type: string
+ *                       revenue:
+ *                         type: number
+ *                       orders:
+ *                         type: number
+ *                       quantity:
+ *                         type: number
+ *                       status:
+ *                         type: string
+ *                 summary:
+ *                   type: object
+ */
+Router.get(
+  '/branches/performance',
+  requireRoles(RoleEnum.ADMIN),
+  validationHandlingMiddleware({ query: STATISTICS_VALIDATION.periodQuery }),
+  STATISTICS_CONTROLLER.getBranchPerformanceMetrics
+)
+
+/**
+ * @swagger
+ * /api/v1/statistics/recent-orders:
+ *   get:
+ *     summary: Lấy danh sách đơn hàng gần đây cho dashboard
+ *     tags: [Statistics]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *           enum: [today, yesterday, this_week, last_week, this_month, last_month, this_quarter, this_year, last_year, custom, all]
+ *           default: this_month
+ *         description: Khoảng thời gian thống kê
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Số lượng đơn hàng trên một trang
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Trang hiện tại
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *         description: ID chi nhánh (chỉ Admin mới có thể chọn)
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Ngày bắt đầu (dùng khi period=custom)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Ngày kết thúc (dùng khi period=custom)
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       orderNumber:
+ *                         type: string
+ *                       customer:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       phone:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       totalAmount:
+ *                         type: number
+ *                       paymentMethod:
+ *                         type: string
+ *                       branch:
+ *                         type: string
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ */
+Router.get(
+  '/recent-orders',
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
+  validationHandlingMiddleware({ query: STATISTICS_VALIDATION.paginationQuery }),
+  STATISTICS_CONTROLLER.getRecentOrdersForDashboard
+)
+
+/**
+ * @swagger
+ * /api/v1/statistics/order-status-summary:
+ *   get:
+ *     summary: Lấy tóm tắt trạng thái đơn hàng
+ *     tags: [Statistics]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *           enum: [today, yesterday, this_week, last_week, this_month, last_month, this_quarter, this_year, last_year, custom, all]
+ *           default: this_month
+ *         description: Khoảng thời gian thống kê
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *         description: ID chi nhánh (chỉ Admin mới có thể chọn)
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Ngày bắt đầu (dùng khi period=custom)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Ngày kết thúc (dùng khi period=custom)
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     statuses:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           status:
+ *                             type: string
+ *                           count:
+ *                             type: number
+ *                           percentage:
+ *                             type: number
+ *                           totalAmount:
+ *                             type: number
+ *                     summary:
+ *                       type: object
+ */
+Router.get(
+  '/order-status-summary',
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
+  validationHandlingMiddleware({ query: STATISTICS_VALIDATION.periodQuery }),
+  STATISTICS_CONTROLLER.getOrderStatusSummary
 )
 
 export const STATISTICS_ROUTE = Router

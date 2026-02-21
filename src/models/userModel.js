@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, default: null, minLength: 6 },
     googleId: { type: String, default: null },
     provider: { type: String, enum: Object.values(USER_PROVIDER), default: USER_PROVIDER.LOCAL },
-    phone: { type: String, maxLength: 10 },
+    phone: { type: String, maxLength: 10, default: null },
     addresses: [
       {
         fullname: { type: String, required: true, maxLength: 100 },
@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema(
     emailVerifiedAt: { type: Date },
     avatar: { type: String },
     isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', default: null },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', default: null }
   },

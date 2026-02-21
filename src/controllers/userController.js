@@ -14,6 +14,18 @@ const getAllUsers = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getAllStaffForAdmin = async (req, res, next) => {
+  try {
+    const result = await USER_SERVICE.getAllStaffForAdmin(req.validated.query)
+
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result.data,
+      pagination: result.pagination,
+      message: 'Lấy danh sách nhân sự thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 const getUserById = async (req, res, next) => {
   try {
     const result = await USER_SERVICE.getUserById(req.params.id)
@@ -92,6 +104,19 @@ const getAllUsersForManager = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getAllCustomersForStaff = async (req, res, next) => {
+  try {
+    const staffId = req.user.id
+    const result = await USER_SERVICE.getAllCustomersForStaff(staffId, req.validated.query)
+
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result.data,
+      pagination: result.pagination,
+      message: 'Lấy danh sách khách hàng thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 const getCurrentUser = async (req, res, next) => {
   try {
     const userId = req.user.id
@@ -157,6 +182,7 @@ const confirmResetPassword = async (req, res, next) => {
 
 export const USER_CONTROLLER = {
   getAllUsers,
+  getAllStaffForAdmin,
   getUserById,
   createUser,
   updateUser,
@@ -164,6 +190,7 @@ export const USER_CONTROLLER = {
   deleteUser,
   updateCurrentUser,
   getAllUsersForManager,
+  getAllCustomersForStaff,
   getCurrentUser,
   changePassword,
   resetPassword,

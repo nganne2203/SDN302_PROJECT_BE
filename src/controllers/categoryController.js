@@ -22,6 +22,17 @@ const getAllCategories = async (req, res, next) => {
     }))
   } catch (error) { next(error) }
 }
+
+const getAllCategoriesWithoutPagination = async (req, res, next) => {
+  try {
+    const result = await CATEGORY_SERVICE.getAllCategoriesWithoutPagination(req.validated.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Lấy danh sách danh mục thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
 const createCategory = async (req, res, next) => {
   try {
     const userId = req.user.id
@@ -69,5 +80,6 @@ export const CATEGORY_CONTROLLER = {
   updateCategory,
   deleteCategoryById,
   updateCategoryStatus,
-  getAllCategories
+  getAllCategories,
+  getAllCategoriesWithoutPagination
 }

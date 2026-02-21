@@ -5,6 +5,7 @@ import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { USER_REPOSITORY } from '#repositories/userRepository.js'
 import { RoleEnum } from '#constants/roleConstant.js'
+import { REFRESHTOKEN_REPOSITORY } from '#repositories/refreshTokenRepository.js'
 
 const getBranchById = async (branchId) => {
   const branch = await BRANCH_REPOSITORY.getBranchById(branchId)
@@ -36,6 +37,24 @@ const getAllBranches = async (query = {}) => {
     data: result.docs,
     pagination: mapMongoosePagination(result)
   }
+}
+
+const getAllBranchesWithoutPagination = async (query = {}) => {
+  const { search, isActive, sortBy, sortOrder } = query
+  const filter = {}
+  if (search) {
+    const escapedSearch = escapeRegex(search)
+    filter.$or = [
+      { name: { $regex: escapedSearch, $options: 'i' } },
+      { address: { $regex: escapedSearch, $options: 'i' } }
+    ]
+  }
+  if (typeof isActive === 'boolean') {
+    filter.isActive = isActive
+  }
+  const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
+
+  return await BRANCH_REPOSITORY.getAllBranchesWithoutPagination(filter, sort)
 }
 
 const assertBranchNameUnique = async (name) => {
@@ -75,6 +94,8 @@ const createBranch = async (data, createdBy = null) => {
 
   if (manager) {
     await USER_REPOSITORY.updateUserById(manager, { branch: branch._id })
+    // Revoke all tokens to force re-login with updated branch info
+    await REFRESHTOKEN_REPOSITORY.revokeAllRefreshTokensByUserId(manager)
   }
   return branch
 }
@@ -99,11 +120,18 @@ const updateBranch = async (branchId, data, updatedBy = null) => {
     }
     if (branch.manager) {
       await USER_REPOSITORY.updateUserById(branch.manager, { branch: null })
+      // Revoke tokens for old manager
+      await REFRESHTOKEN_REPOSITORY.revokeAllRefreshTokensByUserId(branch.manager)
     }
     updatedBranchData.manager = manager
+    // Revoke tokens for new manager
+    await USER_REPOSITORY.updateUserById(manager, { branch: branch._id })
+    await REFRESHTOKEN_REPOSITORY.revokeAllRefreshTokensByUserId(manager)
   } else if (manager === null && branch.manager) {
     if (branch.manager) {
       await USER_REPOSITORY.updateUserById(branch.manager, { branch: null })
+      // Revoke tokens when manager is removed
+      await REFRESHTOKEN_REPOSITORY.revokeAllRefreshTokensByUserId(branch.manager)
     }
     updatedBranchData.manager = null
   }
@@ -126,8 +154,12 @@ const assignManagerToBranch = async (branchId, manager, updatedBy = null) => {
   }
   if (branch.manager) {
     await USER_REPOSITORY.updateUserById(branch.manager, { branch: null })
+    // Revoke tokens for old manager
+    await REFRESHTOKEN_REPOSITORY.revokeAllRefreshTokensByUserId(branch.manager)
   }
   await USER_REPOSITORY.updateUserById(manager, { branch: branchId })
+  // Revoke tokens for new manager to force re-login with updated branch info
+  await REFRESHTOKEN_REPOSITORY.revokeAllRefreshTokensByUserId(manager)
   return BRANCH_REPOSITORY.updateBranchById(branchId, { manager, updatedBy })
 }
 
@@ -143,21 +175,28 @@ const removeManagerFromBranch = async (branchId, updatedBy = null) => {
   const branch = await getBranchById(branchId)
   if (branch.manager) {
     await USER_REPOSITORY.updateUserById(branch.manager, { branch: null })
+    // Revoke tokens when manager is removed from branch
+    await REFRESHTOKEN_REPOSITORY.revokeAllRefreshTokensByUserId(branch.manager)
   }
   return BRANCH_REPOSITORY.updateBranchById(branchId, { manager: null, updatedBy })
 }
 
 const deleteBranch = async (branchId, updatedBy = null) => {
   const branch = await getBranchById(branchId)
+  if (branch.isActive) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ có thể xóa chi nhánh không hoạt động'])
+  }
   if (branch.manager) {
     await USER_REPOSITORY.updateUserById(branch.manager, { branch: null })
+    // Revoke tokens when branch is deleted
+    await REFRESHTOKEN_REPOSITORY.revokeAllRefreshTokensByUserId(branch.manager)
   }
   return BRANCH_REPOSITORY.updateBranchById(branchId, { isDeleted: true, updatedBy })
 }
 
 const getAllManagerForBranch = async (query = {}) => {
-  const { page, limit, search, sortBy, sortOrder } = query
-  const filter = { role: RoleEnum.MANAGER, branch: { $exists: false } }
+  const { search, sortBy, sortOrder } = query
+  const filter = { role: RoleEnum.MANAGER }
   if (search) {
     const escapedSearch = escapeRegex(search)
     filter.$or = [
@@ -167,20 +206,16 @@ const getAllManagerForBranch = async (query = {}) => {
   }
   const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
 
-  const result = await USER_REPOSITORY.getAllUsers(filter, {
-    page,
-    limit,
-    sort
-  })
+  const result = await USER_REPOSITORY.getAllUsersWithoutPagination(filter, sort)
   return {
-    data: result.docs,
-    pagination: mapMongoosePagination(result)
+    data: result
   }
 }
 
 export const BRANCH_SERVICE = {
   getBranchById,
   getAllBranches,
+  getAllBranchesWithoutPagination,
   createBranch,
   updateBranch,
   assignManagerToBranch,

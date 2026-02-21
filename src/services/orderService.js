@@ -4,11 +4,14 @@ import { STORE_INVENTORY_SERVICE } from '#services/storeInventoryService.js'
 import { EMAIL_SERVICE } from '#services/emailService.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
-import { ORDER_STATUS, DELIVERY_STATUS } from '#constants/orderConstant.js'
+import { ORDER_STATUS, DELIVERY_STATUS, SHIPPING_FEE } from '#constants/orderConstant.js'
 import { PAYMENT_METHODS } from '#constants/paymentConstant.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
 import { pricingModel } from '#models/pricingModel.js'
 import crypto from 'crypto'
+import { PRODUCT_SERVICE } from '#services/productService.js'
+import { SERVICE_ITEM_SERVICE } from '#services/serviceItemService.js'
+import { BRANCH_REPOSITORY } from '#repositories/branchRepository.js'
 
 /**
  * Generate unique order number
@@ -58,10 +61,14 @@ const calculatePricingDiscounts = async (items) => {
   return pricingApplied
 }
 
+const calculateTotalDiscount = (pricingApplied) => {
+  return pricingApplied.reduce((sum, pricing) => sum + (pricing.discountAmount || 0), 0)
+}
+
 /**
  * Calculate order totals
  */
-const calculateOrderTotals = (items, pricingApplied) => {
+const calculateOrderTotals = (items, pricingApplied, shippingFee = 0) => {
   let subtotal = 0
 
   for (const item of items) {
@@ -70,10 +77,41 @@ const calculateOrderTotals = (items, pricingApplied) => {
     subtotal += productTotal + servicesTotal
   }
 
-  const totalDiscount = pricingApplied.reduce((sum, pricing) => sum + pricing.discountAmount, 0)
-  const totalAmount = subtotal - totalDiscount
+  const totalDiscount = calculateTotalDiscount(pricingApplied)
+  const totalAmount = subtotal - totalDiscount + shippingFee
 
   return { subtotal, totalAmount }
+}
+
+const normalizeLocation = (value) => {
+  return (value || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+const isInterProvince = (shippingAddress, branchAddress) => {
+  const city = normalizeLocation(shippingAddress?.city)
+  const address = normalizeLocation(branchAddress)
+
+  if (!city || !address) {
+    return true
+  }
+
+  return !address.includes(city)
+}
+
+const calculateShippingFee = async (shippingAddress, branchId) => {
+  if (!shippingAddress || !branchId) {
+    return SHIPPING_FEE.INTER_PROVINCE
+  }
+
+  const branch = await BRANCH_REPOSITORY.getBranchById(branchId)
+  const branchAddress = branch?.address || ''
+  const isInter = isInterProvince(shippingAddress, branchAddress)
+  return isInter ? SHIPPING_FEE.INTER_PROVINCE : SHIPPING_FEE.INTRA_PROVINCE
 }
 
 /**
@@ -127,7 +165,7 @@ const restoreInventoryForOrder = async (order) => {
 }
 
 /**
- * Create order from cart (COD or VNPay)
+ * Create order from cart (COD only; VNPay uses payment API)
  */
 const createOrder = async (userId, orderData) => {
   const { shippingAddress, paymentMethod, message = '', branchId = null } = orderData
@@ -147,15 +185,12 @@ const createOrder = async (userId, orderData) => {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Vui lòng sử dụng API /api/payments/vnpay/create để thanh toán qua VNPay'])
   }
 
-  if (paymentMethod !== PAYMENT_METHODS.COD && paymentMethod !== PAYMENT_METHODS.BANK_TRANSFER) {
+  if (paymentMethod !== PAYMENT_METHODS.COD) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Phương thức thanh toán không hợp lệ'])
   }
 
   // Calculate pricing discounts
   const pricingApplied = await calculatePricingDiscounts(populatedCart.items)
-
-  // Calculate totals
-  const { subtotal, totalAmount } = calculateOrderTotals(populatedCart.items, pricingApplied)
 
   // Find or use specified branch with available stock
   let selectedBranch = branchId
@@ -163,12 +198,17 @@ const createOrder = async (userId, orderData) => {
     selectedBranch = await findBranchWithStock(populatedCart.items)
   }
 
+  // Calculate totals (include shipping fee)
+  const shippingFee = await calculateShippingFee(shippingAddress, selectedBranch)
+  const { subtotal, totalAmount } = calculateOrderTotals(populatedCart.items, pricingApplied, shippingFee)
+
   // Generate order number
   const orderNumber = generateOrderNumber()
 
   // Create order
   const order = await ORDER_REPOSITORY.createOrder({
     orderNumber,
+    type: 'online',
     user: userId,
     items: populatedCart.items.map(item => ({
       product: item.product._id,
@@ -182,6 +222,7 @@ const createOrder = async (userId, orderData) => {
     shippingAddress,
     orderStatus: ORDER_STATUS.PENDING,
     subtotal,
+    shippingFee,
     totalAmount,
     pricingApplied,
     paymentMethod,
@@ -335,6 +376,35 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
 }
 
 /**
+ * Update shipping fee (Admin/Manager)
+ */
+const updateShippingFee = async (orderId, shippingFee, updatedBy) => {
+  const order = await ORDER_REPOSITORY.getOrderById(orderId, { populate: false })
+
+  if (!order) {
+    throw new ApiError(ERROR_CODES.NOT_FOUND, ['Đơn hàng không tồn tại'])
+  }
+
+  if (order.orderStatus === ORDER_STATUS.CANCELED) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể cập nhật phí ship cho đơn hàng đã hủy'])
+  }
+
+  if (order.orderStatus === ORDER_STATUS.DELIVERED) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể cập nhật phí ship cho đơn hàng đã hoàn thành'])
+  }
+
+  const totalDiscount = calculateTotalDiscount(order.pricingApplied || [])
+  const totalAmount = (order.subtotal || 0) - totalDiscount + shippingFee
+
+  return await ORDER_REPOSITORY.updateOrderById(orderId, {
+    shippingFee,
+    totalAmount,
+    updatedBy,
+    updatedAt: new Date()
+  })
+}
+
+/**
  * Cancel order
  */
 const cancelOrder = async (orderId, cancelReason, userId, userRole) => {
@@ -434,6 +504,121 @@ const getOrderStatistics = async (userId = null) => {
   return result
 }
 
+/**
+ * Create offline order (for walk-in customers at branch)
+ */
+const createOfflineOrder = async (staffId, orderData) => {
+  const {
+    customerId = null,
+    items,
+    shippingAddress = null,
+    paymentMethod,
+    message = '',
+    branchId,
+    hasDelivery = false
+  } = orderData
+
+  if (hasDelivery && !shippingAddress) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Địa chỉ giao hàng là bắt buộc khi có giao hàng'])
+  }
+
+  // Validate items and get product details
+  if (!items || items.length === 0) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Đơn hàng phải có ít nhất 1 sản phẩm'])
+  }
+
+  // Validate and populate items with product details
+  const populatedItems = []
+  for (const item of items) {
+    const product = await PRODUCT_SERVICE.getProductById(item.product)
+
+    if (!product) {
+      throw new ApiError(ERROR_CODES.NOT_FOUND, ['Sản phẩm không tồn tại'])
+    }
+
+    const itemData = {
+      product: product._id,
+      quantity: item.quantity,
+      price: product.price,
+      services: []
+    }
+
+    // Validate and populate services
+    if (item.services && item.services.length > 0) {
+      for (const serviceId of item.services) {
+        const service = await SERVICE_ITEM_SERVICE.getServiceById(serviceId)
+        if (service) {
+          itemData.services.push({
+            service: service._id,
+            price: service.price
+          })
+        }
+      }
+    }
+
+    populatedItems.push(itemData)
+  }
+
+  // Check inventory availability at branch
+  for (const item of populatedItems) {
+    const storeInventory = await STORE_INVENTORY_SERVICE.getStoreInventoryByBranchAndProduct(branchId, item.product)
+    if (!storeInventory || storeInventory.quantity < item.quantity) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Sản phẩm không đủ tồn kho tại chi nhánh'])
+    }
+  }
+
+  // Calculate pricing discounts
+  const itemsWithProduct = populatedItems.map(item => ({
+    ...item,
+    product: { _id: item.product }
+  }))
+  const pricingApplied = await calculatePricingDiscounts(itemsWithProduct)
+
+  // Calculate totals (include shipping fee)
+  const shippingFee = hasDelivery
+    ? await calculateShippingFee(shippingAddress, branchId)
+    : SHIPPING_FEE.INTRA_PROVINCE
+  const { subtotal, totalAmount } = calculateOrderTotals(populatedItems, pricingApplied, shippingFee)
+
+  // Generate order number
+  const orderNumber = generateOrderNumber()
+
+  // Determine the user for the order (customer or staff if no customer)
+  const orderUserId = customerId || staffId
+
+  // Create order
+  const order = await ORDER_REPOSITORY.createOrder({
+    orderNumber,
+    type: 'offline',
+    user: orderUserId,
+    items: populatedItems,
+    shippingAddress: hasDelivery && shippingAddress ? shippingAddress : null,
+    orderStatus: ORDER_STATUS.CONFIRMED, // Offline orders are confirmed immediately
+    subtotal,
+    shippingFee,
+    totalAmount,
+    pricingApplied,
+    paymentMethod,
+    delivery: hasDelivery
+      ? {
+        status: DELIVERY_STATUS.PENDING,
+        recipientName: shippingAddress?.fullname || ''
+      }
+      : null,
+    message,
+    branch: branchId,
+    createdBy: staffId
+  })
+
+  // Decrease inventory immediately for offline orders
+  await decreaseInventoryForOrder(branchId, populatedItems)
+
+  // Get populated order
+  const populatedOrder = await ORDER_REPOSITORY.getOrderById(order._id)
+
+  return populatedOrder
+}
+
 export const ORDER_SERVICE = {
   createOrder,
   getOrderById,
@@ -441,7 +626,9 @@ export const ORDER_SERVICE = {
   getMyOrders,
   getAllOrders,
   updateOrderStatus,
+  updateShippingFee,
   cancelOrder,
   updateDeliveryInfo,
-  getOrderStatistics
+  getOrderStatistics,
+  createOfflineOrder
 }

@@ -99,6 +99,23 @@ const updateOrderStatus = async (req, res, next) => {
   }
 }
 
+const updateShippingFee = async (req, res, next) => {
+  try {
+    const updatedBy = req.user.id
+    const { orderId } = req.params
+    const { shippingFee } = req.body
+    const order = await ORDER_SERVICE.updateShippingFee(orderId, shippingFee, updatedBy)
+    res.status(StatusCodes.OK).json(
+      responseSuccess({
+        data: order,
+        message: 'Cập nhật phí ship thành công'
+      })
+    )
+  } catch (error) {
+    next(error)
+  }
+}
+
 const cancelOrder = async (req, res, next) => {
   try {
     const userId = req.user.id
@@ -148,6 +165,21 @@ const getOrderStatistics = async (req, res, next) => {
   }
 }
 
+const createOfflineOrder = async (req, res, next) => {
+  try {
+    const staffId = req.user.id
+    const order = await ORDER_SERVICE.createOfflineOrder(staffId, req.body)
+    res.status(StatusCodes.CREATED).json(
+      responseSuccess({
+        data: order,
+        message: 'Tạo đơn hàng offline thành công'
+      })
+    )
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const ORDER_CONTROLLER = {
   createOrder,
   getOrderById,
@@ -155,7 +187,9 @@ export const ORDER_CONTROLLER = {
   getMyOrders,
   getAllOrders,
   updateOrderStatus,
+  updateShippingFee,
   cancelOrder,
   updateDeliveryInfo,
-  getOrderStatistics
+  getOrderStatistics,
+  createOfflineOrder
 }

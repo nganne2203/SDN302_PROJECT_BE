@@ -9,6 +9,7 @@ const deviceSchema = new mongoose.Schema(
     brand: { type: String, required: true, maxLength: 100 },
     model: { type: String, required: true, maxLength: 100 },
     isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users' }
   },

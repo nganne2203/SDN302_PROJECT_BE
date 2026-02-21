@@ -8,9 +8,10 @@ import { EMAIL_SERVICE } from '#services/emailService.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { PAYMENT_STATUS, PAYMENT_METHODS, PAYMENT_PROVIDERS } from '#constants/paymentConstant.js'
-import { ORDER_STATUS, DELIVERY_STATUS } from '#constants/orderConstant.js'
+import { ORDER_STATUS, DELIVERY_STATUS, SHIPPING_FEE } from '#constants/orderConstant.js'
 import { env } from '#configs/environment.js'
 import crypto from 'crypto'
+import { BRANCH_REPOSITORY } from '#repositories/branchRepository.js'
 
 const generateTransactionId = () => {
   const timestamp = Date.now().toString(36).toUpperCase()
@@ -64,6 +65,37 @@ const calculateOrderTotals = (items, pricingApplied) => {
   return { subtotal, totalAmount }
 }
 
+const normalizeLocation = (value) => {
+  return (value || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+const isInterProvince = (shippingAddress, branchAddress) => {
+  const city = normalizeLocation(shippingAddress?.city)
+  const address = normalizeLocation(branchAddress)
+
+  if (!city || !address) {
+    return true
+  }
+
+  return !address.includes(city)
+}
+
+const calculateShippingFee = async (shippingAddress, branchId) => {
+  if (!shippingAddress || !branchId) {
+    return SHIPPING_FEE.INTER_PROVINCE
+  }
+
+  const branch = await BRANCH_REPOSITORY.getBranchById(branchId)
+  const branchAddress = branch?.address || ''
+  const isInter = isInterProvince(shippingAddress, branchAddress)
+  return isInter ? SHIPPING_FEE.INTER_PROVINCE : SHIPPING_FEE.INTRA_PROVINCE
+}
+
 const findBranchWithStock = async (items) => {
   const productIds = items.map(item => item.product._id || item.product)
 
@@ -104,12 +136,15 @@ const createVNPayPayment = async (userId, paymentData, ipAddress) => {
 
   const pricingApplied = await calculatePricingDiscounts(populatedCart.items)
 
-  const { subtotal, totalAmount } = calculateOrderTotals(populatedCart.items, pricingApplied)
+  const baseTotals = calculateOrderTotals(populatedCart.items, pricingApplied)
 
   let selectedBranch = branchId
   if (!selectedBranch) {
     selectedBranch = await findBranchWithStock(populatedCart.items)
   }
+
+  const shippingFee = await calculateShippingFee(shippingAddress, selectedBranch)
+  const totalAmount = baseTotals.totalAmount + shippingFee
 
   const orderNumber = generateOrderNumber()
 
@@ -127,7 +162,8 @@ const createVNPayPayment = async (userId, paymentData, ipAddress) => {
     })),
     shippingAddress,
     orderStatus: ORDER_STATUS.PENDING,
-    subtotal,
+    subtotal: baseTotals.subtotal,
+    shippingFee,
     totalAmount,
     pricingApplied,
     paymentMethod: PAYMENT_METHODS.VNPAY,

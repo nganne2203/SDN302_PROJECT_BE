@@ -6,6 +6,7 @@ const categorySchema = new mongoose.Schema(
     name: { type: String, required: true, unique: true, maxLength: 100 },
     description: { type: String, default: '' },
     slug: { type: String, required: true, unique: true, maxLength: 100 },
+    isDeleted: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users' }

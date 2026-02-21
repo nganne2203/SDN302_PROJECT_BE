@@ -4,7 +4,7 @@ import { responseSuccess } from '#utils/responseUtil.js'
 
 const getProductById = async (req, res, next) => {
   try {
-    const result = await PRODUCT_SERVICE.getProductById(req.params.id)
+    const result = await PRODUCT_SERVICE.getProductByIdWithImages(req.params.id)
     res.status(StatusCodes.OK).json(responseSuccess({
       data: result,
       message: 'Lấy thông tin sản phẩm thành công'
@@ -18,6 +18,16 @@ const getAllProducts = async (req, res, next) => {
     res.status(StatusCodes.OK).json(responseSuccess({
       data: result.data,
       pagination: result.pagination,
+      message: 'Lấy danh sách sản phẩm thành công'
+    }))
+  } catch (error) { next(error) }
+}
+
+const getAllProductsWithoutPagination = async (req, res, next) => {
+  try {
+    const result = await PRODUCT_SERVICE.getAllProductsWithoutPagination(req.validated.query)
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
       message: 'Lấy danh sách sản phẩm thành công'
     }))
   } catch (error) { next(error) }
@@ -173,5 +183,6 @@ export const PRODUCT_CONTROLLER = {
   getFeaturedProducts,
   getNewArrivals,
   getRelatedProducts,
-  getProductDetailForOrder
+  getProductDetailForOrder,
+  getAllProductsWithoutPagination
 }

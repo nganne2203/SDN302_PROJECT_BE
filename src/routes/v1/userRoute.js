@@ -24,7 +24,7 @@ router.use(authorizationMiddleware)
  * @swagger
  * /api/v1/users:
  *   get:
- *     summary: Get all users
+ *     summary: Get all users (admin only)
  *     description: Retrieve a list of users with optional filtering, pagination, and sorting.
  *     tags: [User]
  *     security:
@@ -84,7 +84,7 @@ router.get('/',
  * @swagger
  * /api/v1/users:
  *   post:
- *     summary: Create a new user
+ *     summary: Create a new user (admin, manager, staff)
  *     description: Create a new user.
  *     tags: [User]
  *     security:
@@ -168,7 +168,7 @@ router.post('/',
  * @swagger
  * /api/v1/users/manager:
  *   get:
- *     summary: Get all users for manager
+ *     summary: Get all users for manager role (manager only)
  *     description: Retrieve a list of users with optional filtering, pagination, and sorting.
  *     tags: [User]
  *     security:
@@ -220,6 +220,118 @@ router.get('/manager',
   requireRoles(RoleEnum.MANAGER),
   validationHandlingMiddleware({ query: USER_VALIDATION.query }),
   USER_CONTROLLER.getAllUsersForManager
+)
+
+/**
+ * @swagger
+ * /api/v1/users/customers:
+ *   get:
+ *     summary: Get all customers (staff only)
+ *     description: Retrieve a list of all customers with optional filtering, pagination, and sorting.
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of users per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term to filter customers by name, email, or phone
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *         description: Filter customers by active status
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           default: desc
+ *         description: Sort order, either 'asc' or 'desc'
+ *     responses:
+ *       200:
+ *         description: Get successfully
+ */
+router.get('/customers',
+  apiRateLimiter,
+  requireRoles(RoleEnum.STAFF),
+  validationHandlingMiddleware({ query: USER_VALIDATION.query }),
+  USER_CONTROLLER.getAllCustomersForStaff
+)
+
+/**
+ * @swagger
+ * /api/v1/users/staff:
+ *   get:
+ *     summary: Get all staff users (admin only)
+ *     description: Retrieve staff and manager users with filtering, pagination, and sorting.
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of users per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term to filter users by name, email, or phone
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *         description: Filter users by active status
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *         description: Filter users by role (staff or manager)
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           default: desc
+ *         description: Sort order, either 'asc' or 'desc'
+ *     responses:
+ *       200:
+ *         description: Get successfully
+ */
+router.get('/staff',
+  apiRateLimiter,
+  authorizationMiddleware,
+  requireRoles(RoleEnum.ADMIN),
+  validationHandlingMiddleware({ query: USER_VALIDATION.query }),
+  USER_CONTROLLER.getAllStaffForAdmin
 )
 
 /**
@@ -447,7 +559,7 @@ router.get('/profile',
  * @swagger
  * /api/v1/users/{id}:
  *   get:
- *     summary: Get user by ID
+ *     summary: Get user by ID (admin, manager, staff)
  *     description: Retrieve a user by their unique ID.
  *     tags: [User]
  *     security:
@@ -474,7 +586,7 @@ router.get('/:id',
  * @swagger
  * /api/v1/users/{id}:
  *   put:
- *     summary: Update user by ID
+ *     summary: Update user by ID (admin, manager, staff)
  *     description: Update a user's information by their unique ID.
  *     tags: [User]
  *     security:
@@ -559,8 +671,8 @@ router.put('/:id',
 /**
  * @swagger
  * /api/v1/users/{id}/status:
- *   put:
- *     summary: Update user status by ID
+ *   patch:
+ *     summary: Update user status by ID (admin, manager)
  *     description: Update a user's active status by their unique ID.
  *     tags: [User]
  *     security:
@@ -586,7 +698,7 @@ router.put('/:id',
  *       200:
  *         description: Update successfully
  */
-router.put('/:id/status',
+router.patch('/:id/status',
   writeRateLimiter,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER),
   validationHandlingMiddleware({

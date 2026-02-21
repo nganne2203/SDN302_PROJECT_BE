@@ -7,6 +7,7 @@ const reviewSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, default: '' },
+    isDeleted: { type: Boolean, default: false },
     images: [{ type: String }]
   },
   { timestamps: true, versionKey: false }

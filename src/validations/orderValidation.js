@@ -18,6 +18,9 @@ export const ORDER_VALIDATION = {
     })
   }),
   createOrder: joi.object({
+    type: joi.string().valid('online', 'offline').optional().default('online').messages({
+      'any.only': 'Loại đơn hàng không hợp lệ (online, offline)'
+    }),
     shippingAddress: joi.object({
       fullname: joi.string().trim().required().messages({
         'string.empty': 'Tên người nhận không được để trống',
@@ -44,21 +47,120 @@ export const ORDER_VALIDATION = {
         'string.empty': 'Phường/Xã không được để trống',
         'any.required': 'Phường/Xã là bắt buộc'
       })
-    }).required().messages({
-      'any.required': 'Địa chỉ giao hàng là bắt buộc'
+    }).when('type', {
+      is: 'online',
+      then: joi.required().messages({
+        'any.required': 'Địa chỉ giao hàng là bắt buộc cho đơn hàng online'
+      }),
+      otherwise: joi.optional().allow(null)
     }),
-    paymentMethod: joi.string().valid('cod', 'bank_transfer', 'vnpay').required().messages({
+    paymentMethod: joi.string().valid('cod').required().messages({
       'string.empty': 'Phương thức thanh toán không được để trống',
-      'any.only': 'Phương thức thanh toán không hợp lệ (cod, bank_transfer, vnpay)',
+      'any.only': 'Phương thức thanh toán không hợp lệ (cod)',
       'any.required': 'Phương thức thanh toán là bắt buộc'
     }),
     message: joi.string().trim().max(500).optional().allow('').messages({
       'string.max': 'Ghi chú không được vượt quá 500 ký tự'
     }),
-    branchId: joi.string().hex().length(24).optional().allow(null).messages({
+    branchId: joi.string().hex().length(24).when('type', {
+      is: 'offline',
+      then: joi.required().messages({
+        'any.required': 'Branch ID là bắt buộc cho đơn hàng offline'
+      }),
+      otherwise: joi.optional().allow(null)
+    }).messages({
       'string.hex': 'Branch ID không hợp lệ',
       'string.length': 'Branch ID không hợp lệ'
+    }),
+    customerId: joi.string().hex().length(24).when('type', {
+      is: 'offline',
+      then: joi.optional().allow(null),
+      otherwise: joi.forbidden()
+    }).messages({
+      'string.hex': 'Customer ID không hợp lệ',
+      'string.length': 'Customer ID không hợp lệ',
+      'any.unknown': 'Customer ID chỉ được sử dụng cho đơn hàng offline'
     })
+  }),
+
+  createOfflineOrder: joi.object({
+    type: joi.string().valid('offline').required().messages({
+      'any.only': 'Loại đơn hàng phải là offline',
+      'any.required': 'Loại đơn hàng là bắt buộc'
+    }),
+    customerId: joi.string().hex().length(24).optional().allow(null).messages({
+      'string.hex': 'Customer ID không hợp lệ',
+      'string.length': 'Customer ID không hợp lệ'
+    }),
+    items: joi.array().min(1).items(
+      joi.object({
+        product: joi.string().hex().length(24).required().messages({
+          'string.empty': 'Product ID không được để trống',
+          'any.required': 'Product ID là bắt buộc'
+        }),
+        quantity: joi.number().integer().min(1).required().messages({
+          'number.base': 'Số lượng phải là số',
+          'number.min': 'Số lượng phải lớn hơn 0',
+          'any.required': 'Số lượng là bắt buộc'
+        }),
+        services: joi.array().items(
+          joi.string().hex().length(24).messages({
+            'string.hex': 'Service ID không hợp lệ',
+            'string.length': 'Service ID không hợp lệ'
+          })
+        ).optional()
+      })
+    ).required().messages({
+      'array.min': 'Đơn hàng phải có ít nhất 1 sản phẩm',
+      'any.required': 'Danh sách sản phẩm là bắt buộc'
+    }),
+    shippingAddress: joi.object({
+      fullname: joi.string().trim().required().messages({
+        'string.empty': 'Tên người nhận không được để trống',
+        'any.required': 'Tên người nhận là bắt buộc'
+      }),
+      phone: joi.string().trim().pattern(/^[0-9]{10,11}$/).required().messages({
+        'string.empty': 'Số điện thoại không được để trống',
+        'string.pattern.base': 'Số điện thoại không hợp lệ (10-11 chữ số)',
+        'any.required': 'Số điện thoại là bắt buộc'
+      }),
+      addressLine: joi.string().trim().required().messages({
+        'string.empty': 'Địa chỉ không được để trống',
+        'any.required': 'Địa chỉ là bắt buộc'
+      }),
+      city: joi.string().trim().required().messages({
+        'string.empty': 'Thành phố không được để trống',
+        'any.required': 'Thành phố là bắt buộc'
+      }),
+      district: joi.string().trim().required().messages({
+        'string.empty': 'Quận/Huyện không được để trống',
+        'any.required': 'Quận/Huyện là bắt buộc'
+      }),
+      ward: joi.string().trim().required().messages({
+        'string.empty': 'Phường/Xã không được để trống',
+        'any.required': 'Phường/Xã là bắt buộc'
+      })
+    }).when('hasDelivery', {
+      is: true,
+      then: joi.required().messages({
+        'any.required': 'Địa chỉ giao hàng là bắt buộc khi có giao hàng'
+      }),
+      otherwise: joi.optional().allow(null)
+    }),
+    paymentMethod: joi.string().valid('cod', 'vnpay').required().messages({
+      'string.empty': 'Phương thức thanh toán không được để trống',
+      'any.only': 'Phương thức thanh toán không hợp lệ',
+      'any.required': 'Phương thức thanh toán là bắt buộc'
+    }),
+    message: joi.string().trim().max(500).optional().allow('').messages({
+      'string.max': 'Ghi chú không được vượt quá 500 ký tự'
+    }),
+    branchId: joi.string().hex().length(24).required().messages({
+      'string.hex': 'Branch ID không hợp lệ',
+      'string.length': 'Branch ID không hợp lệ',
+      'any.required': 'Branch ID là bắt buộc'
+    }),
+    hasDelivery: joi.boolean().optional().default(false)
   }),
 
   updateOrderStatus: joi.object({
@@ -85,6 +187,14 @@ export const ORDER_VALIDATION = {
     estimatedDeliveryDate: joi.date().optional().allow(null),
     deliveredAt: joi.date().optional().allow(null),
     recipientName: joi.string().trim().optional().allow('')
+  }),
+
+  updateShippingFee: joi.object({
+    shippingFee: joi.number().min(0).required().messages({
+      'number.base': 'Phí ship phải là số',
+      'number.min': 'Phí ship không được nhỏ hơn 0',
+      'any.required': 'Phí ship là bắt buộc'
+    })
   }),
 
   getOrders: joi.object({

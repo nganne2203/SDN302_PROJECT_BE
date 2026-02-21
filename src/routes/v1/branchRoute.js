@@ -25,7 +25,7 @@ const router = express.Router()
  *
  * /api/v1/branches:
  *   post:
- *     summary: Tạo chi nhánh mới
+ *     summary: Tạo chi nhánh mới (admin only)
  *     tags: [Branch]
  *     security:
  *       - BearerAuth: []
@@ -68,19 +68,11 @@ const router = express.Router()
  *
  * /api/v1/branches/managers:
  *   get:
- *     summary: Lấy danh sách quản lý chi nhánh
+ *     summary: Lấy danh sách quản lý chi nhánh (admin only)
  *     tags: [Branch]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *         description: Trang hiện tại
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *         description: Số lượng mỗi trang
  *       - in: query
  *         name: search
  *         schema:
@@ -102,8 +94,10 @@ const router = express.Router()
  *
  * /api/v1/branches/{id}:
  *   get:
- *     summary: Lấy thông tin chi nhánh theo ID
+ *     summary: Lấy thông tin chi nhánh theo ID (admin, manager, staff only)
  *     tags: [Branch]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -115,7 +109,7 @@ const router = express.Router()
  *       200:
  *         description: Lấy thông tin chi nhánh thành công
  *   put:
- *     summary: Cập nhật thông tin chi nhánh
+ *     summary: Cập nhật thông tin chi nhánh (admin)
  *     tags: [Branch]
  *     security:
  *       - BearerAuth: []
@@ -136,7 +130,7 @@ const router = express.Router()
  *       200:
  *         description: Cập nhật chi nhánh thành công
  *   delete:
- *     summary: Xóa chi nhánh
+ *     summary: Xóa chi nhánh (admin)
  *     tags: [Branch]
  *     security:
  *       - BearerAuth: []
@@ -153,7 +147,7 @@ const router = express.Router()
  *
  * /api/v1/branches/{id}/manager:
  *   patch:
- *     summary: Gán quản lý cho chi nhánh
+ *     summary: Gán quản lý cho chi nhánh (admin)
  *     tags: [Branch]
  *     security:
  *       - BearerAuth: []
@@ -180,7 +174,7 @@ const router = express.Router()
  *
  * /api/v1/branches/{id}/manager/remove:
  *   patch:
- *     summary: Gỡ quản lý khỏi chi nhánh
+ *     summary: Gỡ quản lý khỏi chi nhánh (admin)
  *     tags: [Branch]
  *     security:
  *       - BearerAuth: []
@@ -197,7 +191,7 @@ const router = express.Router()
  *
  * /api/v1/branches/{id}/status:
  *   patch:
- *     summary: Cập nhật trạng thái hoạt động của chi nhánh
+ *     summary: Cập nhật trạng thái hoạt động của chi nhánh (admin)
  *     tags: [Branch]
  *     security:
  *       - BearerAuth: []
@@ -270,8 +264,16 @@ router.get(
 )
 
 router.get(
+  '/all',
+  apiRateLimiter,
+  validationHandlingMiddleware({ query: BRANCH_VALIDATION.queryNoPagination }),
+  BRANCH_CONTROLLER.getAllBranchesWithoutPagination
+)
+
+router.get(
   '/managers',
   apiRateLimiter,
+  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN),
   validationHandlingMiddleware({ query: BRANCH_VALIDATION.getAllManagerForBranch }),
   BRANCH_CONTROLLER.getAllManagerForBranch
@@ -280,6 +282,7 @@ router.get(
 router.get(
   '/:id',
   apiRateLimiter,
+  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   validationHandlingMiddleware({ params: BRANCH_VALIDATION.idParam }),
   BRANCH_CONTROLLER.getBranchById

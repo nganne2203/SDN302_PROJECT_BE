@@ -76,6 +76,16 @@ export const AUTH_VALIDATION = {
       'any.required': 'Captcha token là bắt buộc'
     }).trim()
   }),
+  loginUserNoCaptcha: joi.object({
+    email: joi.string().email().required().pattern(EMAIL_REGEX).messages({
+      'string.empty': 'Email không được để trống',
+      'string.email': 'Email không hợp lệ'
+    }).trim(),
+    password: joi.string().required().messages({
+      'string.empty': 'Mật khẩu không được để trống',
+      'any.required': 'Mật khẩu là bắt buộc'
+    }).trim()
+  }),
   verifyOtp: joi.object({
     email: joi.string().email().required().pattern(EMAIL_REGEX).messages({
       'string.empty': 'Email không được để trống',

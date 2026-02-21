@@ -273,7 +273,7 @@ router.get(
  * @swagger
  * /api/v1/reviews/{id}:
  *   get:
- *     summary: Get review by ID
+ *     summary: Get review by ID (public)
  *     description: Get a specific review by its ID
  *     tags: [Review]
  *     parameters:
@@ -300,7 +300,7 @@ router.get(
  * @swagger
  * /api/v1/reviews/{id}:
  *   patch:
- *     summary: Update a review
+ *     summary: Update a review (authenticated user)
  *     description: Update a review. Only the review owner can update.
  *     tags: [Review]
  *     security:
@@ -356,7 +356,7 @@ router.patch(
  * @swagger
  * /api/v1/reviews/{id}:
  *   delete:
- *     summary: Delete a review
+ *     summary: Delete a review (authenticated user)
  *     description: Delete a review. Only the review owner can delete.
  *     tags: [Review]
  *     security:

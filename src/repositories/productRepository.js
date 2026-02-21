@@ -1,22 +1,22 @@
 import { productModel } from '#models/productModel.js'
 
 const getProductById = async (id) => {
-  return await productModel.findById(id)
+  return await productModel.findById(id, { isDeleted: false })
     .populate('category', 'name')
     .populate('compatibility', 'name')
 }
 
 const getProductByName = async (name) => {
-  return await productModel.findOne({ name })
+  return await productModel.findOne({ name, isDeleted: false })
 }
 
 const getProductBySlug = async (slug) => {
-  return await productModel.findOne({ slug })
+  return await productModel.findOne({ slug, isDeleted: false })
 }
 
 const getAllProducts = async (filter = {}, options = {}) => {
-  const { page = 1, limit = 10, sort = { createdAt: -1 } } = options
-  return await productModel.paginate(filter, {
+  const { page = 1, limit = 10, sort = { createdAt: -1 }, isDeleted = false } = options
+  return await productModel.paginate({ ...filter, isDeleted }, {
     page,
     limit,
     sort,
@@ -25,6 +25,13 @@ const getAllProducts = async (filter = {}, options = {}) => {
       { path: 'compatibility', select: 'name' }
     ]
   })
+}
+
+const getAllProductsWithoutPagination = async (filter = {}, sort = { createdAt: -1 }) => {
+  return await productModel.find({ ...filter, isDeleted: false })
+    .sort(sort)
+    .populate('category', 'name')
+    .populate('compatibility', 'name')
 }
 
 const createProduct = async (data) => {
@@ -40,7 +47,7 @@ const updateProductById = async (id, data) => {
 }
 
 const deleteProductById = async (id) => {
-  return await productModel.findByIdAndDelete(id)
+  return await productModel.findByIdAndUpdate(id, { isDeleted: true }, { new: true, runValidators: true, timestamps: true })
 }
 
 export const PRODUCT_REPOSITORY = {
@@ -50,5 +57,6 @@ export const PRODUCT_REPOSITORY = {
   getAllProducts,
   createProduct,
   updateProductById,
-  deleteProductById
+  deleteProductById,
+  getAllProductsWithoutPagination
 }
