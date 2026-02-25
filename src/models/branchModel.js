@@ -5,7 +5,6 @@ const branchSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     address: { type: String, required: true, trim: true },
-    manager: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
@@ -15,7 +14,6 @@ const branchSchema = new mongoose.Schema(
 )
 
 branchSchema.index({ name: 1 })
-branchSchema.index({ manager: 1 })
 
 branchSchema.plugin(mongoosePaginate)
 

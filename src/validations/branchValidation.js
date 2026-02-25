@@ -17,10 +17,6 @@ export const BRANCH_VALIDATION = {
     address: joi.string().required().messages({
       'string.empty': 'Địa chỉ chi nhánh không được để trống',
       'any.required': 'Địa chỉ chi nhánh là bắt buộc'
-    }).trim(),
-    manager: joi.string().optional().hex().length(24).messages({
-      'string.hex': 'ID quản lý không hợp lệ',
-      'string.length': 'ID quản lý không hợp lệ'
     }).trim()
   }),
   updateBranch: joi.object({
@@ -29,10 +25,6 @@ export const BRANCH_VALIDATION = {
     }).trim(),
     address: joi.string().optional().messages({
       'string.empty': 'Địa chỉ chi nhánh không được để trống'
-    }).trim(),
-    manager: joi.string().optional().hex().length(24).messages({
-      'string.hex': 'ID quản lý không hợp lệ',
-      'string.length': 'ID quản lý không hợp lệ'
     }).trim()
   }),
   query: joi.object({
