@@ -145,6 +145,28 @@ const getManagerByBranch = async (branchId) => {
   return manager
 }
 
+const validateBranchExists = async (branchId) => {
+  if (!branchId) return
+  const branchExists = await BRANCH_REPOSITORY.getBranchById(branchId)
+  if (!branchExists) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chi nhánh không tồn tại'])
+  }
+}
+
+const ensureManagerBranchAvailable = async (branchId, excludedUserId = null) => {
+  if (!branchId) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chi nhánh là bắt buộc'])
+  }
+
+  const existingManager = await getManagerByBranch(branchId)
+  if (
+    existingManager &&
+    existingManager._id.toString() !== excludedUserId?.toString()
+  ) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chi nhánh này đã có 1 manager'])
+  }
+}
+
 const createUserInternal = async ({
   fullname,
   email,
@@ -198,23 +220,19 @@ const createUser = async (userData, createdBy = null) => {
     userData.branch = creator.branch
   }
 
+  if ([RoleEnum.STAFF, RoleEnum.MANAGER].includes(role) && !userData.branch) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chi nhánh là bắt buộc'])
+  }
+
   if (role === RoleEnum.CUSTOMER) {
     userData.branch = null
   }
 
   const { branch } = userData
-  if (branch) {
-    const branchExists = await BRANCH_REPOSITORY.getBranchById(branch)
-    if (!branchExists) {
-      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chi nhánh không tồn tại'])
-    }
-  }
+  await validateBranchExists(branch)
 
   if (role === RoleEnum.MANAGER) {
-    const existingManager = await getManagerByBranch(branch)
-    if (existingManager) {
-      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chi nhánh này đã có 1 manager'])
-    }
+    await ensureManagerBranchAvailable(branch)
   }
 
   return await createUserInternal({
@@ -315,6 +333,23 @@ const updateUser = async (userId, updateData, updatedBy = null) => {
       }
       updatedUserData.branch = branch
     }
+  }
+
+  const targetRole = updatedUserData.role || user.role
+  const targetBranch = Object.prototype.hasOwnProperty.call(updatedUserData, 'branch')
+    ? updatedUserData.branch
+    : user.branch
+
+  if ([RoleEnum.STAFF, RoleEnum.MANAGER].includes(targetRole) && !targetBranch) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chi nhánh là bắt buộc'])
+  }
+
+  if (targetRole !== RoleEnum.CUSTOMER && targetBranch) {
+    await validateBranchExists(targetBranch)
+  }
+
+  if (targetRole === RoleEnum.MANAGER) {
+    await ensureManagerBranchAvailable(targetBranch, userId)
   }
 
   return USER_REPOSITORY.updateUserById(userId, updatedUserData)
