@@ -112,6 +112,10 @@ export const USER_VALIDATION = {
     }),
     avatar: joi.string().trim().optional(),
     addresses: joi.array().items(joi.object({
+      _id: joi.string().hex().length(24).optional().messages({
+        'string.hex': 'ID không hợp lệ',
+        'string.length': 'ID không hợp lệ'
+      }).trim(),
       fullname: joi.string().trim().required().messages({
         'string.empty': 'Họ và tên không được để trống',
         'any.required': 'Họ và tên là bắt buộc',
@@ -169,6 +173,10 @@ export const USER_VALIDATION = {
     }),
     avatar: joi.string().trim().optional(),
     addresses: joi.array().items(joi.object({
+      _id: joi.string().hex().length(24).optional().messages({
+        'string.hex': 'ID không hợp lệ',
+        'string.length': 'ID không hợp lệ'
+      }).trim(),
       fullname: joi.string().trim().required().messages({
         'string.empty': 'Họ và tên không được để trống',
         'any.required': 'Họ và tên là bắt buộc',
