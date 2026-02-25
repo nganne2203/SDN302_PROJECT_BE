@@ -24,7 +24,7 @@ const router = express.Router()
  * /api/v1/auth/register:
  *   post:
  *     summary: Register a new user
- *     description: Register a new account.
+ *     description: Register a new account. Avatar should be a Cloudinary publicId obtained from the upload image API.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -38,7 +38,6 @@ const router = express.Router()
  *               - password
  *               - phone
  *               - addresses
- *               - avatar
  *               - captchaToken
  *             properties:
  *               fullname:
@@ -75,8 +74,8 @@ const router = express.Router()
  *                 }]
  *               avatar:
  *                 type: string
- *                 format: url
- *                 example: 'http://example.com/avatar.jpg'
+ *                 description: Cloudinary public ID obtained from upload image API
+ *                 example: 'uploads/a1b2c3d4e5f6g7h8'
  *               captchaToken:
  *                 type: string
  *                 example: '03AGdBq24...'

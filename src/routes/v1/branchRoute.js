@@ -230,9 +230,6 @@ const router = express.Router()
  *         address:
  *           type: string
  *           example: 123 Đường ABC, Quận 1
- *         manager:
- *           type: string
- *           example: 65f1b2c3d4e5f6a7b8c9d0e1
  *     UpdateBranch:
  *       type: object
  *       properties:
@@ -242,9 +239,6 @@ const router = express.Router()
  *         address:
  *           type: string
  *           example: 456 Đường XYZ, Quận 3
- *         manager:
- *           type: string
- *           example: 65f1b2c3d4e5f6a7b8c9d0e1
  */
 router.post(
   '/',

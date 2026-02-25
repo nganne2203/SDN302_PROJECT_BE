@@ -6,6 +6,7 @@ import { storeInventoryModel } from '#models/storeInventoryModel.js'
 import { branchModel } from '#models/branchModel.js'
 import { ORDER_STATUS } from '#constants/orderConstant.js'
 import { PAYMENT_STATUS } from '#constants/paymentConstant.js'
+import { RoleEnum } from '#constants/roleConstant.js'
 
 /**
  * Build match stage for aggregation queries
@@ -440,8 +441,21 @@ const getBranchPerformance = async (startDate = null, endDate = null, limit = 10
     {
       $lookup: {
         from: 'users',
-        localField: 'branchInfo.manager',
-        foreignField: '_id',
+        let: { branchId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ['$branch', '$$branchId'] },
+                  { $eq: ['$role', RoleEnum.MANAGER] },
+                  { $eq: ['$isDeleted', false] }
+                ]
+              }
+            }
+          },
+          { $limit: 1 }
+        ],
         as: 'managerInfo'
       }
     },
