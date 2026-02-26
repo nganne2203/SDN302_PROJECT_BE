@@ -448,5 +448,7 @@ export const PRODUCT_SERVICE = {
   getNewArrivals,
   getRelatedProducts,
   getProductDetailForOrder,
-  getAllProductsWithoutPagination
+  getAllProductsWithoutPagination,
+  mapProductImages,
+  mapProductsImages
 }

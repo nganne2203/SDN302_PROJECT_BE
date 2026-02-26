@@ -162,29 +162,7 @@ const queryTransaction = async (params) => {
 
 const getSupportedBanks = () => {
   return [
-    { code: 'NCB', name: 'Ngân hàng NCB', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/ncb.png' },
-    { code: 'AGRIBANK', name: 'Ngân hàng Agribank', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/agribank.png' },
-    { code: 'SCB', name: 'Ngân hàng SCB', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/scb.png' },
-    { code: 'SACOMBANK', name: 'Ngân hàng SacomBank', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/sacombank.png' },
-    { code: 'EXIMBANK', name: 'Ngân hàng EximBank', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/eximbank.png' },
-    { code: 'MSBANK', name: 'Ngân hàng MSBANK', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/msbank.png' },
-    { code: 'NAMABANK', name: 'Ngân hàng NamABank', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/namabank.png' },
-    { code: 'VNMART', name: 'Ví điện tử VnMart', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/vnmart.png' },
-    { code: 'VIETINBANK', name: 'Ngân hàng Vietinbank', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/vietinbank.png' },
-    { code: 'VIETCOMBANK', name: 'Ngân hàng VCB', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/vietcombank.png' },
-    { code: 'HDBANK', name: 'Ngân hàng HDBank', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/hdbank.png' },
-    { code: 'DONGABANK', name: 'Ngân hàng Đông Á', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/dongabank.png' },
-    { code: 'TPBANK', name: 'Ngân hàng TPBank', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/tpbank.png' },
-    { code: 'OJB', name: 'Ngân hàng OceanBank', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/ojb.png' },
-    { code: 'BIDV', name: 'Ngân hàng BIDV', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/bidv.png' },
-    { code: 'TECHCOMBANK', name: 'Ngân hàng Techcombank', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/techcombank.png' },
-    { code: 'VPBANK', name: 'Ngân hàng VPBank', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/vpbank.png' },
-    { code: 'MBBANK', name: 'Ngân hàng MBBank', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/mbbank.png' },
-    { code: 'ACB', name: 'Ngân hàng ACB', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/acb.png' },
-    { code: 'OCB', name: 'Ngân hàng OCB', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/ocb.png' },
-    { code: 'IVB', name: 'Ngân hàng IVB', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/ivb.png' },
-    { code: 'SHB', name: 'Ngân hàng SHB', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/shb.png' },
-    { code: 'VNPAYQR', name: 'VNPay QR', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/vnpayqr.png' }
+    { code: 'VNPAY', name: 'VNPay', logo: 'https://sandbox.vnpayment.vn/paymentv2/images/bank/vnpay.png' }
   ]
 }
 

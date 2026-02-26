@@ -123,8 +123,30 @@ const decreaseInventoryForOrder = async (branchId, items) => {
   }
 }
 
+const validateVNPayBankCode = (bankCode) => {
+  if (!bankCode) {
+    return ''
+  }
+
+  const normalizedBankCode = bankCode.toString().trim().toUpperCase()
+  if (!normalizedBankCode) {
+    return ''
+  }
+
+  const supportedBankCodes = new Set(
+    VNPAY_SERVICE.getSupportedBanks().map(bank => bank.code)
+  )
+
+  if (!supportedBankCodes.has(normalizedBankCode)) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Mã ngân hàng không được VNPay hỗ trợ'])
+  }
+
+  return normalizedBankCode
+}
+
 const createVNPayPayment = async (userId, paymentData, ipAddress) => {
   const { shippingAddress, message = '', branchId = null, bankCode = '', locale = 'vn' } = paymentData
+  const validatedBankCode = validateVNPayBankCode(bankCode)
 
   const cart = await CART_SERVICE.validateCartBeforeCheckout(userId)
 
@@ -195,7 +217,7 @@ const createVNPayPayment = async (userId, paymentData, ipAddress) => {
     orderInfo: `Thanh toan don hang ${orderNumber}`,
     ipAddress,
     locale,
-    bankCode
+    bankCode: validatedBankCode
   })
 
   payment.paymentUrl = paymentUrl

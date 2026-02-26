@@ -2,6 +2,7 @@ import { PRICING_REPOSITORY } from '#repositories/pricingRepository.js'
 import { PRODUCT_REPOSITORY } from '#repositories/productRepository.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
+import { PRODUCT_SERVICE } from '#services/productService.js'
 
 const getAllPricings = async (query = {}) => {
   const { page = 1, limit = 10, productId, isActive } = query
@@ -246,6 +247,10 @@ const calculatePrice = async (productId, quantity) => {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy sản phẩm'])
   }
 
+  // Map product images
+  const productWithImages = await PRODUCT_SERVICE.mapProductImages(product)
+  const firstImage = productWithImages.images && productWithImages.images.length > 0 ? productWithImages.images[0] : null
+
   const basePrice = product.basePrice
   const baseTotalPrice = basePrice * quantity
 
@@ -263,7 +268,7 @@ const calculatePrice = async (productId, quantity) => {
       product: {
         _id: product._id,
         name: product.name,
-        sku: product.sku,
+        images: firstImage,
         basePrice
       },
       quantity,
@@ -286,6 +291,7 @@ const calculatePrice = async (productId, quantity) => {
     product: {
       _id: product._id,
       name: product.name,
+      images: firstImage,
       sku: product.sku,
       basePrice
     },
