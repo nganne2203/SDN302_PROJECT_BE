@@ -114,6 +114,109 @@ router.get(
 
 /**
  * @swagger
+ * /api/v1/products/all:
+ *   get:
+ *     summary: Get all products without pagination (public)
+ *     description: Retrieve all products without pagination, with optional filtering and sorting.
+ *     tags: [Product]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term to filter products by name
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *         description: Filter products by category ID
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *         description: Minimum price filter
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *         description: Maximum price filter
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *         description: Filter products by active status
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [name, price, createdAt, updatedAt, ratingAvg, ratingCount]
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order, either 'asc' or 'desc'
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved all products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Lấy tất cả sản phẩm thành công"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       slug:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       category:
+ *                         type: object
+ *                       price:
+ *                         type: number
+ *                       images:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       material:
+ *                         type: string
+ *                       compatibility:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       ratingAvg:
+ *                         type: number
+ *                       ratingCount:
+ *                         type: number
+ *                       isActive:
+ *                         type: boolean
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *       400:
+ *         description: Invalid query parameters
+ */
+
+/**
+ * @swagger
  * /api/v1/products/with-stock:
  *   get:
  *     summary: Get products with stock information (for ordering) (public)

@@ -66,6 +66,25 @@ const router = express.Router()
  *       200:
  *         description: Lấy danh sách chi nhánh thành công
  *
+ * /api/v1/branches/all:
+ *   get:
+ *     summary: Lấy tất cả chi nhánh (không phân trang)
+ *     tags: [Branch]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Tìm kiếm theo tên hoặc địa chỉ
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *         description: Lọc theo trạng thái hoạt động
+ *     responses:
+ *       200:
+ *         description: Lấy tất cả chi nhánh thành công
+ *
  * /api/v1/branches/managers:
  *   get:
  *     summary: Lấy danh sách quản lý chi nhánh (admin only)
