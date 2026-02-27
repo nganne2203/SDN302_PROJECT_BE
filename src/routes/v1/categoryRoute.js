@@ -95,6 +95,51 @@ const router = express.Router()
  *       403:
  *         $ref: '#/components/responses/Forbidden'
  *
+ * /api/v1/categories/all:
+ *   get:
+ *     summary: Lấy tất cả danh mục (không phân trang)
+ *     description: Lấy danh sách tất cả danh mục mà không có phân trang, có hỗ trợ tìm kiếm và sắp xếp.
+ *     tags: [Category]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Tìm kiếm theo tên danh mục
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [name, createdAt, updatedAt]
+ *         description: Trường sắp xếp
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Thứ tự sắp xếp
+ *     responses:
+ *       200:
+ *         description: Lấy tất cả danh mục thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Lấy tất cả danh mục thành công"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Category'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *
  * /api/v1/categories/{id}:
  *   get:
  *     summary: Lấy thông tin danh mục theo ID
