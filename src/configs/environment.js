@@ -25,6 +25,7 @@ export const env = {
   API_SECRET: process.env.API_SECRET,
   VNPAY_TMN_CODE: process.env.VNPAY_TMN_CODE,
   VNPAY_HASH_SECRET: process.env.VNPAY_HASH_SECRET,
+  VNPAY_ENV: process.env.VNPAY_ENV,
   VNPAY_URL: process.env.VNPAY_URL,
   VNPAY_RETURN_URL: process.env.VNPAY_RETURN_URL,
   VNPAY_API_URL: process.env.VNPAY_API_URL
