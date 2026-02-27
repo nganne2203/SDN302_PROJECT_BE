@@ -41,7 +41,8 @@ const createVNPayPayment = async (req, res, next) => {
  */
 const vnpayReturn = async (req, res) => {
   try {
-    const result = await PAYMENT_SERVICE.processVNPayReturn(req.validated.query)
+    const query = req.validated?.query || req.query || {}
+    const result = await PAYMENT_SERVICE.processVNPayReturn(query)
 
     // Build redirect URL from service (similar to Google Auth pattern)
     const redirectUrl = PAYMENT_SERVICE.buildVNPayReturnRedirectUrl(result)
@@ -59,7 +60,8 @@ const vnpayReturn = async (req, res) => {
  */
 const vnpayIPN = async (req, res) => {
   try {
-    const result = await PAYMENT_SERVICE.processVNPayIPN(req.validated.query)
+    const query = req.validated?.query || req.query || {}
+    const result = await PAYMENT_SERVICE.processVNPayIPN(query)
     res.status(StatusCodes.OK).json(result)
   } catch {
     res.status(StatusCodes.OK).json({ RspCode: '99', Message: 'Unknown error' })

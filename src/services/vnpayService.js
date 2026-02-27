@@ -2,12 +2,20 @@ import crypto from 'crypto'
 import querystring from 'qs'
 import { env } from '#configs/environment.js'
 
+const isProduction = env.VNPAY_ENV === 'production'
+const defaultPaymentUrl = isProduction
+  ? 'https://pay.vnpay.vn/paymentv2/vpcpay.html'
+  : 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'
+const defaultApiUrl = isProduction
+  ? 'https://merchant.vnpay.vn/merchant_webapi/api/v1/transaction'
+  : 'https://sandbox.vnpayment.vn/merchant_webapi/api/v1/transaction'
+
 const VNPAY_CONFIG = {
   vnp_TmnCode: env.VNPAY_TMN_CODE || 'DEMO',
   vnp_HashSecret: env.VNPAY_HASH_SECRET || 'DEMOSECRET',
-  vnp_Url: env.VNPAY_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html',
+  vnp_Url: env.VNPAY_URL || defaultPaymentUrl,
   vnp_ReturnUrl: env.VNPAY_RETURN_URL || 'http://localhost:8080/api/v1/payments/vnpay-return',
-  vnp_ApiUrl: env.VNPAY_API_URL || 'https://sandbox.vnpayment.vn/merchant_webapi/api/v1/transaction'
+  vnp_ApiUrl: env.VNPAY_API_URL || defaultApiUrl
 }
 
 const sortObject = (obj) => {
