@@ -85,6 +85,47 @@ const router = express.Router()
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Device'
+ * /api/v1/devices/all:
+ *   get:
+ *     summary: Get all devices without pagination
+ *     tags: [Devices]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Tìm kiếm theo tên, thương hiệu hoặc mẫu mã
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [name, createdAt, updatedAt]
+ *         description: Trường sắp xếp
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Thứ tự sắp xếp
+ *     responses:
+ *       '200':
+ *         description: All devices retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Lấy tất cả thiết bị thành công"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Device'
  * /api/v1/devices/{id}:
  *   get:
  *     summary: Get device by ID
