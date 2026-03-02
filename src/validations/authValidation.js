@@ -54,8 +54,8 @@ export const AUTH_VALIDATION = {
       }).trim(),
       isDefault: joi.boolean().optional().default(false)
     }).optional(),
-    avatar: joi.string().uri().optional().messages({
-      'string.uri': 'URL ảnh đại diện không hợp lệ'
+    avatar: joi.string().optional().messages({
+      'string.empty': 'ID ảnh đại diện không được để trống'
     }).trim(),
     captchaToken: joi.string().required().messages({
       'string.empty': 'Captcha token không được để trống',

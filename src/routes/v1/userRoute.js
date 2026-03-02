@@ -85,7 +85,7 @@ router.get('/',
  * /api/v1/users:
  *   post:
  *     summary: Create a new user (admin, manager, staff)
- *     description: Create a new user.
+ *     description: Create a new user. Avatar should be a Cloudinary publicId obtained from the upload image API.
  *     tags: [User]
  *     security:
  *       - BearerAuth: []
@@ -150,8 +150,8 @@ router.get('/',
  *                     isDefault: true
  *               avatar:
  *                 type: string
- *                 format: url
- *                 example: 'http://example.com/avatar.jpg'
+ *                 description: Cloudinary public ID obtained from upload image API
+ *                 example: 'uploads/a1b2c3d4e5f6g7h8'
  *     responses:
  *       201:
  *         description: Created successfully
@@ -362,8 +362,8 @@ router.get('/staff',
  *                 example: '0123456789'
  *               avatar:
  *                 type: string
- *                 format: url
- *                 example: 'http://example.com/avatar.jpg'
+ *                 description: Cloudinary public ID obtained from upload image API
+ *                 example: 'uploads/a1b2c3d4e5f6g7h8'
  *               addresses:
  *                 type: array
  *                 items:
@@ -624,8 +624,8 @@ router.get('/:id',
  *                 example: '60d0fe4f5311236168a109ca'
  *               avatar:
  *                 type: string
- *                 format: url
- *                 example: 'http://example.com/avatar.jpg'
+ *                 description: Cloudinary public ID obtained from upload image API
+ *                 example: 'uploads/a1b2c3d4e5f6g7h8'
  *               addresses:
  *                 type: array
  *                 items:

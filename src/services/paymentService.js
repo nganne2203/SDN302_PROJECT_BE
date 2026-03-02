@@ -503,7 +503,10 @@ const buildVNPayReturnRedirectUrl = (result) => {
 const buildVNPayErrorRedirectUrl = (error) => {
   const clientUrl = env.CLIENT_URLS[0] || 'http://localhost:5173'
   const errorUrl = new URL(`${clientUrl}/payment/error`)
-  errorUrl.searchParams.set('message', error.message || 'Có lỗi xảy ra')
+  const detailedMessage = Array.isArray(error.errors) && error.errors.length > 0
+    ? error.errors[0]
+    : error.message
+  errorUrl.searchParams.set('message', detailedMessage || 'Có lỗi xảy ra')
   return errorUrl.toString()
 }
 
