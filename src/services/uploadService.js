@@ -28,7 +28,9 @@ const getImage = async (publicId) => {
   }
 
   try {
-    const resource = await cloudinary.api.resource(publicId, { resource_type: 'image' })
+    // If publicId has no folder separator, prepend 'uploads/' for backward compatibility
+    const fullPublicId = publicId.includes('/') ? publicId : `uploads/${publicId}`
+    const resource = await cloudinary.api.resource(fullPublicId, { resource_type: 'image' })
     return {
       imageUrl: resource.secure_url,
       publicId: resource.public_id,
@@ -74,7 +76,9 @@ const deleteImage = async (publicId) => {
   }
 
   try {
-    const result = await cloudinary.uploader.destroy(publicId, { invalidate: true })
+    // If publicId has no folder separator, prepend 'uploads/' for backward compatibility
+    const fullPublicId = publicId.includes('/') ? publicId : `uploads/${publicId}`
+    const result = await cloudinary.uploader.destroy(fullPublicId, { invalidate: true })
     if (['ok', 'not found'].includes(result.result)) {
       return true
     }

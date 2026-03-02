@@ -123,8 +123,30 @@ const decreaseInventoryForOrder = async (branchId, items) => {
   }
 }
 
+const validateVNPayBankCode = (bankCode) => {
+  if (!bankCode) {
+    return ''
+  }
+
+  const normalizedBankCode = bankCode.toString().trim().toUpperCase()
+  if (!normalizedBankCode) {
+    return ''
+  }
+
+  const supportedBankCodes = new Set(
+    VNPAY_SERVICE.getSupportedBanks().map(bank => bank.code)
+  )
+
+  if (!supportedBankCodes.has(normalizedBankCode)) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Mã ngân hàng không được VNPay hỗ trợ'])
+  }
+
+  return normalizedBankCode
+}
+
 const createVNPayPayment = async (userId, paymentData, ipAddress) => {
-  const { shippingAddress, message = '', branchId = null, bankCode = '', locale = 'vn' } = paymentData
+  const { shippingAddress, message = '', bankCode = '', locale = 'vn' } = paymentData
+  const validatedBankCode = validateVNPayBankCode(bankCode)
 
   const cart = await CART_SERVICE.validateCartBeforeCheckout(userId)
 
@@ -138,10 +160,8 @@ const createVNPayPayment = async (userId, paymentData, ipAddress) => {
 
   const baseTotals = calculateOrderTotals(populatedCart.items, pricingApplied)
 
-  let selectedBranch = branchId
-  if (!selectedBranch) {
-    selectedBranch = await findBranchWithStock(populatedCart.items)
-  }
+  // Automatically find a branch with available stock (customers do not specify branch)
+  const selectedBranch = await findBranchWithStock(populatedCart.items)
 
   const shippingFee = await calculateShippingFee(shippingAddress, selectedBranch)
   const totalAmount = baseTotals.totalAmount + shippingFee
@@ -195,7 +215,7 @@ const createVNPayPayment = async (userId, paymentData, ipAddress) => {
     orderInfo: `Thanh toan don hang ${orderNumber}`,
     ipAddress,
     locale,
-    bankCode
+    bankCode: validatedBankCode
   })
 
   payment.paymentUrl = paymentUrl
@@ -481,7 +501,10 @@ const buildVNPayReturnRedirectUrl = (result) => {
 const buildVNPayErrorRedirectUrl = (error) => {
   const clientUrl = env.CLIENT_URLS[0] || 'http://localhost:5173'
   const errorUrl = new URL(`${clientUrl}/payment/error`)
-  errorUrl.searchParams.set('message', error.message || 'Có lỗi xảy ra')
+  const detailedMessage = Array.isArray(error.errors) && error.errors.length > 0
+    ? error.errors[0]
+    : error.message
+  errorUrl.searchParams.set('message', detailedMessage || 'Có lỗi xảy ra')
   return errorUrl.toString()
 }
 

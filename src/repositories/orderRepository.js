@@ -117,6 +117,21 @@ const cancelOrder = async (orderId, cancelReason, updatedBy) => {
     .populate('branch', 'name address phone')
 }
 
+/**
+ * Find pending VNPay orders older than the given age in ms (default 30 min)
+ */
+const findExpiredPendingVNPayOrders = async (maxAgeMs = 30 * 60 * 1000) => {
+  const expiredBefore = new Date(Date.now() - maxAgeMs)
+  return await orderModel
+    .find({
+      orderStatus: ORDER_STATUS.PENDING,
+      paymentMethod: 'vnpay',
+      createdAt: { $lt: expiredBefore }
+    })
+    .select('_id orderNumber user branch items orderStatus paymentMethod createdAt')
+    .lean()
+}
+
 const countOrdersByStatus = async (userId = null) => {
   const matchStage = userId ? { user: userId } : {}
 
@@ -135,5 +150,6 @@ export const ORDER_REPOSITORY = {
   updateOrderById,
   updateOrderStatus,
   cancelOrder,
-  countOrdersByStatus
+  countOrdersByStatus,
+  findExpiredPendingVNPayOrders
 }
