@@ -34,10 +34,6 @@ export const PAYMENT_VALIDATION = {
     message: joi.string().trim().max(500).optional().allow('').messages({
       'string.max': 'Ghi chú không được vượt quá 500 ký tự'
     }),
-    branchId: joi.string().hex().length(24).optional().allow(null).messages({
-      'string.hex': 'Branch ID không hợp lệ',
-      'string.length': 'Branch ID không hợp lệ'
-    }),
     bankCode: joi.string().trim().optional().allow('').messages({
       'string.base': 'Mã ngân hàng không hợp lệ'
     }),
