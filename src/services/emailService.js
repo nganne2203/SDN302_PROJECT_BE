@@ -323,9 +323,13 @@ const sendOrderConfirmation = async (to, fullName, order) => {
               ${order.pricingApplied && order.pricingApplied.length > 0 ? `
               <tr>
                 <td colspan="3" style="padding: 10px; text-align: right; color: #dc3545; font-weight: bold;">Giảm giá:</td>
-                <td style="padding: 10px; text-align: right; color: #dc3545;">-${formatCurrency(order.subtotal - order.totalAmount)}</td>
+                <td style="padding: 10px; text-align: right; color: #dc3545;">-${formatCurrency(order.pricingApplied.reduce((sum, p) => sum + (p.discountAmount || 0), 0))}</td>
               </tr>
               ` : ''}
+              <tr>
+                <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold;">Phí giao hàng:</td>
+                <td style="padding: 10px; text-align: right;">${order.shippingFee > 0 ? formatCurrency(order.shippingFee) : '<span style="color: #28a745;">Miễn phí</span>'}</td>
+              </tr>
               <tr class="total-row">
                 <td colspan="3" style="padding: 15px; text-align: right;">TỔNG CỘNG:</td>
                 <td style="padding: 15px; text-align: right; color: #28a745; font-size: 18px;">${formatCurrency(order.totalAmount)}</td>

@@ -168,7 +168,7 @@ const restoreInventoryForOrder = async (order) => {
  * Create order from cart (COD only; VNPay uses payment API)
  */
 const createOrder = async (userId, orderData) => {
-  const { shippingAddress, paymentMethod, message = '', branchId = null } = orderData
+  const { shippingAddress, paymentMethod, message = '' } = orderData
 
   // Validate cart and get items
   const cart = await CART_SERVICE.validateCartBeforeCheckout(userId)
@@ -180,23 +180,16 @@ const createOrder = async (userId, orderData) => {
   // Populate cart items to get full product details
   const populatedCart = await CART_SERVICE.getCart(userId)
 
-  // Validate payment method
-  if (paymentMethod === PAYMENT_METHODS.VNPAY) {
-    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Vui lòng sử dụng API /api/payments/vnpay/create để thanh toán qua VNPay'])
-  }
-
+  // Only COD is allowed for online orders; VNPay uses /api/payments/vnpay/create
   if (paymentMethod !== PAYMENT_METHODS.COD) {
-    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Phương thức thanh toán không hợp lệ'])
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Đơn hàng online chỉ hỗ trợ thanh toán COD. Vui lòng sử dụng API /api/payments/vnpay/create để thanh toán qua VNPay'])
   }
 
   // Calculate pricing discounts
   const pricingApplied = await calculatePricingDiscounts(populatedCart.items)
 
-  // Find or use specified branch with available stock
-  let selectedBranch = branchId
-  if (!selectedBranch) {
-    selectedBranch = await findBranchWithStock(populatedCart.items)
-  }
+  // Automatically find a branch with available stock (customers do not specify branch)
+  const selectedBranch = await findBranchWithStock(populatedCart.items)
 
   // Calculate totals (include shipping fee)
   const shippingFee = await calculateShippingFee(shippingAddress, selectedBranch)

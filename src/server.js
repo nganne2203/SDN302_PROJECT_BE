@@ -14,6 +14,7 @@ import { initializeDefaultValue } from '#providers/dataInitial.js'
 import auditLogMiddleware from '#middlewares/auditLogMiddleware.js'
 import compression from 'compression'
 import { REFRESHTOKEN_SCHEDULER } from '#providers/refreshTokenScheduler.js'
+import { VNPAY_ORDER_SCHEDULER } from '#providers/vnpayOrderScheduler.js'
 
 const app = express()
 
@@ -71,11 +72,17 @@ const START_SERVER = () => {
   if (!REFRESHTOKEN_SCHEDULER.isSchedulerRunning()) {
     REFRESHTOKEN_SCHEDULER.startScheduler( 60 * 60 * 1000 ) // Chạy mỗi 1 giờ
   }
+  if (!VNPAY_ORDER_SCHEDULER.isSchedulerRunning()) {
+    VNPAY_ORDER_SCHEDULER.startScheduler( 10 * 60 * 1000 ) // Chạy mỗi 10 phút
+  }
   // Disconnect from MongoDB when the server stops
   existHook(async (callback) => {
     // stop scheduled tasks here if needed
     if (REFRESHTOKEN_SCHEDULER.isSchedulerRunning()) {
       REFRESHTOKEN_SCHEDULER.stopScheduler()
+    }
+    if (VNPAY_ORDER_SCHEDULER.isSchedulerRunning()) {
+      VNPAY_ORDER_SCHEDULER.stopScheduler()
     }
     await CLOSE_DB()
     callback()

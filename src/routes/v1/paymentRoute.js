@@ -147,9 +147,6 @@ router.use(authorizationMiddleware)
  *               message:
  *                 type: string
  *                 example: Please deliver in the morning
- *               branchId:
- *                 type: string
- *                 example: 507f1f77bcf86cd799439011
  *               bankCode:
  *                 type: string
  *                 example: NCB
