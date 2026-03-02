@@ -63,6 +63,16 @@ const savePayment = async (payment) => {
   return await payment.save()
 }
 
+/**
+ * Bulk-cancel all pending payments for the given order IDs
+ */
+const cancelPendingPaymentsByOrderIds = async (orderIds, cancelReason = 'Hết thời gian thanh toán VNPay') => {
+  return await paymentModel.updateMany(
+    { order: { $in: orderIds }, status: 'pending' },
+    { $set: { status: 'canceled', failureReason: cancelReason } }
+  )
+}
+
 export const PAYMENT_REPOSITORY = {
   createPayment,
   findByTxnRef: findByVnpTxnRef,
@@ -71,5 +81,6 @@ export const PAYMENT_REPOSITORY = {
   findByTransactionId,
   findByUserWithPagination: findByUserId,
   updateById,
-  savePayment
+  savePayment,
+  cancelPendingPaymentsByOrderIds
 }

@@ -67,7 +67,9 @@ export const ORDER_VALIDATION = {
       then: joi.required().messages({
         'any.required': 'Branch ID là bắt buộc cho đơn hàng offline'
       }),
-      otherwise: joi.optional().allow(null)
+      otherwise: joi.forbidden().messages({
+        'any.unknown': 'Branch ID không được phép cho đơn hàng online - hệ thống tự động chọn chi nhánh'
+      })
     }).messages({
       'string.hex': 'Branch ID không hợp lệ',
       'string.length': 'Branch ID không hợp lệ'

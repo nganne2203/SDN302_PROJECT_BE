@@ -145,7 +145,7 @@ const validateVNPayBankCode = (bankCode) => {
 }
 
 const createVNPayPayment = async (userId, paymentData, ipAddress) => {
-  const { shippingAddress, message = '', branchId = null, bankCode = '', locale = 'vn' } = paymentData
+  const { shippingAddress, message = '', bankCode = '', locale = 'vn' } = paymentData
   const validatedBankCode = validateVNPayBankCode(bankCode)
 
   const cart = await CART_SERVICE.validateCartBeforeCheckout(userId)
@@ -160,10 +160,8 @@ const createVNPayPayment = async (userId, paymentData, ipAddress) => {
 
   const baseTotals = calculateOrderTotals(populatedCart.items, pricingApplied)
 
-  let selectedBranch = branchId
-  if (!selectedBranch) {
-    selectedBranch = await findBranchWithStock(populatedCart.items)
-  }
+  // Automatically find a branch with available stock (customers do not specify branch)
+  const selectedBranch = await findBranchWithStock(populatedCart.items)
 
   const shippingFee = await calculateShippingFee(shippingAddress, selectedBranch)
   const totalAmount = baseTotals.totalAmount + shippingFee
