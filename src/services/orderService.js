@@ -14,6 +14,25 @@ import { SERVICE_ITEM_SERVICE } from '#services/serviceItemService.js'
 import { BRANCH_REPOSITORY } from '#repositories/branchRepository.js'
 
 /**
+ * Map Cloudinary images for all products in an order's items.
+ * Without this, item.product.images is a raw string[] of publicIds with no URLs.
+ */
+const mapOrderProductImages = async (order) => {
+  if (!order) return order
+  const orderObj = order.toObject ? order.toObject() : order
+  const mappedItems = await Promise.all(
+    (orderObj.items || []).map(async (item) => {
+      if (item.product && typeof item.product === 'object') {
+        const mappedProduct = await PRODUCT_SERVICE.mapProductImages(item.product)
+        return { ...item, product: mappedProduct }
+      }
+      return item
+    })
+  )
+  return { ...orderObj, items: mappedItems }
+}
+
+/**
  * Generate unique order number
  */
 const generateOrderNumber = () => {
@@ -115,29 +134,41 @@ const calculateShippingFee = async (shippingAddress, branchId) => {
 }
 
 /**
- * Find best branch with available stock
+ * Find best branch with available stock for ALL items
  */
 const findBranchWithStock = async (items) => {
-  // Get all store inventories for products in the order
-  const productIds = items.map(item => item.product._id || item.product)
+  // Fetch inventories for every product up front
+  const inventoriesByProduct = await Promise.all(
+    items.map(async (item) => {
+      const productId = item.product._id || item.product
+      const invs = await STORE_INVENTORY_SERVICE.getStoreInventoriesByProduct(productId)
+      return { productName: item.product.name || 'Unknown', requiredQty: item.quantity, invs }
+    })
+  )
 
-  for (const item of items) {
-    const productId = item.product._id || item.product
-    const storeInventories = await STORE_INVENTORY_SERVICE.getStoreInventoriesByProduct(productId)
+  // Build a set of branch IDs that have enough stock for every product
+  // Start from the first product's eligible branches and intersect with others
+  const eligibleBranchIds = inventoriesByProduct.reduce((eligible, { productName, requiredQty, invs }) => {
+    const branchesWithEnough = invs
+      .filter(inv => inv.quantity >= requiredQty)
+      .map(inv => inv.branch._id.toString())
 
-    // Find branch with sufficient stock
-    const availableBranch = storeInventories.find(inv => inv.quantity >= item.quantity)
-
-    if (!availableBranch) {
-      const productName = item.product.name || 'Unknown Product'
+    if (branchesWithEnough.length === 0) {
       throw new ApiError(ERROR_CODES.BAD_REQUEST, [`Sản phẩm "${productName}" không đủ tồn kho tại bất kỳ chi nhánh nào`])
     }
+
+    if (eligible === null) return new Set(branchesWithEnough)
+    return new Set(branchesWithEnough.filter(id => eligible.has(id)))
+  }, null)
+
+  if (!eligibleBranchIds || eligibleBranchIds.size === 0) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không có chi nhánh nào có đủ tồn kho cho tất cả sản phẩm trong đơn hàng'])
   }
 
-  // Return first available branch (can be improved with better logic)
-  const firstProductId = productIds[0]
-  const inventories = await STORE_INVENTORY_SERVICE.getStoreInventoriesByProduct(firstProductId)
-  return inventories.find(inv => inv.quantity > 0)?.branch._id || null
+  // Return the first eligible branch's actual _id (ObjectId)
+  const selectedBranchId = [...eligibleBranchIds][0]
+  const firstInv = inventoriesByProduct[0].invs.find(inv => inv.branch._id.toString() === selectedBranchId)
+  return firstInv?.branch._id || selectedBranchId
 }
 
 /**
@@ -269,7 +300,7 @@ const getOrderById = async (orderId, userId, userRole) => {
     throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền xem đơn hàng này'])
   }
 
-  return order
+  return mapOrderProductImages(order)
 }
 
 /**
@@ -304,9 +335,10 @@ const getMyOrders = async (userId, query = {}) => {
   const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 }
 
   const result = await ORDER_REPOSITORY.getOrdersByUser(userId, filter, { page, limit, sort })
+  const mappedDocs = await Promise.all(result.docs.map(mapOrderProductImages))
 
   return {
-    data: result.docs,
+    data: mappedDocs,
     pagination: mapMongoosePagination(result)
   }
 }
@@ -325,9 +357,10 @@ const getAllOrders = async (query = {}) => {
   const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 }
 
   const result = await ORDER_REPOSITORY.getAllOrders(filter, { page, limit, sort })
+  const mappedDocs = await Promise.all(result.docs.map(mapOrderProductImages))
 
   return {
-    data: result.docs,
+    data: mappedDocs,
     pagination: mapMongoosePagination(result)
   }
 }
@@ -365,7 +398,7 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
     console.error('Failed to send order status update email:', emailError.message)
   }
 
-  return updatedOrder
+  return mapOrderProductImages(updatedOrder)
 }
 
 /**
@@ -444,7 +477,7 @@ const cancelOrder = async (orderId, cancelReason, userId, userRole) => {
     console.error('Failed to send order cancellation email:', emailError.message)
   }
 
-  return canceledOrder
+  return mapOrderProductImages(canceledOrder)
 }
 
 /**
