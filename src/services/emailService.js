@@ -301,7 +301,7 @@ const sendOrderConfirmation = async (to, fullName, order) => {
             <h3 style="margin-top: 0; color: #28a745;">Địa Chỉ Giao Hàng</h3>
             <p><strong>${order.shippingAddress.fullname}</strong></p>
             <p>Điện thoại: ${order.shippingAddress.phone}</p>
-            <p>${order.shippingAddress.addressLine}, ${order.shippingAddress.ward}, ${order.shippingAddress.district}, ${order.shippingAddress.city}</p>
+            <p>${order.shippingAddress.addressLine}, ${order.shippingAddress.ward}, ${order.shippingAddress.city}</p>
           </div>
 
           <h3 style="color: #28a745;">Chi Tiết Đơn Hàng</h3>
