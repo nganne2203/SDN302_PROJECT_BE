@@ -3,6 +3,7 @@ import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { escapeRegex } from '#utils/formatterUtil.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
+import mongoose from 'mongoose'
 
 const assertProductExists = async (productId) => {
   const existingProduct = await SERVICE_REPOSITORY.findByIdProduct(productId)
@@ -67,7 +68,19 @@ const getAllServicesWithoutPagination = async (query = {}) => {
 }
 
 const getServiceById = async (serviceId) => {
-  const service = await SERVICE_REPOSITORY.findByIdService(serviceId)
+  const normalizedServiceId = typeof serviceId === 'string'
+    ? serviceId.trim()
+    : serviceId?.toString?.().trim()
+
+  if (!normalizedServiceId) {
+    throw new ApiError(ERROR_CODES.VALIDATION_ERROR, ['Service ID là bắt buộc'])
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(normalizedServiceId)) {
+    throw new ApiError(ERROR_CODES.VALIDATION_ERROR, ['Service ID không hợp lệ'])
+  }
+
+  const service = await SERVICE_REPOSITORY.findByIdService(normalizedServiceId)
   if (!service) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy dịch vụ'])
   }
