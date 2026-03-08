@@ -229,7 +229,7 @@ router.put(
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
   sanitizeRequest(CART_CONSTANT.UPDATE_CART_SERVICES_FIELDS, CART_CONSTANT.UPDATE_CART_SERVICES_FIELDS),
-  validationHandlingMiddleware({ body: CART_VALIDATION.updateCartItem }),
+  validationHandlingMiddleware({ body: CART_VALIDATION.updateCartServices }),
   CART_CONTROLLER.updateCartItemServices
 )
 

@@ -38,11 +38,11 @@ const findServiceByProductId = async (productId) => {
 }
 
 const findByIdProduct = async (id) => {
-  return await productModel.findById(id, { isDeleted: false })
+  return await productModel.findOne({ _id: id, isDeleted: false })
 }
 
-const findByIdService = async (id) => {
-  return await serviceModel.findById(id, { product: 0, isDeleted: false })
+const findByIdService = async (serviceId) => {
+  return await serviceModel.findOne({ _id: serviceId, isDeleted: false })
 }
 
 const updateServiceById = async (serviceId, data) => {
