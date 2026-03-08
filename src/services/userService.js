@@ -319,7 +319,8 @@ const updateUser = async (userId, updateData, updatedBy = null) => {
   }
 
   if (branch !== undefined) {
-    if (user.role === RoleEnum.CUSTOMER || role === RoleEnum.CUSTOMER) {
+    const targetRoleForBranch = role || user.role
+    if (targetRoleForBranch === RoleEnum.CUSTOMER) {
       updatedUserData.branch = null
     } else {
       if (

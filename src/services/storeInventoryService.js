@@ -53,6 +53,14 @@ const createStoreInventory = async (branchData, createdBy = null, currentUser = 
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Ngưỡng tối thiểu phải nhỏ hơn ngưỡng tối đa'])
   }
 
+  if (quantity < minThreshold) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Số lượng không được nhỏ hơn ngưỡng tối thiểu'])
+  }
+
+  if (quantity > maxThreshold) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Số lượng không được lớn hơn ngưỡng tối đa'])
+  }
+
   const storeInventoryData = {
     branch: branchId,
     product: productId,
