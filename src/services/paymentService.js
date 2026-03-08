@@ -386,6 +386,16 @@ const getPaymentByOrderId = async (orderId) => {
 }
 
 /**
+ * Get payment by order number (VNPay txn ref)
+ * @param {string} orderNumber - Order number
+ * @returns {Object} Payment record
+ */
+const getPaymentByOrderNumber = async (orderNumber) => {
+  const payment = await PAYMENT_REPOSITORY.findByTxnRef(orderNumber)
+  return payment
+}
+
+/**
  * Get payment by transaction ID
  * @param {string} transactionId - Transaction ID
  * @returns {Object} Payment record
@@ -513,6 +523,7 @@ export const PAYMENT_SERVICE = {
   processVNPayReturn,
   processVNPayIPN,
   getPaymentByOrderId,
+  getPaymentByOrderNumber,
   getPaymentByTransactionId,
   getUserPayments,
   getSupportedBanks,

@@ -179,7 +179,7 @@ const cancelPayment = async (req, res, next) => {
 const checkPaymentResult = async (req, res, next) => {
   try {
     const { orderNumber } = req.params
-    const payment = await PAYMENT_SERVICE.getPaymentByOrderId(orderNumber)
+    const payment = await PAYMENT_SERVICE.getPaymentByOrderNumber(orderNumber)
 
     res.status(StatusCodes.OK).json(
       responseSuccess({

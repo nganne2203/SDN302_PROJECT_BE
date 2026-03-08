@@ -39,7 +39,7 @@ const updateInventory = async (inventoryId, data, updatedBy = null) => {
   if (updatedBy) {
     updatedData.updatedBy = updatedBy
   }
-  if (data.quantity) {
+  if (data.quantity !== undefined) {
     updatedData.quantity = data.quantity
   }
   return INVENTORY_REPOSITORY.updateInventory(inventoryId, updatedData)

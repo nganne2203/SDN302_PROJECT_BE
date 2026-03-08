@@ -15,7 +15,8 @@ const createStoreInventory = async (req, res, next) => {
     }
     const storeInventory = await STORE_INVENTORY_SERVICE.createStoreInventory(
       branchData,
-      userId
+      userId,
+      req.user
     )
     res.status(StatusCodes.CREATED).json(
       responseSuccess({
@@ -33,7 +34,7 @@ const createStoreInventory = async (req, res, next) => {
 export const getStoreInventoriesByBranch = async (req, res, next) => {
   try {
     const { branchId } = req.params
-    const result = await STORE_INVENTORY_SERVICE.getStoreInventoriesByBranch(branchId, req.validated.query)
+    const result = await STORE_INVENTORY_SERVICE.getStoreInventoriesByBranch(branchId, req.validated.query, req.user)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: result.data,
@@ -70,7 +71,7 @@ export const getStoreInventory = async (req, res, next) => {
 export const getOutOfStockProductsAtBranch = async (req, res, next) => {
   try {
     const { branchId } = req.params
-    const result = await STORE_INVENTORY_SERVICE.getOutOfStockProductsAtBranch(branchId, req.validated.query)
+    const result = await STORE_INVENTORY_SERVICE.getOutOfStockProductsAtBranch(branchId, req.validated.query, req.user)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: result.data,
@@ -89,7 +90,7 @@ export const getOutOfStockProductsAtBranch = async (req, res, next) => {
 export const getLowStockProductsAtBranch = async (req, res, next) => {
   try {
     const { branchId } = req.params
-    const result = await STORE_INVENTORY_SERVICE.getLowStockProductsAtBranch(branchId, req.validated.query)
+    const result = await STORE_INVENTORY_SERVICE.getLowStockProductsAtBranch(branchId, req.validated.query, req.user)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: result.data,
@@ -108,7 +109,7 @@ export const getLowStockProductsAtBranch = async (req, res, next) => {
 export const getNeedRestockProducts = async (req, res, next) => {
   try {
     const { branchId } = req.params
-    const result = await STORE_INVENTORY_SERVICE.getNeedRestockProducts(branchId, req.validated.query)
+    const result = await STORE_INVENTORY_SERVICE.getNeedRestockProducts(branchId, req.validated.query, req.user)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: result.data,
@@ -127,7 +128,7 @@ export const getNeedRestockProducts = async (req, res, next) => {
 export const getOverstockProducts = async (req, res, next) => {
   try {
     const { branchId } = req.params
-    const result = await STORE_INVENTORY_SERVICE.getOverstockProducts(branchId, req.validated.query)
+    const result = await STORE_INVENTORY_SERVICE.getOverstockProducts(branchId, req.validated.query, req.user)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: result.data,
@@ -152,7 +153,8 @@ export const updateThresholds = async (req, res, next) => {
       branchId,
       productId,
       { minThreshold, maxThreshold },
-      userId
+      userId,
+      req.user
     )
     res.status(StatusCodes.OK).json(
       responseSuccess({
