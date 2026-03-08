@@ -7,11 +7,24 @@ import { mapMongoosePagination } from '#utils/pagination.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { PRODUCT_SERVICE } from '#services/productService.js'
 import { BRANCH_SERVICE } from '#services/branchService.js'
+import { RoleEnum } from '#constants/roleConstant.js'
+
+const assertManagerBranchAccess = (currentUser, branchId) => {
+  if (!currentUser || currentUser.role !== RoleEnum.MANAGER) {
+    return
+  }
+
+  if (!currentUser.branch || currentUser.branch !== branchId.toString()) {
+    throw new ApiError(ERROR_CODES.FORBIDDEN, ['Manager chỉ được thao tác trên chi nhánh của mình'])
+  }
+}
 
 /**
  * Tạo yêu cầu nhập hàng từ chi nhánh
  */
-const createStockRequest = async (branchId, productId, quantity, reason, requesterId) => {
+const createStockRequest = async (branchId, productId, quantity, reason, requesterId, currentUser = null) => {
+  assertManagerBranchAccess(currentUser, branchId)
+
   await BRANCH_SERVICE.getBranchById(branchId)
   await PRODUCT_SERVICE.getProductById(productId)
   const inventory = await INVENTORY_REPOSITORY.getInventoryByProductId(productId)
@@ -34,7 +47,9 @@ const createStockRequest = async (branchId, productId, quantity, reason, request
 /**
  * Lấy danh sách yêu cầu của chi nhánh
  */
-const getStockRequestsByBranch = async (branchId, query = {}) => {
+const getStockRequestsByBranch = async (branchId, query = {}, currentUser = null) => {
+  assertManagerBranchAccess(currentUser, branchId)
+
   const { page, limit, sortBy, sortOrder } = query
   const filter = {}
   const sortField = sortBy || 'createdAt'
@@ -142,11 +157,22 @@ const rejectStockRequest = async (requestId, note, adminId) => {
 /**
  * Lấy chi tiết yêu cầu nhập hàng
  */
-const getStockRequestDetail = async (requestId) => {
+const getStockRequestDetail = async (requestId, currentUser = null) => {
   const stockRequest = await STOCK_REQUEST_REPOSITORY.getStockRequestById(requestId)
   if (!stockRequest) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy yêu cầu nhập hàng'])
   }
+
+  if (currentUser?.role === RoleEnum.MANAGER) {
+    const requestBranchId = stockRequest.branch?._id
+      ? stockRequest.branch._id.toString()
+      : stockRequest.branch?.toString()
+
+    if (!currentUser.branch || currentUser.branch !== requestBranchId) {
+      throw new ApiError(ERROR_CODES.FORBIDDEN, ['Manager chỉ được thao tác trên chi nhánh của mình'])
+    }
+  }
+
   return stockRequest
 }
 

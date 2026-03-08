@@ -10,7 +10,7 @@ export const createStockRequest = async (req, res, next) => {
     const { branch, product, quantity, reason } = req.body
     const userId = req.user.id
 
-    const stockRequest = await STOCK_REQUEST_SERVICE.createStockRequest(branch, product, quantity, reason, userId)
+    const stockRequest = await STOCK_REQUEST_SERVICE.createStockRequest(branch, product, quantity, reason, userId, req.user)
     res.status(StatusCodes.CREATED).json(
       responseSuccess({
         data: stockRequest,
@@ -64,7 +64,7 @@ export const getPendingStockRequests = async (req, res, next) => {
 export const getStockRequestsByBranch = async (req, res, next) => {
   try {
     const { branchId } = req.params
-    const result = await STOCK_REQUEST_SERVICE.getStockRequestsByBranch(branchId, req.validated.query)
+    const result = await STOCK_REQUEST_SERVICE.getStockRequestsByBranch(branchId, req.validated.query, req.user)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: result.data,
@@ -83,7 +83,7 @@ export const getStockRequestsByBranch = async (req, res, next) => {
 export const getStockRequestDetail = async (req, res, next) => {
   try {
     const { requestId } = req.params
-    const stockRequest = await STOCK_REQUEST_SERVICE.getStockRequestDetail(requestId)
+    const stockRequest = await STOCK_REQUEST_SERVICE.getStockRequestDetail(requestId, req.user)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: stockRequest,
