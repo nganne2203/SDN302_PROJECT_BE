@@ -16,7 +16,7 @@ const mapImagePublicIdsToInfo = async (imagePublicIds = []) => {
     try {
       const image = await UPLOAD_SERVICE.getImage(publicId)
       return {
-        publicId: image.publicId ?? publicId,
+        publicId,  // Use stored publicId (not Cloudinary's, which may have different prefix)
         imageUrl: image.imageUrl
       }
     } catch {
