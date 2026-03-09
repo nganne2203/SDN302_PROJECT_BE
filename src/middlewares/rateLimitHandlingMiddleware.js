@@ -1,5 +1,8 @@
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
+import { env } from '#configs/environment.js'
+
+const isDev = env.NODE_ENV === 'dev'
 
 const rateLimitStore = new Map()
 
@@ -23,6 +26,8 @@ export const createRateLimiter = (options = {}) => {
   } = options
 
   return (req, res, next) => {
+    if (isDev) return next()
+
     try {
       const key = keyGenerator(req)
       const now = Date.now()
