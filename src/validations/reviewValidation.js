@@ -33,14 +33,7 @@ export const REVIEW_VALIDATION = {
     }),
     comment: joi.string().optional().allow('').max(1000).messages({
       'string.max': 'Nhận xét không được vượt quá 1000 ký tự'
-    }).trim(),
-    images: joi.array().items(
-      joi.string().uri().messages({
-        'string.uri': 'URL ảnh không hợp lệ'
-      })
-    ).max(5).default([]).messages({
-      'array.max': 'Chỉ được upload tối đa 5 ảnh'
-    })
+    }).trim()
   }),
   updateReview: joi.object({
     rating: joi.number().integer().min(1).max(5).optional().messages({
@@ -51,14 +44,7 @@ export const REVIEW_VALIDATION = {
     }),
     comment: joi.string().optional().allow('').max(1000).messages({
       'string.max': 'Nhận xét không được vượt quá 1000 ký tự'
-    }).trim(),
-    images: joi.array().items(
-      joi.string().uri().messages({
-        'string.uri': 'URL ảnh không hợp lệ'
-      })
-    ).max(5).optional().messages({
-      'array.max': 'Chỉ được upload tối đa 5 ảnh'
-    })
+    }).trim()
   }),
   getReviews: joi.object({
     page: joi.number().integer().min(1).default(1).messages({

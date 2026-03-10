@@ -60,7 +60,6 @@ const router = express.Router()
  *                  phone: string,
  *                  addressLine: string,
  *                  city: string,
- *                  district: string,
  *                  ward: string,
  *                  isDefault: boolean
  *                 }]
@@ -69,7 +68,6 @@ const router = express.Router()
   *                 phone: '0123456789',
   *                 addressLine: '123 Le Loi',
   *                 city: 'Ho Chi Minh',
-  *                 district: 'District 1',
   *                 ward: 'Ben Nghe',
   *                 isDefault: true
  *                 }]
@@ -133,7 +131,6 @@ router.post('/register',
  *                  phone: string,
  *                  addressLine: string,
  *                  city: string,
- *                  district: string,
  *                  ward: string,
  *                  isDefault: boolean
  *                 }]
@@ -142,7 +139,6 @@ router.post('/register',
   *                 phone: '0123456789',
   *                 addressLine: '123 Le Loi',
   *                 city: 'Ho Chi Minh',
-  *                 district: 'District 1',
   *                 ward: 'Ben Nghe',
   *                 isDefault: true
  *                 }]

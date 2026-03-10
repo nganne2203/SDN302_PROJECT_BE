@@ -1,11 +1,12 @@
 import { ORDER_REPOSITORY } from '#repositories/orderRepository.js'
+import { PAYMENT_REPOSITORY } from '#repositories/paymentRepository.js'
 import { CART_SERVICE } from '#services/cartService.js'
 import { STORE_INVENTORY_SERVICE } from '#services/storeInventoryService.js'
 import { EMAIL_SERVICE } from '#services/emailService.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { ORDER_STATUS, DELIVERY_STATUS, SHIPPING_FEE } from '#constants/orderConstant.js'
-import { PAYMENT_METHODS } from '#constants/paymentConstant.js'
+import { PAYMENT_METHODS, PAYMENT_STATUS } from '#constants/paymentConstant.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
 import { pricingModel } from '#models/pricingModel.js'
 import crypto from 'crypto'
@@ -382,6 +383,14 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
 
   if (order.orderStatus === ORDER_STATUS.DELIVERED) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể cập nhật đơn hàng đã hoàn thành'])
+  }
+
+  // Block status update for VNPay orders that have not been paid
+  if (order.paymentMethod === PAYMENT_METHODS.VNPAY) {
+    const payment = await PAYMENT_REPOSITORY.findByOrderId(order._id, false)
+    if (!payment || payment.status !== PAYMENT_STATUS.SUCCESS) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể cập nhật trạng thái đơn hàng VNPay chưa thanh toán'])
+    }
   }
 
   const updatedOrder = await ORDER_REPOSITORY.updateOrderStatus(orderId, status, updatedBy)

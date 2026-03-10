@@ -19,7 +19,6 @@ const userSchema = new mongoose.Schema(
         phone: { type: String, required: true, maxLength: 10 },
         addressLine: { type: String, required: true, maxLength: 200 },
         city: { type: String, required: true, maxLength: 100 },
-        district: { type: String, required: true, maxLength: 100 },
         ward: { type: String, required: true, maxLength: 100 },
         isDefault: { type: Boolean, default: false }
       }
