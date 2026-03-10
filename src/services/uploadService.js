@@ -1,6 +1,13 @@
 import { cloudinary, uploadToCloudinary } from '#middlewares/uploadHandlingMiddleware.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
+import { env } from '#configs/environment.js'
+
+const buildImageUrl = (publicId) => {
+  if (!publicId) return null
+  const fullPublicId = publicId.includes('/') ? publicId : `uploads/${publicId}`
+  return `https://res.cloudinary.com/${env.CLOUD_NAME}/image/upload/${fullPublicId}`
+}
 
 const uploadImage = async (file) => {
   if (!file) {
@@ -117,6 +124,7 @@ export const UPLOAD_SERVICE = {
   uploadMultipleImages,
   getImage,
   deleteImage,
-  deleteImagesFromCloudinary
+  deleteImagesFromCloudinary,
+  buildImageUrl
 }
 

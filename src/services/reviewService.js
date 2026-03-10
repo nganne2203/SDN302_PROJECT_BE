@@ -67,28 +67,23 @@ const uploadReviewImages = async (files) => {
   return results.map(r => r.public_id)
 }
 
-const mapReviewImages = async (imagePublicIds = []) => {
+const mapReviewImages = (imagePublicIds = []) => {
   if (!Array.isArray(imagePublicIds) || imagePublicIds.length === 0) return []
-  const results = await Promise.all(imagePublicIds.map(async (publicId) => {
-    try {
-      const image = await UPLOAD_SERVICE.getImage(publicId)
-      return { publicId, imageUrl: image.imageUrl }
-    } catch {
-      return { publicId, imageUrl: null }
-    }
+  return imagePublicIds.map((publicId) => ({
+    publicId,
+    imageUrl: UPLOAD_SERVICE.buildImageUrl(publicId)
   }))
-  return results
 }
 
-const mapReviewWithImages = async (review) => {
+const mapReviewWithImages = (review) => {
   if (!review) return review
   const reviewObj = review.toObject ? review.toObject() : { ...review }
-  reviewObj.images = await mapReviewImages(reviewObj.images)
+  reviewObj.images = mapReviewImages(reviewObj.images)
   return reviewObj
 }
 
-const mapReviewsWithImages = async (reviews) => {
-  return Promise.all(reviews.map(mapReviewWithImages))
+const mapReviewsWithImages = (reviews) => {
+  return reviews.map(mapReviewWithImages)
 }
 
 const createReview = async (data, userId, files) => {
@@ -147,7 +142,7 @@ const getReviewsByProduct = async (productId, query = {}) => {
   })
 
   return {
-    data: await mapReviewsWithImages(result.docs),
+    data: mapReviewsWithImages(result.docs),
     pagination: mapMongoosePagination(result)
   }
 }
@@ -162,7 +157,7 @@ const getMyReviews = async (userId, query = {}) => {
   })
 
   return {
-    data: await mapReviewsWithImages(result.docs),
+    data: mapReviewsWithImages(result.docs),
     pagination: mapMongoosePagination(result)
   }
 }
@@ -187,7 +182,7 @@ const getAllReviews = async (query = {}) => {
   })
 
   return {
-    data: await mapReviewsWithImages(result.docs),
+    data: mapReviewsWithImages(result.docs),
     pagination: mapMongoosePagination(result)
   }
 }

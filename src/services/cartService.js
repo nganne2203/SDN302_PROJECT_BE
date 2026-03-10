@@ -89,15 +89,13 @@ const getCart = async (userId) => {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Giỏ hàng không tồn tại'])
   }
   const cartObj = cart.toJSON ? cart.toJSON() : cart
-  const mappedItems = await Promise.all(
-    (cartObj.items || []).map(async (item) => {
-      if (item.product) {
-        const mappedProduct = await PRODUCT_SERVICE.mapProductImages(item.product)
-        return { ...item, product: mappedProduct }
-      }
-      return item
-    })
-  )
+  const mappedItems = (cartObj.items || []).map((item) => {
+    if (item.product) {
+      const mappedProduct = PRODUCT_SERVICE.mapProductImages(item.product)
+      return { ...item, product: mappedProduct }
+    }
+    return item
+  })
   return { ...cartObj, items: mappedItems }
 }
 
