@@ -5,7 +5,7 @@ import { responseSuccess } from '#utils/responseUtil.js'
 const createReview = async (req, res, next) => {
   try {
     const userId = req.user.id
-    const result = await REVIEW_SERVICE.createReview(req.validated.body, userId)
+    const result = await REVIEW_SERVICE.createReview(req.body, userId, req.files)
     res.status(StatusCodes.CREATED).json(responseSuccess({
       data: result,
       message: 'Tạo đánh giá thành công'
@@ -65,8 +65,9 @@ const updateReviewById = async (req, res, next) => {
     const userId = req.user.id
     const result = await REVIEW_SERVICE.updateReviewById(
       req.params.id,
-      req.validated.body,
-      userId
+      req.body,
+      userId,
+      req.files
     )
     res.status(StatusCodes.OK).json(responseSuccess({
       data: result,

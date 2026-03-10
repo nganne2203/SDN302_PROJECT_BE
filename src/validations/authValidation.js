@@ -44,10 +44,6 @@ export const AUTH_VALIDATION = {
         'string.empty': 'Thành phố không được để trống',
         'any.required': 'Thành phố là bắt buộc'
       }).trim(),
-      district: joi.string().required().messages({
-        'string.empty': 'Quận/Huyện không được để trống',
-        'any.required': 'Quận/Huyện là bắt buộc'
-      }).trim(),
       ward: joi.string().required().messages({
         'string.empty': 'Phường/Xã không được để trống',
         'any.required': 'Phường/Xã là bắt buộc'
@@ -98,10 +94,6 @@ export const AUTH_VALIDATION = {
       city: joi.string().required().messages({
         'string.empty': 'Thành phố không được để trống',
         'any.required': 'Thành phố là bắt buộc'
-      }).trim(),
-      district: joi.string().required().messages({
-        'string.empty': 'Quận/Huyện không được để trống',
-        'any.required': 'Quận/Huyện là bắt buộc'
       }).trim(),
       ward: joi.string().required().messages({
         'string.empty': 'Phường/Xã không được để trống',

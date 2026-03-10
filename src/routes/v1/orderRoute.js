@@ -40,7 +40,6 @@ router.use(authorizationMiddleware)
  *                   - phone
  *                   - addressLine
  *                   - city
- *                   - district
  *                   - ward
  *                 properties:
  *                   fullname:
@@ -55,9 +54,6 @@ router.use(authorizationMiddleware)
  *                   city:
  *                     type: string
  *                     example: Ho Chi Minh
- *                   district:
- *                     type: string
- *                     example: District 1
  *                   ward:
  *                     type: string
  *                     example: Ward 1
@@ -149,9 +145,6 @@ router.post(
  *                   city:
  *                     type: string
  *                     example: Ho Chi Minh
- *                   district:
- *                     type: string
- *                     example: District 1
  *                   ward:
  *                     type: string
  *                     example: Ward 1

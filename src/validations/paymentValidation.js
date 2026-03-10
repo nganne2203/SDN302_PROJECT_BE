@@ -20,10 +20,6 @@ export const PAYMENT_VALIDATION = {
         'string.empty': 'Thành phố không được để trống',
         'any.required': 'Thành phố là bắt buộc'
       }),
-      district: joi.string().trim().required().messages({
-        'string.empty': 'Quận/Huyện không được để trống',
-        'any.required': 'Quận/Huyện là bắt buộc'
-      }),
       ward: joi.string().trim().required().messages({
         'string.empty': 'Phường/Xã không được để trống',
         'any.required': 'Phường/Xã là bắt buộc'
