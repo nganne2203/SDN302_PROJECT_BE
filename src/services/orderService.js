@@ -18,18 +18,16 @@ import { BRANCH_REPOSITORY } from '#repositories/branchRepository.js'
  * Map Cloudinary images for all products in an order's items.
  * Without this, item.product.images is a raw string[] of publicIds with no URLs.
  */
-const mapOrderProductImages = async (order) => {
+const mapOrderProductImages = (order) => {
   if (!order) return order
   const orderObj = order.toObject ? order.toObject() : order
-  const mappedItems = await Promise.all(
-    (orderObj.items || []).map(async (item) => {
-      if (item.product && typeof item.product === 'object') {
-        const mappedProduct = await PRODUCT_SERVICE.mapProductImages(item.product)
-        return { ...item, product: mappedProduct }
-      }
-      return item
-    })
-  )
+  const mappedItems = (orderObj.items || []).map((item) => {
+    if (item.product && typeof item.product === 'object') {
+      const mappedProduct = PRODUCT_SERVICE.mapProductImages(item.product)
+      return { ...item, product: mappedProduct }
+    }
+    return item
+  })
   return { ...orderObj, items: mappedItems }
 }
 
@@ -336,7 +334,7 @@ const getMyOrders = async (userId, query = {}) => {
   const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 }
 
   const result = await ORDER_REPOSITORY.getOrdersByUser(userId, filter, { page, limit, sort })
-  const mappedDocs = await Promise.all(result.docs.map(mapOrderProductImages))
+  const mappedDocs = result.docs.map(mapOrderProductImages)
 
   return {
     data: mappedDocs,
@@ -358,7 +356,7 @@ const getAllOrders = async (query = {}) => {
   const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 }
 
   const result = await ORDER_REPOSITORY.getAllOrders(filter, { page, limit, sort })
-  const mappedDocs = await Promise.all(result.docs.map(mapOrderProductImages))
+  const mappedDocs = result.docs.map(mapOrderProductImages)
 
   return {
     data: mappedDocs,

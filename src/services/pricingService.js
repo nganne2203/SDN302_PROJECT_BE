@@ -248,7 +248,7 @@ const calculatePrice = async (productId, quantity) => {
   }
 
   // Map product images
-  const productWithImages = await PRODUCT_SERVICE.mapProductImages(product)
+  const productWithImages = PRODUCT_SERVICE.mapProductImages(product)
   const firstImage = productWithImages.images && productWithImages.images.length > 0 ? productWithImages.images[0] : null
 
   const basePrice = product.price
