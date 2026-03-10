@@ -1,10 +1,12 @@
 import { REVIEW_REPOSITORY } from '#repositories/reviewRepository.js'
 import { ORDER_REPOSITORY } from '#repositories/orderRepository.js'
 import { PRODUCT_REPOSITORY } from '#repositories/productRepository.js'
+import { UPLOAD_SERVICE } from '#services/uploadService.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
 import { ORDER_STATUS } from '#constants/orderConstant.js'
+import { uploadToCloudinary } from '#middlewares/uploadHandlingMiddleware.js'
 
 const checkUserPurchasedProduct = async (userId, productId) => {
   // Find orders where:
@@ -56,8 +58,36 @@ const updateProductRating = async (productId) => {
   })
 }
 
-const createReview = async (data, userId) => {
-  const { productId, rating, comment = '', images = [] } = data
+const uploadReviewImages = async (files) => {
+  if (!files || files.length === 0) return []
+  if (files.length > 5) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ được upload tối đa 5 ảnh'])
+  }
+  const results = await Promise.all(files.map(file => uploadToCloudinary(file.buffer, 'reviews')))
+  return results.map(r => r.public_id)
+}
+
+const mapReviewImages = (imagePublicIds = []) => {
+  if (!Array.isArray(imagePublicIds) || imagePublicIds.length === 0) return []
+  return imagePublicIds.map((publicId) => ({
+    publicId,
+    imageUrl: UPLOAD_SERVICE.buildImageUrl(publicId)
+  }))
+}
+
+const mapReviewWithImages = (review) => {
+  if (!review) return review
+  const reviewObj = review.toObject ? review.toObject() : { ...review }
+  reviewObj.images = mapReviewImages(reviewObj.images)
+  return reviewObj
+}
+
+const mapReviewsWithImages = (reviews) => {
+  return reviews.map(mapReviewWithImages)
+}
+
+const createReview = async (data, userId, files) => {
+  const { productId, rating, comment = '' } = data
 
   // Validate product exists
   await assertProductExists(productId)
@@ -71,22 +101,27 @@ const createReview = async (data, userId) => {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Bạn đã đánh giá sản phẩm này rồi'])
   }
 
+  // Upload images to Cloudinary
+  const imagePublicIds = await uploadReviewImages(files)
+
   // Create review
   const review = await REVIEW_REPOSITORY.createReview({
     product: productId,
     user: userId,
     rating,
     comment,
-    images
+    images: imagePublicIds
   })
 
   await updateProductRating(productId)
 
-  return await REVIEW_REPOSITORY.getReviewById(review._id)
+  const created = await REVIEW_REPOSITORY.getReviewById(review._id)
+  return mapReviewWithImages(created)
 }
 
 const getReviewById = async (reviewId) => {
-  return await assertReviewExists(reviewId)
+  const review = await assertReviewExists(reviewId)
+  return mapReviewWithImages(review)
 }
 
 const getReviewsByProduct = async (productId, query = {}) => {
@@ -107,7 +142,7 @@ const getReviewsByProduct = async (productId, query = {}) => {
   })
 
   return {
-    data: result.docs,
+    data: mapReviewsWithImages(result.docs),
     pagination: mapMongoosePagination(result)
   }
 }
@@ -122,7 +157,7 @@ const getMyReviews = async (userId, query = {}) => {
   })
 
   return {
-    data: result.docs,
+    data: mapReviewsWithImages(result.docs),
     pagination: mapMongoosePagination(result)
   }
 }
@@ -147,13 +182,13 @@ const getAllReviews = async (query = {}) => {
   })
 
   return {
-    data: result.docs,
+    data: mapReviewsWithImages(result.docs),
     pagination: mapMongoosePagination(result)
   }
 }
 
-const updateReviewById = async (reviewId, data, userId) => {
-  const { rating, comment, images } = data
+const updateReviewById = async (reviewId, data, userId, files) => {
+  const { rating, comment } = data
 
   const review = await assertReviewExists(reviewId)
 
@@ -162,7 +197,11 @@ const updateReviewById = async (reviewId, data, userId) => {
   const updateData = {}
   if (rating !== undefined) updateData.rating = rating
   if (comment !== undefined) updateData.comment = comment
-  if (images !== undefined) updateData.images = images
+
+  // Upload new images if provided
+  if (files && files.length > 0) {
+    updateData.images = await uploadReviewImages(files)
+  }
 
   // Update review
   const updatedReview = await REVIEW_REPOSITORY.updateReviewById(reviewId, updateData)
@@ -170,7 +209,7 @@ const updateReviewById = async (reviewId, data, userId) => {
   // Update product rating
   await updateProductRating(review.product._id)
 
-  return updatedReview
+  return mapReviewWithImages(updatedReview)
 }
 
 const deleteReviewById = async (reviewId, userId) => {

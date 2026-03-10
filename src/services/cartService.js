@@ -4,6 +4,7 @@ import { ERROR_CODES } from '#constants/errorCode.js'
 import { PRODUCT_SERVICE } from '#services/productService.js'
 import { SERVICE_ITEM_SERVICE } from '#services/serviceItemService.js'
 import { STORE_INVENTORY_SERVICE } from '#services/storeInventoryService.js'
+import mongoose from 'mongoose'
 
 const calculateTotalPrice = (items) => {
   return items.reduce((total, item) => {
@@ -12,13 +13,49 @@ const calculateTotalPrice = (items) => {
   }, 0)
 }
 
+const normalizeServiceIds = (services = []) => {
+  if (!Array.isArray(services)) {
+    throw new ApiError(ERROR_CODES.VALIDATION_ERROR, ['services phải là một mảng'])
+  }
+
+  const validationErrors = []
+  const normalizedServiceIds = services
+    .map((service, index) => {
+      const rawServiceId = typeof service === 'string' ? service : service?.serviceId
+      const serviceId = typeof rawServiceId === 'string' ? rawServiceId.trim() : ''
+
+      if (!serviceId) {
+        validationErrors.push(`services[${index}].serviceId là bắt buộc`)
+        return null
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(serviceId)) {
+        validationErrors.push(`services[${index}].serviceId không hợp lệ`)
+        return null
+      }
+
+      return serviceId
+    })
+    .filter(Boolean)
+
+  if (validationErrors.length > 0) {
+    throw new ApiError(ERROR_CODES.VALIDATION_ERROR, validationErrors)
+  }
+
+  return normalizedServiceIds
+}
+
 const validateServiceItems = async (productId, services) => {
   await PRODUCT_SERVICE.getProductById(productId)
 
+  const normalizedServiceIds = normalizeServiceIds(services)
   const validatedServices = []
 
-  for (const serviceId of services) {
+  for (const serviceId of normalizedServiceIds) {
     const service = await SERVICE_ITEM_SERVICE.getServiceById(serviceId)
+    if (!service.product) {
+      throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy sản phẩm của dịch vụ'])
+    }
     if (service.product.toString() !== productId.toString()) {
       throw new ApiError(ERROR_CODES.BAD_REQUEST, [`Dịch vụ ${service.name} không thuộc về sản phẩm tương ứng`])
     }
@@ -51,7 +88,15 @@ const getCart = async (userId) => {
   if (!cart) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Giỏ hàng không tồn tại'])
   }
-  return cart
+  const cartObj = cart.toJSON ? cart.toJSON() : cart
+  const mappedItems = (cartObj.items || []).map((item) => {
+    if (item.product) {
+      const mappedProduct = PRODUCT_SERVICE.mapProductImages(item.product)
+      return { ...item, product: mappedProduct }
+    }
+    return item
+  })
+  return { ...cartObj, items: mappedItems }
 }
 
 const addToCart = async (userId, data) => {
@@ -164,7 +209,10 @@ const validateCartBeforeCheckout = async (userId) => {
     }
     for (const serviceItem of item.services) {
       const service = await SERVICE_ITEM_SERVICE.getServiceById(serviceItem.service)
-      if (!service || !service.isActive) {
+      if (!service) {
+        throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Dịch vụ không tồn tại hoặc đã bị xóa'])
+      }
+      if (!service.isActive) {
         throw new ApiError(ERROR_CODES.BAD_REQUEST, [`Dịch vụ ${service.name} hiện không khả dụng`])
       }
       if (service.price !== serviceItem.price) {

@@ -342,8 +342,8 @@ const refreshToken = async (data, requestInfo = {}) => {
     ])
   }
 
-  const tokens = await createToken(user, ipAddress, userAgent)
   await REFRESHTOKEN_REPOSITORY.revokeRefreshToken(refreshToken)
+  const tokens = await createToken(user, ipAddress, userAgent)
 
   return {
     ...tokens

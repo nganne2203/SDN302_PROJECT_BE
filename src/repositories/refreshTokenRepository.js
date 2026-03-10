@@ -1,7 +1,14 @@
 import { refreshTokenModel } from '#models/refreshTokenModel.js'
 
 const createRefreshToken = async (data) => {
-  return await refreshTokenModel.create(data)
+  try {
+    return await refreshTokenModel.create(data)
+  } catch (error) {
+    if (error.code === 11000) {
+      return await refreshTokenModel.findOne({ token: data.token })
+    }
+    throw error
+  }
 }
 
 const findRefreshToken = async (token) => {

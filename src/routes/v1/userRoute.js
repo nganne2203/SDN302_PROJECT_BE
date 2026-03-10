@@ -134,8 +134,6 @@ router.get('/',
  *                       type: string
  *                     city:
  *                       type: string
- *                     district:
- *                       type: string
  *                     ward:
  *                       type: string
  *                     isDefault:
@@ -145,7 +143,6 @@ router.get('/',
  *                     phone: '0123456789'
  *                     addressLine: '123 Le Loi'
  *                     city: 'Ho Chi Minh'
- *                     district: 'District 1'
  *                     ward: 'Ben Nghe'
  *                     isDefault: true
  *               avatar:
@@ -377,8 +374,6 @@ router.get('/staff',
  *                       type: string
  *                     city:
  *                       type: string
- *                     district:
- *                       type: string
  *                     ward:
  *                       type: string
  *                     isDefault:
@@ -388,7 +383,6 @@ router.get('/staff',
  *                     phone: '0123456789'
  *                     addressLine: '123 Le Loi'
  *                     city: 'Ho Chi Minh'
- *                     district: 'District 1'
  *                     ward: 'Ben Nghe'
  *                     isDefault: true
  *     responses:
@@ -639,8 +633,6 @@ router.get('/:id',
  *                       type: string
  *                     city:
  *                       type: string
- *                     district:
- *                       type: string
  *                     ward:
  *                       type: string
  *                     isDefault:
@@ -650,7 +642,6 @@ router.get('/:id',
  *                     phone: '0123456789'
  *                     addressLine: '123 Le Loi'
  *                     city: 'Ho Chi Minh'
- *                     district: 'District 1'
  *                     ward: 'Ben Nghe'
  *                     isDefault: true
  *     responses:

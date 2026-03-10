@@ -1,5 +1,26 @@
 import joi from 'joi'
 
+const serviceIdStringSchema = joi.string().trim().hex().length(24).required().messages({
+  'string.base': 'Service ID phải là chuỗi',
+  'string.empty': 'Service ID không được để trống',
+  'string.hex': 'Service ID không hợp lệ',
+  'string.length': 'Service ID không hợp lệ',
+  'any.required': 'Service ID là bắt buộc'
+})
+
+const serviceInputSchema = joi.alternatives().try(
+  serviceIdStringSchema,
+  joi.object({
+    serviceId: serviceIdStringSchema.messages({
+      'any.required': 'services[].serviceId là bắt buộc'
+    })
+  }).required().messages({
+    'object.base': 'Mỗi phần tử services phải là object hoặc string ObjectId'
+  })
+).messages({
+  'alternatives.match': 'Mỗi phần tử services phải là object { serviceId } hoặc string ObjectId'
+})
+
 export const CART_VALIDATION = {
   addToCart: joi.object({
     productId: joi.string().hex().length(24).required().messages({
@@ -14,16 +35,7 @@ export const CART_VALIDATION = {
       'number.min': 'Số lượng phải lớn hơn hoặc bằng 1',
       'any.required': 'Số lượng là bắt buộc'
     }),
-    services: joi.array().items(
-      joi.object({
-        serviceId: joi.string().hex().length(24).required().messages({
-          'string.empty': 'Service ID không được để trống',
-          'string.hex': 'Service ID không hợp lệ',
-          'string.length': 'Service ID không hợp lệ',
-          'any.required': 'Service ID là bắt buộc'
-        }).trim()
-      })
-    ).optional().default([])
+    services: joi.array().items(serviceInputSchema).optional().default([])
   }),
   updateCartItem: joi.object({
     productId: joi.string().hex().length(24).required().messages({
@@ -46,16 +58,7 @@ export const CART_VALIDATION = {
       'string.length': 'Product ID không hợp lệ',
       'any.required': 'Product ID là bắt buộc'
     }).trim(),
-    services: joi.array().items(
-      joi.object({
-        serviceId: joi.string().hex().length(24).required().messages({
-          'string.empty': 'Service ID không được để trống',
-          'string.hex': 'Service ID không hợp lệ',
-          'string.length': 'Service ID không hợp lệ',
-          'any.required': 'Service ID là bắt buộc'
-        }).trim()
-      })
-    ).required().messages({
+    services: joi.array().items(serviceInputSchema).required().messages({
       'any.required': 'Danh sách dịch vụ là bắt buộc'
     })
   }),

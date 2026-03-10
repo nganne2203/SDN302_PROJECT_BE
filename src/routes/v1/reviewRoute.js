@@ -8,6 +8,7 @@ import { RoleEnum } from '#constants/roleConstant.js'
 import { validationHandlingMiddleware } from '#middlewares/validationHandlingMiddleware.js'
 import { REVIEW_VALIDATION } from '#validations/reviewValidation.js'
 import { REVIEW_CONSTANT } from '#constants/reviewConstant.js'
+import upload from '#middlewares/uploadHandlingMiddleware.js'
 
 const router = express.Router()
 
@@ -23,7 +24,7 @@ const router = express.Router()
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
@@ -45,7 +46,8 @@ const router = express.Router()
  *                 type: array
  *                 items:
  *                   type: string
- *                 description: Review images URLs
+ *                   format: binary
+ *                 description: Review images (max 5 files)
  *     responses:
  *       201:
  *         description: Review created successfully
@@ -60,6 +62,7 @@ router.post(
   '/',
   apiRateLimiter,
   authorizationMiddleware,
+  upload.array('images', 5),
   sanitizeRequest(REVIEW_CONSTANT.CREATE_REVIEW_FIELDS, REVIEW_CONSTANT.CREATE_REVIEW_REQUIRED_FIELDS),
   validationHandlingMiddleware({ body: REVIEW_VALIDATION.createReview }),
   REVIEW_CONTROLLER.createReview
@@ -315,7 +318,7 @@ router.get(
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -331,7 +334,8 @@ router.get(
  *                 type: array
  *                 items:
  *                   type: string
- *                 description: Review images URLs
+ *                   format: binary
+ *                 description: Review images (max 5 files)
  *     responses:
  *       200:
  *         description: Review updated successfully
@@ -344,6 +348,7 @@ router.patch(
   '/:id',
   apiRateLimiter,
   authorizationMiddleware,
+  upload.array('images', 5),
   sanitizeRequest(REVIEW_CONSTANT.UPDATE_REVIEW_FIELDS),
   validationHandlingMiddleware({
     params: REVIEW_VALIDATION.idParam,

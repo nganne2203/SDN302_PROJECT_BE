@@ -4,6 +4,17 @@ import { mapMongoosePagination } from '#utils/pagination.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { PRODUCT_SERVICE } from '#services/productService.js'
 import { BRANCH_SERVICE } from '#services/branchService.js'
+import { RoleEnum } from '#constants/roleConstant.js'
+
+const assertManagerBranchAccess = (currentUser, branchId) => {
+  if (!currentUser || currentUser.role !== RoleEnum.MANAGER) {
+    return
+  }
+
+  if (!currentUser.branch || currentUser.branch !== branchId.toString()) {
+    throw new ApiError(ERROR_CODES.FORBIDDEN, ['Manager chỉ được thao tác trên chi nhánh của mình'])
+  }
+}
 
 /**
  * Store Inventory Service
@@ -22,8 +33,10 @@ import { BRANCH_SERVICE } from '#services/branchService.js'
 /**
  * Tạo inventory cho chi nhánh
  */
-const createStoreInventory = async (branchData, createdBy = null) => {
+const createStoreInventory = async (branchData, createdBy = null, currentUser = null) => {
   const { branchId, productId, quantity = 0, minThreshold = 10, maxThreshold = 100 } = branchData
+
+  assertManagerBranchAccess(currentUser, branchId)
 
   await PRODUCT_SERVICE.getProductById(productId)
   await BRANCH_SERVICE.getBranchById(branchId)
@@ -38,6 +51,14 @@ const createStoreInventory = async (branchData, createdBy = null) => {
 
   if (minThreshold >= maxThreshold) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Ngưỡng tối thiểu phải nhỏ hơn ngưỡng tối đa'])
+  }
+
+  if (quantity < minThreshold) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Số lượng không được nhỏ hơn ngưỡng tối thiểu'])
+  }
+
+  if (quantity > maxThreshold) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Số lượng không được lớn hơn ngưỡng tối đa'])
   }
 
   const storeInventoryData = {
@@ -56,7 +77,9 @@ const createStoreInventory = async (branchData, createdBy = null) => {
 /**
  * Lấy tồn kho của chi nhánh
  */
-const getStoreInventoryByBranchAndProduct = async (branchId, productId) => {
+const getStoreInventoryByBranchAndProduct = async (branchId, productId, currentUser = null) => {
+  assertManagerBranchAccess(currentUser, branchId)
+
   const storeInventory = await STORE_INVENTORY_REPOSITORY.getStoreInventoryByBranchAndProduct(branchId, productId)
   if (!storeInventory) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy tồn kho tại chi nhánh này'])
@@ -67,7 +90,9 @@ const getStoreInventoryByBranchAndProduct = async (branchId, productId) => {
 /**
  * Lấy danh sách tồn kho của chi nhánh
  */
-const getStoreInventoriesByBranch = async (branchId, query = {}) => {
+const getStoreInventoriesByBranch = async (branchId, query = {}, currentUser = null) => {
+  assertManagerBranchAccess(currentUser, branchId)
+
   const { page, limit, sortBy, sortOrder } = query
   const filter = {}
   const sortField = sortBy || 'createdAt'
@@ -88,7 +113,9 @@ const getStoreInventoriesByBranch = async (branchId, query = {}) => {
 /**
  * Lấy sản phẩm hết hàng tại chi nhánh
  */
-const getOutOfStockProductsAtBranch = async (branchId, query = {}) => {
+const getOutOfStockProductsAtBranch = async (branchId, query = {}, currentUser = null) => {
+  assertManagerBranchAccess(currentUser, branchId)
+
   const { page, limit, sortBy, sortOrder } = query
   const filter = {}
   const sortField = sortBy || 'quantity'
@@ -136,7 +163,9 @@ const stockBranch = async (productId) => {
 /**
  * Lấy sản phẩm cần bổ sung tồn kho (dưới ngưỡng tối thiểu)
  */
-const getNeedRestockProducts = async (branchId, query = {}) => {
+const getNeedRestockProducts = async (branchId, query = {}, currentUser = null) => {
+  assertManagerBranchAccess(currentUser, branchId)
+
   const { page, limit, sortBy, sortOrder } = query
   const sortField = sortBy || 'quantity'
   const sortDirection = sortOrder === 'asc' ? 1 : -1
@@ -152,7 +181,9 @@ const getNeedRestockProducts = async (branchId, query = {}) => {
 /**
  * Lấy sản phẩm tồn kho thấp tại chi nhánh (dưới ngưỡng tối thiểu)
  */
-const getLowStockProductsAtBranch = async (branchId, query = {}) => {
+const getLowStockProductsAtBranch = async (branchId, query = {}, currentUser = null) => {
+  assertManagerBranchAccess(currentUser, branchId)
+
   const { page, limit, sortBy, sortOrder } = query
   const sortField = sortBy || 'quantity'
   const sortDirection = sortOrder === 'asc' ? 1 : -1
@@ -168,7 +199,9 @@ const getLowStockProductsAtBranch = async (branchId, query = {}) => {
 /**
  * Lấy sản phẩm tồn kho quá mức (vượt ngưỡng tối đa)
  */
-const getOverstockProducts = async (branchId, query = {}) => {
+const getOverstockProducts = async (branchId, query = {}, currentUser = null) => {
+  assertManagerBranchAccess(currentUser, branchId)
+
   const { page, limit, sortBy, sortOrder } = query
   const sortField = sortBy || 'quantity'
   const sortDirection = sortOrder === 'asc' ? 1 : -1
@@ -184,7 +217,9 @@ const getOverstockProducts = async (branchId, query = {}) => {
 /**
  * Cập nhật ngưỡng tồn kho
  */
-const updateThresholds = async (branchId, productId, thresholdData, updatedBy = null) => {
+const updateThresholds = async (branchId, productId, thresholdData, updatedBy = null, currentUser = null) => {
+  assertManagerBranchAccess(currentUser, branchId)
+
   const { minThreshold, maxThreshold } = thresholdData
 
   if (minThreshold !== undefined && maxThreshold !== undefined && minThreshold >= maxThreshold) {

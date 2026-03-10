@@ -26,7 +26,6 @@ const orderSchema = new mongoose.Schema(
       phone: { type: String, required: true },
       addressLine: { type: String, required: true },
       city: { type: String, required: true },
-      district: { type: String, required: true },
       ward: { type: String, required: true }
     },
     orderStatus: { type: String, enum: Object.values(ORDER_STATUS), default: ORDER_STATUS.PENDING },

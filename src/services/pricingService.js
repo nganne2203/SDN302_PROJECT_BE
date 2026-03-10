@@ -248,10 +248,10 @@ const calculatePrice = async (productId, quantity) => {
   }
 
   // Map product images
-  const productWithImages = await PRODUCT_SERVICE.mapProductImages(product)
+  const productWithImages = PRODUCT_SERVICE.mapProductImages(product)
   const firstImage = productWithImages.images && productWithImages.images.length > 0 ? productWithImages.images[0] : null
 
-  const basePrice = product.basePrice
+  const basePrice = product.price
   const baseTotalPrice = basePrice * quantity
 
   // Get applicable pricing rule
@@ -292,7 +292,6 @@ const calculatePrice = async (productId, quantity) => {
       _id: product._id,
       name: product.name,
       images: firstImage,
-      sku: product.sku,
       basePrice
     },
     quantity,

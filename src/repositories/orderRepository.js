@@ -88,10 +88,23 @@ const updateOrderById = async (orderId, updateData) => {
     .populate('updatedBy', 'fullname email')
 }
 
+const ORDER_STATUS_TO_DELIVERY_STATUS = {
+  pending: 'pending',
+  confirmed: 'pending',
+  shipped: 'shipping',
+  delivered: 'delivered',
+  canceled: 'cancelled'
+}
+
 const updateOrderStatus = async (orderId, status, updatedBy) => {
+  const deliveryStatus = ORDER_STATUS_TO_DELIVERY_STATUS[status]
+  const updateFields = { orderStatus: status, updatedBy, updatedAt: new Date() }
+  if (deliveryStatus) {
+    updateFields['delivery.status'] = deliveryStatus
+  }
   return await orderModel.findByIdAndUpdate(
     orderId,
-    { orderStatus: status, updatedBy, updatedAt: new Date() },
+    updateFields,
     { new: true, runValidators: true }
   )
     .populate('user', 'fullname email phone')
