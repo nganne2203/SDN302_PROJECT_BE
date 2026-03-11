@@ -35,7 +35,6 @@ const router = express.Router()
  */
 router.post('/images',
   writeRateLimiter,
-  authorizationMiddleware,
   upload.single('image'),
   UPLOAD_CONTROLLER.uploadImage
 )

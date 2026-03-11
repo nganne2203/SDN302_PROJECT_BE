@@ -1,4 +1,5 @@
 import { reviewModel } from '#models/reviewModel.js'
+import mongoose from 'mongoose'
 
 const createReview = async (reviewData) => {
   return await reviewModel.create(reviewData)
@@ -73,8 +74,9 @@ const checkExistingReview = async (userId, productId) => {
 }
 
 const getReviewStats = async (productId) => {
+  const objectId = new mongoose.Types.ObjectId(productId)
   const stats = await reviewModel.aggregate([
-    { $match: { product: productId, isDeleted: false } },
+    { $match: { product: objectId, isDeleted: false } },
     {
       $group: {
         _id: '$product',

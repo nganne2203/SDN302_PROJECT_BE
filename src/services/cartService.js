@@ -88,7 +88,15 @@ const getCart = async (userId) => {
   if (!cart) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Giỏ hàng không tồn tại'])
   }
-  return cart
+  const cartObj = cart.toJSON ? cart.toJSON() : cart
+  const mappedItems = (cartObj.items || []).map((item) => {
+    if (item.product) {
+      const mappedProduct = PRODUCT_SERVICE.mapProductImages(item.product)
+      return { ...item, product: mappedProduct }
+    }
+    return item
+  })
+  return { ...cartObj, items: mappedItems }
 }
 
 const addToCart = async (userId, data) => {

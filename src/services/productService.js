@@ -9,39 +9,26 @@ import { DEVICE_SERVICE } from '#services/deviceService.js'
 import { PRICING_SERVICE } from '#services/pricingService.js'
 import { STORE_INVENTORY_SERVICE } from '#services/storeInventoryService.js'
 
-const mapImagePublicIdsToInfo = async (imagePublicIds = []) => {
+const mapImagePublicIdsToInfo = (imagePublicIds = []) => {
   if (!Array.isArray(imagePublicIds) || imagePublicIds.length === 0) return []
-
-  const results = await Promise.all(imagePublicIds.map(async (publicId) => {
-    try {
-      const image = await UPLOAD_SERVICE.getImage(publicId)
-      return {
-        publicId: image.publicId ?? publicId,
-        imageUrl: image.imageUrl
-      }
-    } catch {
-      return {
-        publicId,
-        imageUrl: null
-      }
-    }
+  return imagePublicIds.map((publicId) => ({
+    publicId,
+    imageUrl: UPLOAD_SERVICE.buildImageUrl(publicId)
   }))
-
-  return results
 }
 
-const mapProductImages = async (product) => {
+const mapProductImages = (product) => {
   if (!product) return product
   const productObj = product.toObject ? product.toObject() : product
-  const images = await mapImagePublicIdsToInfo(productObj.images || [])
+  const images = mapImagePublicIdsToInfo(productObj.images || [])
   return {
     ...productObj,
     images
   }
 }
 
-const mapProductsImages = async (products = []) => {
-  return Promise.all(products.map((product) => mapProductImages(product)))
+const mapProductsImages = (products = []) => {
+  return products.map((product) => mapProductImages(product))
 }
 
 const getProductByIdRaw = async (productId) => {
@@ -88,7 +75,7 @@ const getAllProducts = async (query = {}) => {
   const sort = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 }
 
   const result = await PRODUCT_REPOSITORY.getAllProducts(filter, { page, limit, sort })
-  const mappedDocs = await mapProductsImages(result.docs)
+  const mappedDocs = mapProductsImages(result.docs)
   return {
     data: mappedDocs,
     pagination: mapMongoosePagination(result)
@@ -266,7 +253,7 @@ const getProductsWithStock = async (query = {}) => {
     // Get active pricing rules
     const pricingRules = await PRICING_SERVICE.getPricingRule(product._id)
 
-    const productWithImages = await mapProductImages(product)
+    const productWithImages = mapProductImages(product)
 
     return {
       ...productWithImages,
@@ -303,7 +290,7 @@ const getProductsByDevice = async (deviceId, query = {}) => {
   const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 }
 
   const result = await PRODUCT_REPOSITORY.getAllProducts(filter, { page, limit, sort })
-  const mappedDocs = await mapProductsImages(result.docs)
+  const mappedDocs = mapProductsImages(result.docs)
 
   return {
     data: mappedDocs,
@@ -384,7 +371,7 @@ const getProductDetailForOrder = async (productId) => {
   // Get stock by branch
   const stockByBranch = await STORE_INVENTORY_SERVICE.stockBranch(product._id)
 
-  const productWithImages = await mapProductImages(product)
+  const productWithImages = mapProductImages(product)
 
   return {
     ...productWithImages,

@@ -71,11 +71,6 @@ export const USER_VALIDATION = {
         'any.required': 'Thành phố là bắt buộc',
         'any.max': 'Thành phố không được vượt quá 100 ký tự'
       }).max(100).trim(),
-      district: joi.string().required().messages({
-        'string.empty': 'Quận/Huyện không được để trống',
-        'any.required': 'Quận/Huyện là bắt buộc',
-        'any.max': 'Quận/Huyện không được vượt quá 100 ký tự'
-      }).max(100).trim(),
       ward: joi.string().required().messages({
         'string.empty': 'Phường/Xã không được để trống',
         'any.required': 'Phường/Xã là bắt buộc',
@@ -137,11 +132,6 @@ export const USER_VALIDATION = {
         'any.required': 'Thành phố là bắt buộc',
         'any.max': 'Thành phố không được vượt quá 100 ký tự'
       }).max(100),
-      district: joi.string().trim().required().messages({
-        'string.empty': 'Quận/Huyện không được để trống',
-        'any.required': 'Quận/Huyện là bắt buộc',
-        'any.max': 'Quận/Huyện không được vượt quá 100 ký tự'
-      }).max(100),
       ward: joi.string().trim().required().messages({
         'string.empty': 'Phường/Xã không được để trống',
         'any.required': 'Phường/Xã là bắt buộc',
@@ -197,11 +187,6 @@ export const USER_VALIDATION = {
         'string.empty': 'Thành phố không được để trống',
         'any.required': 'Thành phố là bắt buộc',
         'any.max': 'Thành phố không được vượt quá 100 ký tự'
-      }).max(100),
-      district: joi.string().trim().required().messages({
-        'string.empty': 'Quận/Huyện không được để trống',
-        'any.required': 'Quận/Huyện là bắt buộc',
-        'any.max': 'Quận/Huyện không được vượt quá 100 ký tự'
       }).max(100),
       ward: joi.string().trim().required().messages({
         'string.empty': 'Phường/Xã không được để trống',

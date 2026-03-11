@@ -12,7 +12,8 @@ import {
   VERIFY_OTP_FIELDS,
   RESEND_OTP_FIELDS,
   REFRESH_TOKEN_FIELDS,
-  LOGIN_NO_CAPTCHA_FIELDS
+  LOGIN_NO_CAPTCHA_FIELDS,
+  REGISTER_NO_CAPTCHA_FIELDS
 } from '#constants/userConstant.js'
 import { verifyRecaptchaMiddleware } from '#middlewares/verifyCaptchaMiddleware.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
@@ -59,7 +60,6 @@ const router = express.Router()
  *                  phone: string,
  *                  addressLine: string,
  *                  city: string,
- *                  district: string,
  *                  ward: string,
  *                  isDefault: boolean
  *                 }]
@@ -68,7 +68,6 @@ const router = express.Router()
   *                 phone: '0123456789',
   *                 addressLine: '123 Le Loi',
   *                 city: 'Ho Chi Minh',
-  *                 district: 'District 1',
   *                 ward: 'Ben Nghe',
   *                 isDefault: true
  *                 }]
@@ -90,6 +89,73 @@ router.post('/register',
   verifyRecaptchaMiddleware,
   sanitizeRequest(REGISTER_FIELDS, REQUIRE_FIELD_REGISTER),
   validationHandlingMiddleware({ body: AUTH_VALIDATION.registerUser }),
+  AUTH_CONTROLLER.register
+)
+
+
+/**
+ * @swagger
+ * /api/v1/auth/register-no-captcha:
+ *   post:
+ *     summary: Register a new user
+ *     description: Register a new account. Avatar should be a Cloudinary publicId obtained from the upload image API.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fullname
+ *               - email
+ *               - password
+ *               - phone
+ *             properties:
+ *               fullname:
+ *                 type: string
+ *                 example: Mai Thi Thanh Ngan
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: ngan@gmail.com
+ *               password:
+ *                 type: string
+ *                 example: Password@123
+ *               phone:
+ *                 type: string
+ *                 example: '0123456789'
+ *               addresses:
+ *                 type: [{
+ *                  fullname: string,
+ *                  phone: string,
+ *                  addressLine: string,
+ *                  city: string,
+ *                  ward: string,
+ *                  isDefault: boolean
+ *                 }]
+ *                 example: [{
+  *                 fullname: 'Mai Thi Thanh Ngan',
+  *                 phone: '0123456789',
+  *                 addressLine: '123 Le Loi',
+  *                 city: 'Ho Chi Minh',
+  *                 ward: 'Ben Nghe',
+  *                 isDefault: true
+ *                 }]
+ *               avatar:
+ *                 type: string
+ *                 description: Cloudinary public ID obtained from upload image API
+ *                 example: 'uploads/a1b2c3d4e5f6g7h8'
+ *     responses:
+ *       201:
+ *         description: Register successfully
+ *       409:
+ *         description: Email already exists
+ */
+router.post('/register-no-captcha',
+  authRateLimiter,
+  sanitizeRequest(REGISTER_NO_CAPTCHA_FIELDS, REGISTER_NO_CAPTCHA_FIELDS),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.registerUserNoCaptcha }),
   AUTH_CONTROLLER.register
 )
 
