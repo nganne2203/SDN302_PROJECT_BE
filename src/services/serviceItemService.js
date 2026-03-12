@@ -71,6 +71,8 @@ const getServiceById = async (serviceId) => {
   const normalizedServiceId = typeof serviceId === 'string'
     ? serviceId.trim()
     : serviceId?.toString?.().trim()
+    console.log("serviceId nhận được:", serviceId)
+  console.log("normalizedServiceId:", normalizedServiceId)
 
   if (!normalizedServiceId) {
     throw new ApiError(ERROR_CODES.VALIDATION_ERROR, ['Service ID là bắt buộc'])
@@ -79,8 +81,10 @@ const getServiceById = async (serviceId) => {
   if (!mongoose.Types.ObjectId.isValid(normalizedServiceId)) {
     throw new ApiError(ERROR_CODES.VALIDATION_ERROR, ['Service ID không hợp lệ'])
   }
+  console.log("Query DB với id:", normalizedServiceId)
 
   const service = await SERVICE_REPOSITORY.findByIdService(normalizedServiceId)
+  console.log("Service tìm được:", service)
   if (!service) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy dịch vụ'])
   }
