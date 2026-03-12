@@ -27,6 +27,10 @@ export const REGISTER_NO_CAPTCHA_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
   AUTH_VALIDATION.registerUserNoCaptcha
 )
 
+export const REQUIRE_FIELD_REGISTER_NO_CAPTCHA = GENERATE_UTILS.extractRequiredFieldsFromJoi(
+  AUTH_VALIDATION.registerUserNoCaptcha
+)
+
 export const VERIFY_OTP_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
   AUTH_VALIDATION.verifyOtp
 )
