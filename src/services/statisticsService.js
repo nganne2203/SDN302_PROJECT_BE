@@ -143,7 +143,7 @@ const getDashboardOverview = async (branchId = null, period = 'this_month', cust
       confirmed: stats.confirmedOrders,
       shipped: stats.shippedOrders,
       delivered: stats.deliveredOrders,
-      canceled: stats.canceledOrders,
+      cancelled: stats.canceledOrders,
       activeTransactions: activeTransactions
     },
     revenue: {

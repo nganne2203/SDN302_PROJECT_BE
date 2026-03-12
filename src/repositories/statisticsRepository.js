@@ -56,7 +56,7 @@ const getOrderOverviewStats = async (matchStage) => {
           $sum: { $cond: [{ $eq: ['$orderStatus', ORDER_STATUS.DELIVERED] }, 1, 0] }
         },
         canceledOrders: {
-          $sum: { $cond: [{ $eq: ['$orderStatus', ORDER_STATUS.CANCELED] }, 1, 0] }
+          $sum: { $cond: [{ $eq: ['$orderStatus', ORDER_STATUS.CANCELLED] }, 1, 0] }
         },
         averageOrderValue: { $avg: '$totalAmount' }
       }
