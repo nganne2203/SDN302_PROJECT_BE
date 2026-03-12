@@ -8,11 +8,18 @@ import mongoose from 'mongoose'
 
 const calculateTotalPrice = (items) => {
   return items.reduce((total, item) => {
-    const serviceTotal = (item.services || []).reduce(
-      (sum, s) => sum + (Number(s.price) || 0),
-      0
-    )
-    return total + item.price * item.quantity + serviceTotal * item.quantity
+    const serviceFee =
+      typeof item.serviceFee === 'number'
+        ? Number(item.serviceFee)
+        : (item.services || []).reduce(
+          (sum, s) => sum + (Number(s.price) || 0),
+          0
+        )
+
+    const price = Number(item.price) || 0
+    const quantity = Number(item.quantity) || 0
+
+    return total + (price + serviceFee) * quantity
   }, 0)
 }
 
@@ -146,7 +153,7 @@ const getCart = async (userId) => {
       product: mappedProduct,
       services: mappedServices,
       serviceFee,
-      totalPrice: item.price * item.quantity + serviceFee * item.quantity
+      totalPrice: (Number(item.price) + serviceFee) * Number(item.quantity)
     }
   })
 
@@ -175,10 +182,19 @@ const addToCart = async (userId, data) => {
 
   const cart = await CART_REPOSITORY.getOrCreateCart(userId)
 
-  // 🔥 chỉ check productId (vì mỗi product chỉ có 1 service)
-  const index = cart.items.findIndex(
-    (item) => item.product.toString() === productId.toString()
-  )
+  const newServiceIds = validatedServices
+    .map((s) => s.service.toString())
+    .sort()
+
+  const index = cart.items.findIndex((item) => {
+    if (item.product.toString() !== productId.toString()) return false
+
+    const existingServiceIds = (item.services || [])
+      .map((s) => s.service.toString())
+      .sort()
+
+    return JSON.stringify(existingServiceIds) === JSON.stringify(newServiceIds)
+  })
 
   if (index > -1) {
     const newQuantity = cart.items[index].quantity + quantity
@@ -207,9 +223,7 @@ const addToCart = async (userId, data) => {
 
     item.serviceFee = serviceFee
 
-    item.totalPrice =
-      Number(item.price) * Number(item.quantity) +
-      serviceFee * Number(item.quantity)
+    item.totalPrice = (Number(item.price) + serviceFee) * Number(item.quantity)
   }
 
   cart.totalPrice = calculateTotalPrice(cart.items)
@@ -253,8 +267,8 @@ const updateCartItemQuantity = async (userId, data) => {
   cart.items[index].serviceFee = serviceFee
 
   cart.items[index].totalPrice =
-  Number(cart.items[index].price) * quantity +
-  serviceFee * quantity
+  (Number(cart.items[index].price) + serviceFee) *
+  Number(cart.items[index].quantity)
 
   cart.totalPrice = calculateTotalPrice(cart.items)
 
@@ -299,8 +313,8 @@ const updateCartItemServices = async (userId, data) => {
   cart.items[index].serviceFee = serviceFee
 
   cart.items[index].totalPrice =
-  Number(cart.items[index].price) * Number(cart.items[index].quantity) +
-  serviceFee * Number(cart.items[index].quantity)
+  (Number(cart.items[index].price) + serviceFee) *
+  Number(cart.items[index].quantity)
 
   cart.totalPrice = calculateTotalPrice(cart.items)
 
