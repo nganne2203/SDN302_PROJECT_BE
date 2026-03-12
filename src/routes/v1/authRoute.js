@@ -9,6 +9,7 @@ import {
   REGISTER_FIELDS,
   LOGIN_FIELDS,
   REQUIRE_FIELD_REGISTER,
+  REQUIRE_FIELD_REGISTER_NO_CAPTCHA,
   VERIFY_OTP_FIELDS,
   RESEND_OTP_FIELDS,
   REFRESH_TOKEN_FIELDS,
@@ -92,7 +93,6 @@ router.post('/register',
   AUTH_CONTROLLER.register
 )
 
-
 /**
  * @swagger
  * /api/v1/auth/register-no-captcha:
@@ -154,7 +154,7 @@ router.post('/register',
  */
 router.post('/register-no-captcha',
   authRateLimiter,
-  sanitizeRequest(REGISTER_NO_CAPTCHA_FIELDS, REGISTER_NO_CAPTCHA_FIELDS),
+  sanitizeRequest(REGISTER_NO_CAPTCHA_FIELDS, REQUIRE_FIELD_REGISTER_NO_CAPTCHA),
   validationHandlingMiddleware({ body: AUTH_VALIDATION.registerUserNoCaptcha }),
   AUTH_CONTROLLER.register
 )
