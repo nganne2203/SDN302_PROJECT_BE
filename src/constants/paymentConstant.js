@@ -3,7 +3,7 @@ export const PAYMENT_STATUS = {
   SUCCESS: 'success',
   FAILED: 'failed',
   REFUNDED: 'refunded',
-  CANCELED: 'canceled'
+  CANCELLED: 'cancelled'
 }
 
 export const PAYMENT_METHODS = {
