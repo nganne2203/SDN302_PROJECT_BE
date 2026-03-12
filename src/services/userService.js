@@ -209,15 +209,15 @@ const createUser = async (userData, createdBy = null) => {
   const creator = await getUserById(createdBy)
   const { role } = userData
 
+  if (creator.role === RoleEnum.MANAGER && role === RoleEnum.STAFF) {
+    userData.branch = creator.branch
+  }
+
   if (!canCreateUser(creator, role, userData.branch)) {
     throw new ApiError(
       ERROR_CODES.FORBIDDEN,
       ['Bạn không có quyền tạo người dùng với vai trò này']
     )
-  }
-
-  if (creator.role === RoleEnum.MANAGER && role === RoleEnum.STAFF) {
-    userData.branch = creator.branch
   }
 
   if ([RoleEnum.STAFF, RoleEnum.MANAGER].includes(role) && !userData.branch) {
@@ -238,7 +238,6 @@ const createUser = async (userData, createdBy = null) => {
   return await createUserInternal({
     ...userData,
     isEmailVerified: true,
-
     createdBy
   })
 }
@@ -362,7 +361,28 @@ const updateEmailVerificationStatus = async (id, isEmailVerified, updatedBy = nu
 }
 
 const updateUserStatus = async (id, isActive, updatedBy = null) => {
-  await getUserById(id)
+  const updater = await getUserById(updatedBy)
+  const user = await getUserById(id)
+
+  if (updater.role === RoleEnum.STAFF) {
+    throw new ApiError(ERROR_CODES.FORBIDDEN, [
+      'STAFF không có quyền cập nhật trạng thái người dùng'
+    ])
+  }
+
+  if (updater.role === RoleEnum.MANAGER) {
+    if (user.role !== RoleEnum.STAFF) {
+      throw new ApiError(ERROR_CODES.FORBIDDEN, [
+        'MANAGER chỉ có thể vô hiệu hóa STAFF'
+      ])
+    }
+
+    if (user.branch?.toString() !== updater.branch?.toString()) {
+      throw new ApiError(ERROR_CODES.FORBIDDEN, [
+        'Không thể cập nhật STAFF ngoài chi nhánh quản lý'
+      ])
+    }
+  }
 
   return await USER_REPOSITORY.updateStatusById(id, isActive, updatedBy)
 }

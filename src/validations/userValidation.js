@@ -37,13 +37,7 @@ export const USER_VALIDATION = {
       'string.pattern.base': 'Số điện thoại không hợp lệ',
       'string.length': 'Số điện thoại phải có 10 chữ số'
     }).trim(),
-    branch: joi.when('role', {
-      is: joi.string().valid('manager', 'staff'),
-      then: joi.string().required().messages({
-        'any.required': 'Chi nhánh là bắt buộc'
-      }),
-      otherwise: joi.string().allow('').optional()
-    }),
+    branch: joi.string().optional(),
     role: joi.string().valid(...ROLE_VALUES).required().messages({
       'any.only': 'Vai trò không hợp lệ',
       'any.required': 'Vai trò là bắt buộc'
@@ -95,13 +89,7 @@ export const USER_VALIDATION = {
       'string.pattern.base': 'Số điện thoại không hợp lệ',
       'string.length': 'Số điện thoại phải có 10 chữ số'
     }),
-    branch: joi.when('role', {
-      is: joi.string().valid('manager', 'staff'),
-      then: joi.string().required().messages({
-        'any.required': 'Chi nhánh là bắt buộc'
-      }),
-      otherwise: joi.string().allow('').optional()
-    }),
+    branch: joi.string().optional().allow(null, ''),
     role: joi.string().trim().valid(...ROLE_VALUES).optional().messages({
       'any.only': 'Vai trò không hợp lệ'
     }),
