@@ -13,6 +13,7 @@ import crypto from 'crypto'
 import { PRODUCT_SERVICE } from '#services/productService.js'
 import { SERVICE_ITEM_SERVICE } from '#services/serviceItemService.js'
 import { BRANCH_REPOSITORY } from '#repositories/branchRepository.js'
+import { INVENTORY_SERVICE } from '#services/inventoryService.js'
 
 /**
  * Map Cloudinary images for all products in an order's items.
@@ -133,7 +134,8 @@ const calculateShippingFee = async (shippingAddress, branchId) => {
 }
 
 /**
- * Find best branch with available stock for ALL items
+ * Find a branch that can fulfill ALL items in the order.
+ * Returns null when no single branch can satisfy the full order.
  */
 const findBranchWithStock = async (items) => {
   // Fetch inventories for every product up front
@@ -147,13 +149,13 @@ const findBranchWithStock = async (items) => {
 
   // Build a set of branch IDs that have enough stock for every product
   // Start from the first product's eligible branches and intersect with others
-  const eligibleBranchIds = inventoriesByProduct.reduce((eligible, { productName, requiredQty, invs }) => {
+  const eligibleBranchIds = inventoriesByProduct.reduce((eligible, { requiredQty, invs }) => {
     const branchesWithEnough = invs
       .filter(inv => inv.quantity >= requiredQty)
       .map(inv => inv.branch._id.toString())
 
     if (branchesWithEnough.length === 0) {
-      throw new ApiError(ERROR_CODES.BAD_REQUEST, [`Sản phẩm "${productName}" không đủ tồn kho tại bất kỳ chi nhánh nào`])
+      return new Set()
     }
 
     if (eligible === null) return new Set(branchesWithEnough)
@@ -161,13 +163,50 @@ const findBranchWithStock = async (items) => {
   }, null)
 
   if (!eligibleBranchIds || eligibleBranchIds.size === 0) {
-    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không có chi nhánh nào có đủ tồn kho cho tất cả sản phẩm trong đơn hàng'])
+    return null
   }
 
   // Return the first eligible branch's actual _id (ObjectId)
   const selectedBranchId = [...eligibleBranchIds][0]
   const firstInv = inventoriesByProduct[0].invs.find(inv => inv.branch._id.toString() === selectedBranchId)
   return firstInv?.branch._id || selectedBranchId
+}
+
+/**
+ * Check whether main inventory can fulfill all items.
+ */
+const canFulfillFromMainInventory = async (items) => {
+  for (const item of items) {
+    const productId = item.product._id || item.product
+
+    let mainInventory = null
+    try {
+      mainInventory = await INVENTORY_SERVICE.getInventoryByProductId(productId)
+    } catch (error) {
+      if (error?.code === ERROR_CODES.NOT_FOUND.code) {
+        return false
+      }
+      throw error
+    }
+
+    if (!mainInventory || mainInventory.quantity < item.quantity) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Decrease main inventory for all items.
+ */
+const decreaseMainInventoryForOrder = async (items) => {
+  await INVENTORY_SERVICE.decreaseInventoryOnOrderCreation(
+    items.map((item) => ({
+      product: item.product._id || item.product,
+      quantity: item.quantity
+    }))
+  )
 }
 
 /**
@@ -184,14 +223,20 @@ const decreaseInventoryForOrder = async (branchId, items) => {
  * Restore inventory when order is canceled
  */
 const restoreInventoryForOrder = async (order) => {
-  if (!order.branch) {
+  if (order.branch) {
+    for (const item of order.items) {
+      const productId = item.product._id || item.product
+      await STORE_INVENTORY_SERVICE.increaseStoreInventory(order.branch, productId, item.quantity)
+    }
     return
   }
 
-  for (const item of order.items) {
-    const productId = item.product._id || item.product
-    await STORE_INVENTORY_SERVICE.increaseStoreInventory(order.branch, productId, item.quantity)
-  }
+  await INVENTORY_SERVICE.restoreInventoryOnOrderCancellation(
+    order.items.map((item) => ({
+      product: item.product._id || item.product,
+      quantity: item.quantity
+    }))
+  )
 }
 
 /**
@@ -218,11 +263,21 @@ const createOrder = async (userId, orderData) => {
   // Calculate pricing discounts
   const pricingApplied = await calculatePricingDiscounts(populatedCart.items)
 
-  // Automatically find a branch with available stock (customers do not specify branch)
+  // Prefer branch fulfillment; fallback to main inventory when all branches cannot fulfill.
   const selectedBranch = await findBranchWithStock(populatedCart.items)
+  const useMainInventory = !selectedBranch
+
+  if (useMainInventory) {
+    const canUseMainInventory = await canFulfillFromMainInventory(populatedCart.items)
+    if (!canUseMainInventory) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không đủ số lượng trong hệ thống'])
+    }
+  }
 
   // Calculate totals (include shipping fee)
-  const shippingFee = await calculateShippingFee(shippingAddress, selectedBranch)
+  const shippingFee = selectedBranch
+    ? await calculateShippingFee(shippingAddress, selectedBranch)
+    : SHIPPING_FEE.INTER_PROVINCE
   const { subtotal, totalAmount } = calculateOrderTotals(populatedCart.items, pricingApplied, shippingFee)
 
   // Generate order number
@@ -253,14 +308,19 @@ const createOrder = async (userId, orderData) => {
       status: DELIVERY_STATUS.PENDING
     },
     message,
-    branch: selectedBranch,
+    branch: selectedBranch || null,
     createdBy: userId
   })
 
   // For COD, confirm order and decrease inventory immediately
   if (paymentMethod === PAYMENT_METHODS.COD) {
     await ORDER_REPOSITORY.updateOrderStatus(order._id, ORDER_STATUS.CONFIRMED, userId)
-    await decreaseInventoryForOrder(selectedBranch, populatedCart.items)
+
+    if (selectedBranch) {
+      await decreaseInventoryForOrder(selectedBranch, populatedCart.items)
+    } else {
+      await decreaseMainInventoryForOrder(populatedCart.items)
+    }
   }
 
   // Clear cart after successful order
