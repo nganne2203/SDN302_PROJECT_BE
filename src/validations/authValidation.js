@@ -129,6 +129,12 @@ export const AUTH_VALIDATION = {
       'any.required': 'Mật khẩu là bắt buộc'
     }).trim()
   }),
+  loginGoogleMobile: joi.object({
+    idToken: joi.string().required().messages({
+      'string.empty': 'Google idToken không được để trống',
+      'any.required': 'Google idToken là bắt buộc'
+    }).trim()
+  }),
   verifyOtp: joi.object({
     email: joi.string().email().required().pattern(EMAIL_REGEX).messages({
       'string.empty': 'Email không được để trống',
