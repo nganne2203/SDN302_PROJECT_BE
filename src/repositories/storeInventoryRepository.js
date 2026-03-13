@@ -169,7 +169,7 @@ const updateThresholds = async (branchId, productId, minThreshold, maxThreshold,
     { branch: branchId, product: productId, isDeleted: false },
     { $set: updateData },
     { new: true, runValidators: true, timestamps: true }
-  )
+  ).populate(['branch', 'product'])
 }
 
 const deleteStoreInventory = async (inventoryId, updatedBy = null) => {
