@@ -15,6 +15,7 @@ const getOrderById = async (orderId, options = {}) => {
       .populate('items.product', 'name price images slug category')
       .populate('items.services.service', 'name type price')
       .populate('branch', 'name address phone')
+      .populate('payment', 'status paidAt method provider amount currency')
       .populate('createdBy', 'fullname email')
       .populate('updatedBy', 'fullname email')
   }
@@ -32,6 +33,7 @@ const getOrderByOrderNumber = async (orderNumber, options = {}) => {
       .populate('items.product', 'name price images slug category')
       .populate('items.services.service', 'name type price')
       .populate('branch', 'name address phone')
+      .populate('payment', 'status paidAt method provider amount currency')
       .populate('createdBy', 'fullname email')
       .populate('updatedBy', 'fullname email')
   }
@@ -51,7 +53,8 @@ const getOrdersByUser = async (userId, filter = {}, options = {}) => {
       { path: 'user', select: 'fullname email phone' },
       { path: 'items.product', select: 'name price images slug category' },
       { path: 'items.services.service', select: 'name type price' },
-      { path: 'branch', select: 'name address phone' }
+      { path: 'branch', select: 'name address phone' },
+      { path: 'payment', select: 'status paidAt method provider amount currency' }
     ]
   })
 }
@@ -68,6 +71,7 @@ const getAllOrders = async (filter = {}, options = {}) => {
       { path: 'items.product', select: 'name price images slug category' },
       { path: 'items.services.service', select: 'name type price' },
       { path: 'branch', select: 'name address phone' },
+      { path: 'payment', select: 'status paidAt method provider amount currency' },
       { path: 'createdBy', select: 'fullname email' },
       { path: 'updatedBy', select: 'fullname email' }
     ]
@@ -84,6 +88,7 @@ const updateOrderById = async (orderId, updateData) => {
     .populate('items.product', 'name price images slug category')
     .populate('items.services.service', 'name type price')
     .populate('branch', 'name address phone')
+    .populate('payment', 'status paidAt method provider amount currency')
     .populate('createdBy', 'fullname email')
     .populate('updatedBy', 'fullname email')
 }
@@ -102,6 +107,9 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
   if (deliveryStatus) {
     updateFields['delivery.status'] = deliveryStatus
   }
+  if (status === ORDER_STATUS.DELIVERED) {
+    updateFields['delivery.deliveredAt'] = new Date()
+  }
   return await orderModel.findByIdAndUpdate(
     orderId,
     updateFields,
@@ -111,6 +119,7 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
     .populate('items.product', 'name price images slug category')
     .populate('items.services.service', 'name type price')
     .populate('branch', 'name address phone')
+    .populate('payment', 'status paidAt method provider amount currency')
 }
 
 const cancelOrder = async (orderId, cancelReason, updatedBy) => {
@@ -128,6 +137,7 @@ const cancelOrder = async (orderId, cancelReason, updatedBy) => {
     .populate('items.product', 'name price images slug category')
     .populate('items.services.service', 'name type price')
     .populate('branch', 'name address phone')
+    .populate('payment', 'status paidAt method provider amount currency')
 }
 
 /**

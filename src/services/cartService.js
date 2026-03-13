@@ -170,6 +170,15 @@ const getCart = async (userId) => {
   }
 }
 
+const createCart = async (userId) => {
+  return CART_REPOSITORY.createCart(userId)
+}
+
+const getOrCreateCart = async (userId) => {
+  const cart = await CART_REPOSITORY.getOrCreateCart(userId)
+  return CART_REPOSITORY.getCartByUserId(cart.user, { populate: true })
+}
+
 const addToCart = async (userId, data) => {
   const { productId, quantity, services = [] } = data
 
@@ -417,6 +426,8 @@ const validateCartBeforeCheckout = async (userId) => {
 
 export const CART_SERVICE = {
   getCart,
+  createCart,
+  getOrCreateCart,
   addToCart,
   updateCartItemQuantity,
   updateCartItemServices,
