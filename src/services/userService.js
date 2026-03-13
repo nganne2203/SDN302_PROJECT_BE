@@ -199,7 +199,8 @@ const createUserInternal = async ({
   const createdUser = await USER_REPOSITORY.createUser(newUser)
 
   if (role === RoleEnum.CUSTOMER) {
-    await CART_SERVICE.createCart(createdUser._id)
+    // Ensure customer always has a cart (idempotent)
+    await CART_SERVICE.getOrCreateCart(createdUser._id)
   }
 
   return await getUserById(createdUser._id)
