@@ -397,20 +397,15 @@ const processVNPayIPN = async (vnpParams) => {
 const getPaymentByOrderId = async (orderId) => {
   const payment = await PAYMENT_REPOSITORY.findByOrderId(orderId)
 
-  if (payment && payment.status === PAYMENT_STATUS.CANCELED_LEGACY) {
-    payment.status = PAYMENT_STATUS.CANCELED
-  }
-
   // Backfill consistency: refunded VNPay payments should imply cancelled order at system level.
   if (
     payment &&
     payment.status === PAYMENT_STATUS.REFUNDED &&
     payment.order &&
-    payment.order.orderStatus !== ORDER_STATUS.CANCELED &&
-    payment.order.orderStatus !== ORDER_STATUS.CANCELED_LEGACY
+    payment.order.orderStatus !== ORDER_STATUS.CANCELLED
   ) {
     await ORDER_REPOSITORY.updateOrderById(payment.order._id || payment.order, {
-      orderStatus: ORDER_STATUS.CANCELED,
+      orderStatus: ORDER_STATUS.CANCELLED,
       'delivery.status': DELIVERY_STATUS.CANCELLED,
       updatedAt: new Date()
     })
@@ -450,11 +445,10 @@ const getPaymentByOrderNumber = async (orderNumber) => {
     payment &&
     payment.status === PAYMENT_STATUS.REFUNDED &&
     payment.order &&
-    payment.order.orderStatus !== ORDER_STATUS.CANCELED &&
-    payment.order.orderStatus !== ORDER_STATUS.CANCELED_LEGACY
+    payment.order.orderStatus !== ORDER_STATUS.CANCELLED
   ) {
     await ORDER_REPOSITORY.updateOrderById(payment.order._id || payment.order, {
-      orderStatus: ORDER_STATUS.CANCELED,
+      orderStatus: ORDER_STATUS.CANCELLED,
       'delivery.status': DELIVERY_STATUS.CANCELLED,
       updatedAt: new Date()
     })
@@ -486,9 +480,6 @@ const getUserPayments = async (userId, query = {}) => {
 
   const result = await PAYMENT_REPOSITORY.findByUserWithPagination(userId, { page, limit, status })
   const normalizedPayments = (result.payments || []).map((p) => {
-    if (p?.status === PAYMENT_STATUS.CANCELED_LEGACY) {
-      return { ...(p.toObject ? p.toObject() : p), status: PAYMENT_STATUS.CANCELED }
-    }
     return p
   })
 
@@ -552,8 +543,8 @@ const cancelPayment = async (orderId, userId) => {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể hủy thanh toán đã xử lý'])
   }
 
-  payment.status = PAYMENT_STATUS.CANCELED
-  payment.failureReason = payment.failureReason || 'Customer canceled payment'
+  payment.status = PAYMENT_STATUS.CANCELLED
+  payment.failureReason = payment.failureReason || 'Customer cancelled payment'
   await PAYMENT_REPOSITORY.savePayment(payment)
   return payment
 

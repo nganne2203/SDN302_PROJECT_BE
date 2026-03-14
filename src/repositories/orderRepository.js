@@ -1,5 +1,5 @@
 import { orderModel } from '#models/orderModel.js'
-import { ORDER_STATUS } from '#constants/orderConstant.js'
+import { DELIVERY_STATUS, ORDER_STATUS } from '#constants/orderConstant.js'
 
 const createOrder = async (orderData, options = {}) => {
   const { session } = options
@@ -103,8 +103,7 @@ const ORDER_STATUS_TO_DELIVERY_STATUS = {
   confirmed: 'pending',
   shipped: 'shipping',
   delivered: 'delivered',
-  canceled: 'cancelled',
-  cancelled: 'cancelled'
+  cancelled: DELIVERY_STATUS.CANCELLED
 }
 
 const updateOrderStatus = async (orderId, status, updatedBy) => {
@@ -123,7 +122,7 @@ const updateOrderStatusIfNotCancelled = async (orderId, status, updatedBy, optio
   }
 
   return await orderModel.findOneAndUpdate(
-    { _id: orderId, orderStatus: { $nin: [ORDER_STATUS.CANCELED, ORDER_STATUS.CANCELED_LEGACY] } },
+    { _id: orderId, orderStatus: { $ne: ORDER_STATUS.CANCELLED } },
     updateFields,
     { new: true, runValidators: true, session }
   )
@@ -155,14 +154,14 @@ const updateOrderStatusWithOptions = async (orderId, status, updatedBy, options 
 const cancelOrder = async (orderId, cancelReason, updatedBy, options = {}) => {
   const { session = null } = options
   return await orderModel.findOneAndUpdate(
-    { _id: orderId, orderStatus: { $nin: [ORDER_STATUS.CANCELED, ORDER_STATUS.CANCELED_LEGACY] } },
+    { _id: orderId, orderStatus: { $ne: ORDER_STATUS.CANCELLED } },
     {
       $set: {
-        orderStatus: ORDER_STATUS.CANCELED,
+        orderStatus: ORDER_STATUS.CANCELLED,
         cancelReason,
         updatedBy,
         updatedAt: new Date(),
-        'delivery.status': 'cancelled'
+        'delivery.status': DELIVERY_STATUS.CANCELLED
       }
     },
     { new: true, runValidators: true, session }
