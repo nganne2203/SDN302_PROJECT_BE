@@ -353,7 +353,7 @@ describe('Order API Integration Tests', () => {
 
       expect(response.status).toBe(200)
       expect(response.body.success).toBe(true)
-      expect(response.body.data.orderStatus).toBe('canceled')
+      expect(response.body.data.orderStatus).toBe('cancelled')
       expect(response.body.data.cancelReason).toBe('Changed my mind about this purchase')
     })
 

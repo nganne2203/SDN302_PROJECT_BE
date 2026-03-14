@@ -220,6 +220,7 @@ const createVNPayPayment = async (userId, paymentData, ipAddress) => {
 
   payment.paymentUrl = paymentUrl
   await PAYMENT_REPOSITORY.savePayment(payment)
+  return payment
 
   return {
     paymentUrl,
@@ -383,6 +384,10 @@ const processVNPayIPN = async (vnpParams) => {
 const getPaymentByOrderId = async (orderId) => {
   const payment = await PAYMENT_REPOSITORY.findByOrderId(orderId)
 
+  if (payment && payment.status === PAYMENT_STATUS.CANCELED_LEGACY) {
+    payment.status = PAYMENT_STATUS.CANCELED
+  }
+
   // Backfill for COD: if order is already delivered, mark payment as paid.
   // This covers orders delivered before COD auto-mark logic existed.
   if (
@@ -433,9 +438,15 @@ const getUserPayments = async (userId, query = {}) => {
   const { page = 1, limit = 10, status } = query
 
   const result = await PAYMENT_REPOSITORY.findByUserWithPagination(userId, { page, limit, status })
+  const normalizedPayments = (result.payments || []).map((p) => {
+    if (p?.status === PAYMENT_STATUS.CANCELED_LEGACY) {
+      return { ...(p.toObject ? p.toObject() : p), status: PAYMENT_STATUS.CANCELED }
+    }
+    return p
+  })
 
   return {
-    data: result.payments,
+    data: normalizedPayments,
     pagination: {
       page,
       limit,
@@ -495,7 +506,9 @@ const cancelPayment = async (orderId, userId) => {
   }
 
   payment.status = PAYMENT_STATUS.CANCELED
+  payment.failureReason = payment.failureReason || 'Customer canceled payment'
   await PAYMENT_REPOSITORY.savePayment(payment)
+  return payment
 
   // Cancel the order
   await ORDER_REPOSITORY.cancelOrder(orderId, 'Khách hàng hủy thanh toán', userId)
