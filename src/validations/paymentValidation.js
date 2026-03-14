@@ -41,7 +41,7 @@ export const PAYMENT_VALIDATION = {
   getMyPayments: joi.object({
     page: joi.number().integer().min(1).optional().default(1),
     limit: joi.number().integer().min(1).max(100).optional().default(10),
-    status: joi.string().valid('pending', 'success', 'failed', 'refunded', 'canceled').optional()
+    status: joi.string().valid('pending', 'success', 'failed', 'refunded', 'cancelled').optional()
   }),
 
   orderIdParam: joi.object({

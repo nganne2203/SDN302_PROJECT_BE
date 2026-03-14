@@ -143,8 +143,8 @@ const decreaseStoreInventoryOnSale = async (branchId, productId, quantity) => {
 /**
  * Tăng tồn kho tại chi nhánh
  */
-const increaseStoreInventory = async (branchId, productId, quantity) => {
-  return STORE_INVENTORY_REPOSITORY.increaseQuantity(branchId, productId, quantity)
+const increaseStoreInventory = async (branchId, productId, quantity, options = {}) => {
+  return STORE_INVENTORY_REPOSITORY.increaseQuantity(branchId, productId, quantity, options)
 }
 
 const getStoreInventoriesByProduct = async (productId) => {

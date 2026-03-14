@@ -1,15 +1,22 @@
 import { paymentModel } from '#models/paymentModel.js'
 
-const createPayment = async (paymentData) => {
-  return await paymentModel.create(paymentData)
+const createPayment = async (paymentData, options = {}) => {
+  const { session = null } = options
+  const payment = new paymentModel(paymentData)
+  return await payment.save({ session })
 }
 
-const findByVnpTxnRef = async (vnpTxnRef) => {
-  return await paymentModel.findOne({ vnp_TxnRef: vnpTxnRef })
+const findByVnpTxnRef = async (vnpTxnRef, options = {}) => {
+  const { session = null } = options
+  let query = paymentModel.findOne({ vnp_TxnRef: vnpTxnRef })
+  if (session) query = query.session(session)
+  return await query
 }
 
-const findByOrderId = async (orderId, populate = true) => {
+const findByOrderId = async (orderId, populate = true, options = {}) => {
+  const { session = null } = options
   let query = paymentModel.findOne({ order: orderId })
+  if (session) query = query.session(session)
 
   if (populate) {
     query = query
@@ -20,12 +27,17 @@ const findByOrderId = async (orderId, populate = true) => {
   return await query
 }
 
-const findByOrderIdAndUserId = async (orderId, userId) => {
-  return await paymentModel.findOne({ order: orderId, user: userId })
+const findByOrderIdAndUserId = async (orderId, userId, options = {}) => {
+  const { session = null } = options
+  let query = paymentModel.findOne({ order: orderId, user: userId })
+  if (session) query = query.session(session)
+  return await query
 }
 
-const findByTransactionId = async (transactionId, populate = true) => {
+const findByTransactionId = async (transactionId, populate = true, options = {}) => {
+  const { session = null } = options
   let query = paymentModel.findOne({ transactionId })
+  if (session) query = query.session(session)
 
   if (populate) {
     query = query
@@ -59,8 +71,32 @@ const updateById = async (paymentId, updateData) => {
   return await paymentModel.findByIdAndUpdate(paymentId, updateData, { new: true })
 }
 
-const savePayment = async (payment) => {
-  return await payment.save()
+const updateByIdWithOptions = async (paymentId, updateData, options = {}) => {
+  const { session = null } = options
+  return await paymentModel.findByIdAndUpdate(paymentId, updateData, { new: true, session })
+}
+
+const savePayment = async (payment, options = {}) => {
+  const { session = null } = options
+  return await payment.save({ session })
+}
+
+const updateByOrderId = async (orderId, updateData, options = {}) => {
+  const { session = null } = options
+  return await paymentModel.findOneAndUpdate(
+    { order: orderId },
+    { $set: updateData },
+    { new: true, session }
+  )
+}
+
+const updateByOrderIdAndStatus = async (orderId, status, updateData, options = {}) => {
+  const { session = null } = options
+  return await paymentModel.findOneAndUpdate(
+    { order: orderId, status },
+    { $set: updateData },
+    { new: true, session }
+  )
 }
 
 /**
@@ -69,7 +105,7 @@ const savePayment = async (payment) => {
 const cancelPendingPaymentsByOrderIds = async (orderIds, cancelReason = 'Hết thời gian thanh toán VNPay') => {
   return await paymentModel.updateMany(
     { order: { $in: orderIds }, status: 'pending' },
-    { $set: { status: 'canceled', failureReason: cancelReason } }
+    { $set: { status: 'cancelled', failureReason: cancelReason } }
   )
 }
 
@@ -81,6 +117,9 @@ export const PAYMENT_REPOSITORY = {
   findByTransactionId,
   findByUserWithPagination: findByUserId,
   updateById,
+  updateByIdWithOptions,
   savePayment,
+  updateByOrderId,
+  updateByOrderIdAndStatus,
   cancelPendingPaymentsByOrderIds
 }
