@@ -111,6 +111,29 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
   return await updateOrderStatusWithOptions(orderId, status, updatedBy)
 }
 
+const updateOrderStatusIfNotCancelled = async (orderId, status, updatedBy, options = {}) => {
+  const { session = null } = options
+  const deliveryStatus = ORDER_STATUS_TO_DELIVERY_STATUS[status]
+  const updateFields = { orderStatus: status, updatedBy, updatedAt: new Date() }
+  if (deliveryStatus) {
+    updateFields['delivery.status'] = deliveryStatus
+  }
+  if (status === ORDER_STATUS.DELIVERED) {
+    updateFields['delivery.deliveredAt'] = new Date()
+  }
+
+  return await orderModel.findOneAndUpdate(
+    { _id: orderId, orderStatus: { $nin: [ORDER_STATUS.CANCELED, ORDER_STATUS.CANCELED_LEGACY] } },
+    updateFields,
+    { new: true, runValidators: true, session }
+  )
+    .populate('user', 'fullname email phone')
+    .populate('items.product', 'name price images slug category')
+    .populate('items.services.service', 'name type price')
+    .populate('branch', 'name address phone')
+    .populate('payment', 'status paidAt method provider amount currency')
+}
+
 const updateOrderStatusWithOptions = async (orderId, status, updatedBy, options = {}) => {
   const { session = null } = options
   const deliveryStatus = ORDER_STATUS_TO_DELIVERY_STATUS[status]
@@ -183,6 +206,7 @@ export const ORDER_REPOSITORY = {
   getAllOrders,
   updateOrderById,
   updateOrderStatus,
+  updateOrderStatusIfNotCancelled,
   updateOrderStatusWithOptions,
   cancelOrder,
   countOrdersByStatus,

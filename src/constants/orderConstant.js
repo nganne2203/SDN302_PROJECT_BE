@@ -8,6 +8,7 @@ export const ORDER_STATUS = {
   SHIPPING: 'shipped',
   DELIVERED: 'delivered',
   CANCELLED: 'cancelled',
+  CANCELED: 'cancelled',
   CANCELED_LEGACY: 'canceled'
 }
 

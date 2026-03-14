@@ -478,6 +478,35 @@ const getOrderByOrderNumber = async (orderNumber, userId, userRole) => {
     throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền xem đơn hàng này'])
   }
 
+  // Self-heal inconsistent state: refunded payment implies cancelled order at system level.
+  if (
+    order.paymentMethod === PAYMENT_METHODS.VNPAY &&
+    order.payment?.status === PAYMENT_STATUS.REFUNDED &&
+    !isOrderCancelled(order.orderStatus)
+  ) {
+    await ORDER_REPOSITORY.updateOrderById(orderId, {
+      orderStatus: ORDER_STATUS.CANCELED,
+      'delivery.status': DELIVERY_STATUS.CANCELLED,
+      updatedAt: new Date()
+    })
+    const updatedOrder = await ORDER_REPOSITORY.getOrderById(orderId)
+    return mapOrderProductImages(updatedOrder)
+  }
+
+  if (
+    order.paymentMethod === PAYMENT_METHODS.VNPAY &&
+    order.payment?.status === PAYMENT_STATUS.REFUNDED &&
+    !isOrderCancelled(order.orderStatus)
+  ) {
+    await ORDER_REPOSITORY.updateOrderById(order._id, {
+      orderStatus: ORDER_STATUS.CANCELED,
+      'delivery.status': DELIVERY_STATUS.CANCELLED,
+      updatedAt: new Date()
+    })
+    const updatedOrder = await ORDER_REPOSITORY.getOrderByOrderNumber(orderNumber)
+    return mapOrderProductImages(updatedOrder)
+  }
+
   return mapOrderProductImages(order)
 }
 
