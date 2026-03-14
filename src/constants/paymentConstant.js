@@ -4,6 +4,7 @@ export const PAYMENT_STATUS = {
   FAILED: 'failed',
   REFUNDED: 'refunded',
   CANCELLED: 'cancelled',
+  CANCELED: 'cancelled',
   CANCELED_LEGACY: 'canceled'
 }
 
