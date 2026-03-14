@@ -6,7 +6,7 @@ import { EMAIL_SERVICE } from '#services/emailService.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { ORDER_STATUS, DELIVERY_STATUS, SHIPPING_FEE } from '#constants/orderConstant.js'
-import { PAYMENT_METHODS, PAYMENT_STATUS } from '#constants/paymentConstant.js'
+import { PAYMENT_METHODS, PAYMENT_STATUS, PAYMENT_PROVIDERS } from '#constants/paymentConstant.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
 import { pricingModel } from '#models/pricingModel.js'
 import crypto from 'crypto'
@@ -39,6 +39,46 @@ const generateOrderNumber = () => {
   const timestamp = Date.now().toString(36).toUpperCase()
   const random = crypto.randomBytes(3).toString('hex').toUpperCase()
   return `ORD-${timestamp}-${random}`
+}
+
+const generateTransactionId = (prefix = 'TXN') => {
+  const timestamp = Date.now().toString(36).toUpperCase()
+  const random = crypto.randomBytes(4).toString('hex').toUpperCase()
+  return `${prefix}-${timestamp}-${random}`
+}
+
+const ensureCodPaymentExists = async (order, { status = PAYMENT_STATUS.PENDING, paidAt = null } = {}) => {
+  if (!order) return null
+  if (order.paymentMethod !== PAYMENT_METHODS.COD) return null
+
+  const orderUserId = order?.user?._id || order.user
+
+  let payment = await PAYMENT_REPOSITORY.findByOrderId(order._id, false)
+  if (!payment) {
+    payment = await PAYMENT_REPOSITORY.createPayment({
+      order: order._id,
+      user: orderUserId,
+      method: PAYMENT_METHODS.COD,
+      provider: PAYMENT_PROVIDERS.COD,
+      amount: order.totalAmount,
+      currency: 'VND',
+      status,
+      transactionId: generateTransactionId('COD'),
+      paidAt: status === PAYMENT_STATUS.SUCCESS ? (paidAt || new Date()) : null
+    })
+
+    return payment
+  }
+
+  // If payment exists, optionally update it to the desired state
+  if (status === PAYMENT_STATUS.SUCCESS && payment.status !== PAYMENT_STATUS.SUCCESS) {
+    payment.status = PAYMENT_STATUS.SUCCESS
+    payment.paidAt = paidAt || new Date()
+    payment.failureReason = ''
+    await PAYMENT_REPOSITORY.savePayment(payment)
+  }
+
+  return payment
 }
 
 /**
@@ -312,6 +352,9 @@ const createOrder = async (userId, orderData) => {
     createdBy: userId
   })
 
+  // Create COD payment record (so /api/payments/order/:orderId works for COD)
+  await ensureCodPaymentExists(order, { status: PAYMENT_STATUS.PENDING })
+
   // For COD, confirm order and decrease inventory immediately
   if (paymentMethod === PAYMENT_METHODS.COD) {
     await ORDER_REPOSITORY.updateOrderStatus(order._id, ORDER_STATUS.CONFIRMED, userId)
@@ -453,6 +496,11 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
 
   const updatedOrder = await ORDER_REPOSITORY.updateOrderStatus(orderId, status, updatedBy)
 
+  // COD: mark as paid when delivered successfully
+  if (status === ORDER_STATUS.DELIVERED && updatedOrder.paymentMethod === PAYMENT_METHODS.COD) {
+    await ensureCodPaymentExists(updatedOrder, { status: PAYMENT_STATUS.SUCCESS, paidAt: new Date() })
+  }
+
   // Send email notification (don't fail if email fails)
   try {
     await EMAIL_SERVICE.sendOrderStatusUpdate(
@@ -527,6 +575,16 @@ const cancelOrder = async (orderId, cancelReason, userId, userRole) => {
 
   const canceledOrder = await ORDER_REPOSITORY.cancelOrder(orderId, cancelReason, userId)
 
+  // Cancel payment record for COD (best-effort)
+  if (order.paymentMethod === PAYMENT_METHODS.COD) {
+    const payment = await PAYMENT_REPOSITORY.findByOrderId(orderId, false)
+    if (payment && payment.status === PAYMENT_STATUS.PENDING) {
+      payment.status = PAYMENT_STATUS.CANCELED
+      payment.failureReason = cancelReason || 'Đơn hàng bị hủy'
+      await PAYMENT_REPOSITORY.savePayment(payment)
+    }
+  }
+
   // Restore inventory if order was confirmed
   if (order.orderStatus !== ORDER_STATUS.PENDING) {
     await restoreInventoryForOrder(order)
@@ -569,7 +627,23 @@ const updateDeliveryInfo = async (orderId, deliveryData, updatedBy) => {
     updatedBy
   }
 
+  // If delivery is marked delivered, also mark order delivered (without email side-effects)
+  if (deliveryData?.status === DELIVERY_STATUS.DELIVERED) {
+    updateData.orderStatus = ORDER_STATUS.DELIVERED
+    if (!deliveryData?.deliveredAt) {
+      updateData['delivery.deliveredAt'] = new Date()
+    }
+  }
+
   const updatedOrder = await ORDER_REPOSITORY.updateOrderById(orderId, updateData)
+
+  // COD: mark as paid when delivery is successful (works even if staff only updates delivery.status)
+  if (
+    updatedOrder.paymentMethod === PAYMENT_METHODS.COD &&
+    (deliveryData?.status === DELIVERY_STATUS.DELIVERED || !!deliveryData?.deliveredAt)
+  ) {
+    await ensureCodPaymentExists(updatedOrder, { status: PAYMENT_STATUS.SUCCESS, paidAt: deliveryData?.deliveredAt || new Date() })
+  }
 
   return updatedOrder
 }
@@ -702,6 +776,14 @@ const createOfflineOrder = async (staffId, orderData) => {
     branch: branchId,
     createdBy: staffId
   })
+
+  // Create payment record for offline COD orders (paid immediately if no delivery)
+  if (paymentMethod === PAYMENT_METHODS.COD) {
+    await ensureCodPaymentExists(order, {
+      status: hasDelivery ? PAYMENT_STATUS.PENDING : PAYMENT_STATUS.SUCCESS,
+      paidAt: hasDelivery ? null : new Date()
+    })
+  }
 
   // Decrease inventory immediately for offline orders
   await decreaseInventoryForOrder(branchId, populatedItems)

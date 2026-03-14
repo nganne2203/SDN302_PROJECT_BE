@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 import { ORDER_SERVICE } from '#services/orderService.js'
 import { orderModel } from '#models/orderModel.js'
+import { paymentModel } from '#models/paymentModel.js'
 import {
   createTestUser,
   createTestProduct,
@@ -71,6 +72,12 @@ describe('Order Service Tests', () => {
       expect(order.paymentMethod).toBe('cod')
       expect(order.totalAmount).toBeGreaterThan(0)
       expect(order.items).toHaveLength(1)
+
+      const payment = await paymentModel.findOne({ order: order._id }).lean()
+      expect(payment).toBeDefined()
+      expect(payment.method).toBe('cod')
+      expect(payment.provider).toBe('cod')
+      expect(payment.status).toBe('pending')
     })
 
     it('should fail when cart is empty', async () => {
@@ -322,6 +329,30 @@ describe('Order Service Tests', () => {
       )
 
       expect(updatedOrder.orderStatus).toBe('shipped')
+    })
+
+    it('should mark COD payment as success when order is delivered', async () => {
+      const orderData = {
+        shippingAddress: {
+          fullname: 'Test User',
+          phone: '0912345678',
+          addressLine: '123 Test St',
+          city: 'HCM',
+          district: 'District 1',
+          ward: 'Ward 1'
+        },
+        paymentMethod: 'cod'
+      }
+
+      const createdOrder = await ORDER_SERVICE.createOrder(testUser._id, orderData)
+      const admin = await createAdminUser()
+
+      await ORDER_SERVICE.updateOrderStatus(createdOrder._id, 'delivered', admin._id)
+
+      const payment = await paymentModel.findOne({ order: createdOrder._id }).lean()
+      expect(payment).toBeDefined()
+      expect(payment.status).toBe('success')
+      expect(payment.paidAt).toBeTruthy()
     })
 
     it('should not update canceled order', async () => {

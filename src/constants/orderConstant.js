@@ -6,13 +6,21 @@ export const ORDER_STATUS = {
   CONFIRMED: 'confirmed',
   SHIPPED: 'shipped',
   DELIVERED: 'delivered',
-  CANCELLED: 'cancelled'
+  // Use "canceled" (one L) for orderStatus to match validation/tests.
+  // Keep both keys for backward compatibility with existing code.
+  CANCELED: 'canceled',
+  CANCELLED: 'canceled',
+  // Legacy value support (older data may have "cancelled")
+  CANCELLED_LEGACY: 'cancelled'
 }
 
 export const DELIVERY_STATUS = {
   PENDING: 'pending',
   SHIPPING: 'shipping',
   DELIVERED: 'delivered',
+  // Delivery status uses "cancelled" (two L) to match validation.
+  // Keep both keys for backward compatibility with existing code.
+  CANCELED: 'cancelled',
   CANCELLED: 'cancelled',
   FAILED: 'failed'
 }

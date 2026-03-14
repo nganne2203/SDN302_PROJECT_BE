@@ -382,6 +382,24 @@ const processVNPayIPN = async (vnpParams) => {
  */
 const getPaymentByOrderId = async (orderId) => {
   const payment = await PAYMENT_REPOSITORY.findByOrderId(orderId)
+
+  // Backfill for COD: if order is already delivered, mark payment as paid.
+  // This covers orders delivered before COD auto-mark logic existed.
+  if (
+    payment &&
+    payment.method === PAYMENT_METHODS.COD &&
+    payment.status === PAYMENT_STATUS.PENDING &&
+    payment.order?.orderStatus === ORDER_STATUS.DELIVERED
+  ) {
+    payment.status = PAYMENT_STATUS.SUCCESS
+    payment.paidAt = payment.paidAt || new Date()
+    payment.failureReason = ''
+    await PAYMENT_REPOSITORY.savePayment(payment)
+
+    // Re-fetch with populate to return consistent data
+    return await PAYMENT_REPOSITORY.findByOrderId(orderId)
+  }
+
   return payment
 }
 
