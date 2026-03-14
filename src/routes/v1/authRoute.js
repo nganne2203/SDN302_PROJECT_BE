@@ -14,7 +14,8 @@ import {
   RESEND_OTP_FIELDS,
   REFRESH_TOKEN_FIELDS,
   LOGIN_NO_CAPTCHA_FIELDS,
-  REGISTER_NO_CAPTCHA_FIELDS
+  REGISTER_NO_CAPTCHA_FIELDS,
+  LOGIN_GOOGLE_MOBILE_FIELDS
 } from '#constants/userConstant.js'
 import { verifyRecaptchaMiddleware } from '#middlewares/verifyCaptchaMiddleware.js'
 import { authorizationMiddleware } from '#middlewares/authHandlingMiddleware.js'
@@ -281,6 +282,36 @@ router.get('/google/callback',
  *         description: Redirect to frontend with error
  */
 router.get('/google/error', AUTH_CONTROLLER.googleError)
+
+/**
+ * @swagger
+ * /api/v1/auth/google/mobile:
+ *   post:
+ *     summary: Login/Register with Google for mobile clients
+ *     description: Accepts Google ID token from mobile app, verifies token and returns app access/refresh tokens.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - idToken
+ *             properties:
+ *               idToken:
+ *                 type: string
+ *                 description: Google ID token from mobile SDK
+ *     responses:
+ *       200:
+ *         description: Google mobile login success
+ */
+router.post('/google/mobile',
+  authRateLimiter,
+  sanitizeRequest(LOGIN_GOOGLE_MOBILE_FIELDS, LOGIN_GOOGLE_MOBILE_FIELDS),
+  validationHandlingMiddleware({ body: AUTH_VALIDATION.loginGoogleMobile }),
+  AUTH_CONTROLLER.loginGoogleMobile
+)
 
 /**
  * @swagger

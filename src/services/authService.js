@@ -369,6 +369,10 @@ const logoutAll = async (userId) => {
   }
 }
 
+const loginGoogleMobile = async (googleUserData, requestInfo = {}) => {
+  return await googleAuth(googleUserData, requestInfo)
+}
+
 export const AUTH_SERVICE = {
   registerUser,
   loginUser,
@@ -379,5 +383,6 @@ export const AUTH_SERVICE = {
   resendVerificationCode,
   refreshToken,
   logout,
-  logoutAll
+  logoutAll,
+  loginGoogleMobile
 }
