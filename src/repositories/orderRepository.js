@@ -198,6 +198,19 @@ const countOrdersByStatus = async (userId = null) => {
   ])
 }
 
+const hasDeliveredOrderWithProduct = async (userId, productId) => {
+  const query = {
+    user: userId,
+    'items.product': productId,
+    $or: [
+      { orderStatus: ORDER_STATUS.DELIVERED },
+      { 'delivery.status': 'delivered' }
+    ]
+  }
+
+  return await orderModel.exists(query)
+}
+
 export const ORDER_REPOSITORY = {
   createOrder,
   getOrderById,
@@ -210,5 +223,6 @@ export const ORDER_REPOSITORY = {
   updateOrderStatusWithOptions,
   cancelOrder,
   countOrdersByStatus,
-  findExpiredPendingVNPayOrders
+  findExpiredPendingVNPayOrders,
+  hasDeliveredOrderWithProduct
 }

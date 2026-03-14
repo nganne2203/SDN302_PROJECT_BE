@@ -5,20 +5,11 @@ import { UPLOAD_SERVICE } from '#services/uploadService.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
-import { ORDER_STATUS } from '#constants/orderConstant.js'
 import { uploadToCloudinary } from '#middlewares/uploadHandlingMiddleware.js'
 
 const checkUserPurchasedProduct = async (userId, productId) => {
-  // Find orders where:
-  // 1. User matches
-  // 2. Order status is DELIVERED
-  // 3. Order contains the product
-  const orders = await ORDER_REPOSITORY.getOrdersByUser(userId, {
-    orderStatus: ORDER_STATUS.DELIVERED,
-    'items.product': productId
-  })
-
-  return orders.docs && orders.docs.length > 0
+  const hasDeliveredOrder = await ORDER_REPOSITORY.hasDeliveredOrderWithProduct(userId, productId)
+  return !!hasDeliveredOrder
 }
 
 const assertUserPurchasedProduct = async (userId, productId) => {
@@ -245,12 +236,13 @@ const checkUserCanReview = async (userId, productId) => {
 
   // Check if user already reviewed
   const existingReview = await REVIEW_REPOSITORY.checkExistingReview(userId, productId)
+  const mappedExistingReview = existingReview ? mapReviewWithImages(existingReview) : null
 
   return {
     canReview: hasPurchased && !existingReview,
     hasPurchased,
     hasReviewed: !!existingReview,
-    existingReview: existingReview || null
+    existingReview: mappedExistingReview
   }
 }
 
