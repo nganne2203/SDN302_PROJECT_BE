@@ -122,7 +122,7 @@ const cancelOrder = async (req, res, next) => {
     const userRole = req.user.role
     const { orderId } = req.params
     const { cancelReason } = req.body
-    const order = await ORDER_SERVICE.cancelOrder(orderId, cancelReason, userId, userRole)
+    const order = await ORDER_SERVICE.cancelOrder(orderId, req.user, cancelReason)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: order,
