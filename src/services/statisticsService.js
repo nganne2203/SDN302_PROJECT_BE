@@ -124,7 +124,7 @@ const getDashboardOverview = async (branchId = null, period = 'this_month', cust
   const totalConfirmed = stats.confirmedOrders + stats.shippedOrders + stats.deliveredOrders
   const completionRate = stats.totalOrders > 0 ? Math.round((totalConfirmed / stats.totalOrders) * 100) : 0
 
-  // Count active transactions (non-pending, non-canceled)
+  // Count active transactions (non-pending, non-cancelled)
   const activeTransactions = totalConfirmed
 
   return {
@@ -321,7 +321,7 @@ const getBranchStatistics = async (period = 'this_month', customStart = null, cu
       orders: {
         total: stats.totalOrders,
         delivered: stats.deliveredOrders,
-        canceled: stats.canceledOrders
+        cancelled: stats.canceledOrders
       },
       revenue: Math.round(stats.totalRevenue),
       inventory: {

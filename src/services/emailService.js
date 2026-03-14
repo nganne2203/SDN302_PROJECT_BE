@@ -377,7 +377,7 @@ const sendOrderStatusUpdate = async (to, fullName, order) => {
     confirmed: 'Đã xác nhận',
     shipped: 'Đang vận chuyển',
     delivered: 'Đã giao hàng',
-    canceled: 'Đã hủy'
+    cancelled: 'Đã hủy'
   }
 
   const statusColors = {
@@ -385,10 +385,10 @@ const sendOrderStatusUpdate = async (to, fullName, order) => {
     confirmed: '#28a745',
     shipped: '#17a2b8',
     delivered: '#28a745',
-    canceled: '#dc3545'
+    cancelled: '#dc3545'
   }
 
-  const normalizedOrderStatus = order?.orderStatus === 'cancelled' ? 'canceled' : order?.orderStatus
+  const normalizedOrderStatus = order?.orderStatus
 
   const htmlContent = `
     <!DOCTYPE html>

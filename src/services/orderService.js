@@ -34,14 +34,13 @@ const mapOrderProductImages = (order) => {
   // Expose paymentStatus explicitly for frontend convenience.
   // Source of truth remains payment.status (orderStatus and paymentStatus are separate).
   const rawPaymentStatus = orderObj?.payment?.status || PAYMENT_STATUS.PENDING
-  const paymentStatus = rawPaymentStatus === PAYMENT_STATUS.CANCELED_LEGACY ? PAYMENT_STATUS.CANCELED : rawPaymentStatus
-  const orderStatus = orderObj?.orderStatus === ORDER_STATUS.CANCELED_LEGACY ? ORDER_STATUS.CANCELED : orderObj?.orderStatus
-  const rawDeliveryStatus = orderObj?.delivery?.status
-  const deliveryStatus = rawDeliveryStatus === 'canceled' ? 'cancelled' : rawDeliveryStatus
+  const paymentStatus = rawPaymentStatus
+  const orderStatus = orderObj?.orderStatus
+  const deliveryStatus = orderObj?.delivery?.status
 
   // Backfill legacy data for response consistency:
   // If order is cancelled but delivery still shows pending/shipping, expose delivery as cancelled.
-  const shouldForceDeliveryCancelled = orderStatus === ORDER_STATUS.CANCELED &&
+  const shouldForceDeliveryCancelled = orderStatus === ORDER_STATUS.CANCELLED &&
     deliveryStatus &&
     (deliveryStatus === DELIVERY_STATUS.PENDING || deliveryStatus === DELIVERY_STATUS.SHIPPING)
 
@@ -287,7 +286,7 @@ const decreaseInventoryForOrder = async (branchId, items) => {
 }
 
 /**
- * Restore inventory when order is canceled
+ * Restore inventory when order is cancelled
  */
 const restoreInventoryForOrder = async (order, options = {}) => {
   const { session = null } = options
@@ -334,7 +333,7 @@ const runWithOptionalTransaction = async (fn) => {
 }
 
 const isOrderCancelled = (status) => {
-  return status === ORDER_STATUS.CANCELED || status === ORDER_STATUS.CANCELED_LEGACY
+  return status === ORDER_STATUS.CANCELLED
 }
 
 /**
@@ -484,22 +483,8 @@ const getOrderByOrderNumber = async (orderNumber, userId, userRole) => {
     order.payment?.status === PAYMENT_STATUS.REFUNDED &&
     !isOrderCancelled(order.orderStatus)
   ) {
-    await ORDER_REPOSITORY.updateOrderById(orderId, {
-      orderStatus: ORDER_STATUS.CANCELED,
-      'delivery.status': DELIVERY_STATUS.CANCELLED,
-      updatedAt: new Date()
-    })
-    const updatedOrder = await ORDER_REPOSITORY.getOrderById(orderId)
-    return mapOrderProductImages(updatedOrder)
-  }
-
-  if (
-    order.paymentMethod === PAYMENT_METHODS.VNPAY &&
-    order.payment?.status === PAYMENT_STATUS.REFUNDED &&
-    !isOrderCancelled(order.orderStatus)
-  ) {
     await ORDER_REPOSITORY.updateOrderById(order._id, {
-      orderStatus: ORDER_STATUS.CANCELED,
+      orderStatus: ORDER_STATUS.CANCELLED,
       'delivery.status': DELIVERY_STATUS.CANCELLED,
       updatedAt: new Date()
     })
@@ -518,9 +503,7 @@ const getMyOrders = async (userId, query = {}) => {
 
   const filter = {}
   if (status) {
-    filter.orderStatus = status === ORDER_STATUS.CANCELED
-      ? { $in: [ORDER_STATUS.CANCELED, ORDER_STATUS.CANCELED_LEGACY] }
-      : status
+    filter.orderStatus = status
   }
 
   const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 }
@@ -542,9 +525,7 @@ const getAllOrders = async (query = {}) => {
 
   const filter = {}
   if (status) {
-    filter.orderStatus = status === ORDER_STATUS.CANCELED
-      ? { $in: [ORDER_STATUS.CANCELED, ORDER_STATUS.CANCELED_LEGACY] }
-      : status
+    filter.orderStatus = status
   }
 
   const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 }
@@ -651,7 +632,7 @@ const cancelOrderLegacy = async (orderId, cancelReason, userId, userRole) => {
     throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền hủy đơn hàng này'])
   }
 
-  // Check if order can be canceled
+  // Check if order can be cancelled
   if (isOrderCancelled(order.orderStatus)) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Đơn hàng đã được hủy trước đó'])
   }
@@ -670,7 +651,7 @@ const cancelOrderLegacy = async (orderId, cancelReason, userId, userRole) => {
   if (order.paymentMethod === PAYMENT_METHODS.COD) {
     const payment = await PAYMENT_REPOSITORY.findByOrderId(orderId, false)
     if (payment && payment.status === PAYMENT_STATUS.PENDING) {
-      payment.status = PAYMENT_STATUS.CANCELED
+      payment.status = PAYMENT_STATUS.CANCELLED
       payment.failureReason = cancelReason || 'Đơn hàng bị hủy'
       await PAYMENT_REPOSITORY.savePayment(payment)
     }
@@ -698,7 +679,7 @@ const cancelOrderLegacy = async (orderId, cancelReason, userId, userRole) => {
 
 /**
  * Cancel order (COD/VNPay rules)
- * - COD: orderStatus=CANCELLED, paymentStatus=CANCELED, no refund flow/email
+ * - COD: orderStatus=CANCELLED, paymentStatus=CANCELLED, no refund flow/email
  * - VNPay: only allow when paymentStatus=SUCCESS; set paymentStatus=REFUNDED and send email
  */
 const cancelOrder = async (orderId, userOrCancelReason, cancelReasonOrUserId, userIdOrUserRole, userRoleArg) => {
@@ -761,14 +742,14 @@ const cancelOrder = async (orderId, userOrCancelReason, cancelReasonOrUserId, us
           provider: PAYMENT_PROVIDERS.COD,
           amount: order.totalAmount,
           currency: 'VND',
-          status: PAYMENT_STATUS.CANCELED,
+          status: PAYMENT_STATUS.CANCELLED,
           transactionId: generateTransactionId('COD'),
           paidAt: null,
           failureReason: cancelReason || 'Đơn hàng bị hủy'
         }, { session })
       } else {
         await PAYMENT_REPOSITORY.updateByOrderId(orderId, {
-          status: PAYMENT_STATUS.CANCELED,
+          status: PAYMENT_STATUS.CANCELLED,
           failureReason: cancelReason || 'Đơn hàng bị hủy'
         }, { session })
       }
@@ -887,14 +868,11 @@ const getOrderStatistics = async (userId = null) => {
     confirmed: 0,
     shipped: 0,
     delivered: 0,
-    cancelled: 0,
-    // Backward-compatible alias for legacy data/clients
-    canceled: 0
+    cancelled: 0
   }
 
   stats.forEach(stat => {
-    const normalizedKey = stat._id === 'canceled' ? 'cancelled' : stat._id
-    result[normalizedKey] = stat.count
+    result[stat._id] = stat.count
     result.total += stat.count
   })
 
