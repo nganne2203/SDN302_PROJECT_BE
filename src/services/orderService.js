@@ -14,6 +14,7 @@ import { PRODUCT_SERVICE } from '#services/productService.js'
 import { SERVICE_ITEM_SERVICE } from '#services/serviceItemService.js'
 import { BRANCH_REPOSITORY } from '#repositories/branchRepository.js'
 import { INVENTORY_SERVICE } from '#services/inventoryService.js'
+import { RoleEnum } from '#constants/roleConstant.js'
 import mongoose from 'mongoose'
 
 /**
@@ -336,6 +337,21 @@ const isOrderCancelled = (status) => {
   return status === ORDER_STATUS.CANCELLED
 }
 
+const assertBranchScopedOrderAccess = (order, requester) => {
+  const requesterRole = requester?.role
+  if (![RoleEnum.STAFF, RoleEnum.MANAGER].includes(requesterRole)) return
+
+  const requesterBranch = requester?.branch
+  if (!requesterBranch) {
+    throw new ApiError(ERROR_CODES.FORBIDDEN, ['Tài khoản chưa được gán chi nhánh'])
+  }
+
+  const orderBranch = order?.branch?._id?.toString?.() || order?.branch?.toString?.() || order?.branch
+  if (!orderBranch || orderBranch.toString() !== requesterBranch.toString()) {
+    throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền truy cập đơn hàng của chi nhánh khác'])
+  }
+}
+
 /**
  * Create order from cart (COD only; VNPay uses payment API)
  */
@@ -447,7 +463,9 @@ const createOrder = async (userId, orderData) => {
 /**
  * Get order by ID
  */
-const getOrderById = async (orderId, userId, userRole) => {
+const getOrderById = async (orderId, requester) => {
+  const userId = requester?.id
+  const userRole = requester?.role
   const order = await ORDER_REPOSITORY.getOrderById(orderId)
 
   if (!order) {
@@ -459,13 +477,17 @@ const getOrderById = async (orderId, userId, userRole) => {
     throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền xem đơn hàng này'])
   }
 
+  assertBranchScopedOrderAccess(order, requester)
+
   return mapOrderProductImages(order)
 }
 
 /**
  * Get order by order number
  */
-const getOrderByOrderNumber = async (orderNumber, userId, userRole) => {
+const getOrderByOrderNumber = async (orderNumber, requester) => {
+  const userId = requester?.id
+  const userRole = requester?.role
   const order = await ORDER_REPOSITORY.getOrderByOrderNumber(orderNumber)
 
   if (!order) {
@@ -476,6 +498,8 @@ const getOrderByOrderNumber = async (orderNumber, userId, userRole) => {
   if (userRole === 'customer' && order.user._id.toString() !== userId.toString()) {
     throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền xem đơn hàng này'])
   }
+
+  assertBranchScopedOrderAccess(order, requester)
 
   // Self-heal inconsistent state: refunded payment implies cancelled order at system level.
   if (
@@ -520,12 +544,22 @@ const getMyOrders = async (userId, query = {}) => {
 /**
  * Get all orders (Admin/Staff)
  */
-const getAllOrders = async (query = {}) => {
+const getAllOrders = async (query = {}, requester = null) => {
   const { page = 1, limit = 10, status, sortBy = 'createdAt', sortOrder = 'desc' } = query
 
   const filter = {}
   if (status) {
     filter.orderStatus = status
+  }
+
+  // Staff/Manager can only see orders in their assigned branch.
+  if ([RoleEnum.STAFF, RoleEnum.MANAGER].includes(requester?.role)) {
+    const requesterBranch = requester?.branch
+    if (!requesterBranch) {
+      throw new ApiError(ERROR_CODES.FORBIDDEN, ['Tài khoản chưa được gán chi nhánh'])
+    }
+
+    filter.branch = new mongoose.Types.ObjectId(requesterBranch)
   }
 
   const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 }
@@ -542,12 +576,15 @@ const getAllOrders = async (query = {}) => {
 /**
  * Update order status (Admin/Staff)
  */
-const updateOrderStatus = async (orderId, status, updatedBy) => {
+const updateOrderStatus = async (orderId, status, requester) => {
+  const updatedBy = requester?.id
   const order = await ORDER_REPOSITORY.getOrderById(orderId, { populate: false })
 
   if (!order) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Đơn hàng không tồn tại'])
   }
+
+  assertBranchScopedOrderAccess(order, requester)
 
   // Validate status transition
   if (isOrderCancelled(order.orderStatus)) {
@@ -688,6 +725,7 @@ const cancelOrder = async (orderId, userOrCancelReason, cancelReasonOrUserId, us
   let cancelReason
   let userId
   let userRole
+  let userBranch = null
 
   if (typeof userOrCancelReason === 'string') {
     cancelReason = userOrCancelReason
@@ -698,6 +736,7 @@ const cancelOrder = async (orderId, userOrCancelReason, cancelReasonOrUserId, us
     cancelReason = cancelReasonOrUserId
     userId = user.id || user._id
     userRole = user.role || userRoleArg
+    userBranch = user.branch || null
   }
 
   if (!userId || !userRole) {
@@ -714,6 +753,8 @@ const cancelOrder = async (orderId, userOrCancelReason, cancelReasonOrUserId, us
     if (userRole === 'customer' && order.user.toString() !== userId.toString()) {
       throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền hủy đơn hàng này'])
     }
+
+    assertBranchScopedOrderAccess(order, { role: userRole, branch: userBranch })
 
     if (isOrderCancelled(order.orderStatus)) {
       throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Đơn hàng đã được hủy trước đó'])
@@ -816,7 +857,8 @@ const cancelOrder = async (orderId, userOrCancelReason, cancelReasonOrUserId, us
 /**
  * Update delivery info (Admin/Staff)
  */
-const updateDeliveryInfo = async (orderId, deliveryData, updatedBy) => {
+const updateDeliveryInfo = async (orderId, deliveryData, requester) => {
+  const updatedBy = requester?.id
   const order = await ORDER_REPOSITORY.getOrderById(orderId, { populate: false })
 
   if (!order) {
@@ -826,6 +868,8 @@ const updateDeliveryInfo = async (orderId, deliveryData, updatedBy) => {
   if (isOrderCancelled(order.orderStatus)) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể cập nhật thông tin vận chuyển cho đơn hàng đã hủy'])
   }
+
+  assertBranchScopedOrderAccess(order, requester)
 
   const updateData = {
     delivery: {

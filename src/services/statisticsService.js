@@ -135,11 +135,17 @@ const getDashboardOverview = async (branchId = null, period = 'this_month', cust
       totalRevenue: Math.round(stats.totalRevenue),
       totalProductsSold: productsSold[0]?.totalQuantity || 0,
       totalCustomers: newCustomers,
-      averageOrderValue: Math.round(stats.averageOrderValue || 0)
+      averageOrderValue: Math.round(stats.averageOrderValue || 0),
+      pendingProcessing: stats.confirmedOrders,
+      confirmedOrders: stats.confirmedOrders,
+      shippedOrders: stats.shippedOrders,
+      deliveredOrders: stats.deliveredOrders,
+      cancelledOrders: stats.canceledOrders
     },
     orders: {
       total: stats.totalOrders,
       pending: stats.pendingOrders,
+      pendingProcessing: stats.confirmedOrders,
       confirmed: stats.confirmedOrders,
       shipped: stats.shippedOrders,
       delivered: stats.deliveredOrders,
