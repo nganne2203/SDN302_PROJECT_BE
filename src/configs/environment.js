@@ -15,6 +15,7 @@ export const env = {
   EMAIL_USER: process.env.EMAIL_USER,
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  GOOGLE_MOBILE_CLIENT_IDS: process.env.GOOGLE_MOBILE_CLIENT_IDS?.split(',').map(id => id.trim()).filter(Boolean) || [],
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
   RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,

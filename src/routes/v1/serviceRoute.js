@@ -171,7 +171,7 @@ router.get(
   '/',
   apiRateLimiter,
   authorizationMiddleware,
-  requireRoles(RoleEnum.ADMIN),
+  requireRoles(RoleEnum.ADMIN, RoleEnum.MANAGER, RoleEnum.STAFF),
   validationHandlingMiddleware({ query: SERVICE_VALIDATION.query }),
   SERVICE_CONTROLLER.getAllServices
 )

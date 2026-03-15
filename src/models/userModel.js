@@ -8,7 +8,14 @@ const userSchema = new mongoose.Schema(
     fullname: { type: String, required: true, maxLength: 100 },
     email: { type: String, required: true, unique: true, maxLength: 100 },
     role: { type: String, enum: [...Object.values(RoleEnum)], default: RoleEnum.CUSTOMER },
-    branch: { type: mongoose.Schema.Types.ObjectId, ref: 'branches', default: null },
+    branch: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'branches',
+  default: null,
+  required: function () {
+    return this.role === RoleEnum.STAFF || this.role === RoleEnum.MANAGER
+  }
+},
     password: { type: String, default: null, minLength: 6 },
     googleId: { type: String, default: null },
     provider: { type: String, enum: Object.values(USER_PROVIDER), default: USER_PROVIDER.LOCAL },

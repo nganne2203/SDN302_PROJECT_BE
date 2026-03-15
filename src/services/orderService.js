@@ -6,13 +6,15 @@ import { EMAIL_SERVICE } from '#services/emailService.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { ORDER_STATUS, DELIVERY_STATUS, SHIPPING_FEE } from '#constants/orderConstant.js'
-import { PAYMENT_METHODS, PAYMENT_STATUS } from '#constants/paymentConstant.js'
+import { PAYMENT_METHODS, PAYMENT_STATUS, PAYMENT_PROVIDERS } from '#constants/paymentConstant.js'
 import { mapMongoosePagination } from '#utils/pagination.js'
 import { pricingModel } from '#models/pricingModel.js'
 import crypto from 'crypto'
 import { PRODUCT_SERVICE } from '#services/productService.js'
 import { SERVICE_ITEM_SERVICE } from '#services/serviceItemService.js'
 import { BRANCH_REPOSITORY } from '#repositories/branchRepository.js'
+import { INVENTORY_SERVICE } from '#services/inventoryService.js'
+import mongoose from 'mongoose'
 
 /**
  * Map Cloudinary images for all products in an order's items.
@@ -28,7 +30,32 @@ const mapOrderProductImages = (order) => {
     }
     return item
   })
-  return { ...orderObj, items: mappedItems }
+
+  // Expose paymentStatus explicitly for frontend convenience.
+  // Source of truth remains payment.status (orderStatus and paymentStatus are separate).
+  const rawPaymentStatus = orderObj?.payment?.status || PAYMENT_STATUS.PENDING
+  const paymentStatus = rawPaymentStatus
+  const orderStatus = orderObj?.orderStatus
+  const deliveryStatus = orderObj?.delivery?.status
+
+  // Backfill legacy data for response consistency:
+  // If order is cancelled but delivery still shows pending/shipping, expose delivery as cancelled.
+  const shouldForceDeliveryCancelled = orderStatus === ORDER_STATUS.CANCELLED &&
+    deliveryStatus &&
+    (deliveryStatus === DELIVERY_STATUS.PENDING || deliveryStatus === DELIVERY_STATUS.SHIPPING)
+
+  return {
+    ...orderObj,
+    orderStatus,
+    items: mappedItems,
+    paymentStatus,
+    delivery: orderObj?.delivery
+      ? {
+        ...orderObj.delivery,
+        status: shouldForceDeliveryCancelled ? DELIVERY_STATUS.CANCELLED : deliveryStatus
+      }
+      : orderObj?.delivery
+  }
 }
 
 /**
@@ -38,6 +65,46 @@ const generateOrderNumber = () => {
   const timestamp = Date.now().toString(36).toUpperCase()
   const random = crypto.randomBytes(3).toString('hex').toUpperCase()
   return `ORD-${timestamp}-${random}`
+}
+
+const generateTransactionId = (prefix = 'TXN') => {
+  const timestamp = Date.now().toString(36).toUpperCase()
+  const random = crypto.randomBytes(4).toString('hex').toUpperCase()
+  return `${prefix}-${timestamp}-${random}`
+}
+
+const ensureCodPaymentExists = async (order, { status = PAYMENT_STATUS.PENDING, paidAt = null } = {}) => {
+  if (!order) return null
+  if (order.paymentMethod !== PAYMENT_METHODS.COD) return null
+
+  const orderUserId = order?.user?._id || order.user
+
+  let payment = await PAYMENT_REPOSITORY.findByOrderId(order._id, false)
+  if (!payment) {
+    payment = await PAYMENT_REPOSITORY.createPayment({
+      order: order._id,
+      user: orderUserId,
+      method: PAYMENT_METHODS.COD,
+      provider: PAYMENT_PROVIDERS.COD,
+      amount: order.totalAmount,
+      currency: 'VND',
+      status,
+      transactionId: generateTransactionId('COD'),
+      paidAt: status === PAYMENT_STATUS.SUCCESS ? (paidAt || new Date()) : null
+    })
+
+    return payment
+  }
+
+  // If payment exists, optionally update it to the desired state
+  if (status === PAYMENT_STATUS.SUCCESS && payment.status !== PAYMENT_STATUS.SUCCESS) {
+    payment.status = PAYMENT_STATUS.SUCCESS
+    payment.paidAt = paidAt || new Date()
+    payment.failureReason = ''
+    await PAYMENT_REPOSITORY.savePayment(payment)
+  }
+
+  return payment
 }
 
 /**
@@ -133,7 +200,8 @@ const calculateShippingFee = async (shippingAddress, branchId) => {
 }
 
 /**
- * Find best branch with available stock for ALL items
+ * Find a branch that can fulfill ALL items in the order.
+ * Returns null when no single branch can satisfy the full order.
  */
 const findBranchWithStock = async (items) => {
   // Fetch inventories for every product up front
@@ -147,13 +215,13 @@ const findBranchWithStock = async (items) => {
 
   // Build a set of branch IDs that have enough stock for every product
   // Start from the first product's eligible branches and intersect with others
-  const eligibleBranchIds = inventoriesByProduct.reduce((eligible, { productName, requiredQty, invs }) => {
+  const eligibleBranchIds = inventoriesByProduct.reduce((eligible, { requiredQty, invs }) => {
     const branchesWithEnough = invs
       .filter(inv => inv.quantity >= requiredQty)
       .map(inv => inv.branch._id.toString())
 
     if (branchesWithEnough.length === 0) {
-      throw new ApiError(ERROR_CODES.BAD_REQUEST, [`Sản phẩm "${productName}" không đủ tồn kho tại bất kỳ chi nhánh nào`])
+      return new Set()
     }
 
     if (eligible === null) return new Set(branchesWithEnough)
@@ -161,13 +229,50 @@ const findBranchWithStock = async (items) => {
   }, null)
 
   if (!eligibleBranchIds || eligibleBranchIds.size === 0) {
-    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không có chi nhánh nào có đủ tồn kho cho tất cả sản phẩm trong đơn hàng'])
+    return null
   }
 
   // Return the first eligible branch's actual _id (ObjectId)
   const selectedBranchId = [...eligibleBranchIds][0]
   const firstInv = inventoriesByProduct[0].invs.find(inv => inv.branch._id.toString() === selectedBranchId)
   return firstInv?.branch._id || selectedBranchId
+}
+
+/**
+ * Check whether main inventory can fulfill all items.
+ */
+const canFulfillFromMainInventory = async (items) => {
+  for (const item of items) {
+    const productId = item.product._id || item.product
+
+    let mainInventory = null
+    try {
+      mainInventory = await INVENTORY_SERVICE.getInventoryByProductId(productId)
+    } catch (error) {
+      if (error?.code === ERROR_CODES.NOT_FOUND.code) {
+        return false
+      }
+      throw error
+    }
+
+    if (!mainInventory || mainInventory.quantity < item.quantity) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Decrease main inventory for all items.
+ */
+const decreaseMainInventoryForOrder = async (items) => {
+  await INVENTORY_SERVICE.decreaseInventoryOnOrderCreation(
+    items.map((item) => ({
+      product: item.product._id || item.product,
+      quantity: item.quantity
+    }))
+  )
 }
 
 /**
@@ -181,17 +286,54 @@ const decreaseInventoryForOrder = async (branchId, items) => {
 }
 
 /**
- * Restore inventory when order is canceled
+ * Restore inventory when order is cancelled
  */
-const restoreInventoryForOrder = async (order) => {
-  if (!order.branch) {
+const restoreInventoryForOrder = async (order, options = {}) => {
+  const { session = null } = options
+  if (order.branch) {
+    for (const item of order.items) {
+      const productId = item.product._id || item.product
+      await STORE_INVENTORY_SERVICE.increaseStoreInventory(order.branch, productId, item.quantity, { session })
+    }
     return
   }
 
-  for (const item of order.items) {
-    const productId = item.product._id || item.product
-    await STORE_INVENTORY_SERVICE.increaseStoreInventory(order.branch, productId, item.quantity)
+  await INVENTORY_SERVICE.restoreInventoryOnOrderCancellation(
+    order.items.map((item) => ({
+      product: item.product._id || item.product,
+      quantity: item.quantity
+    }))
+  )
+}
+
+const isTransactionNotSupportedError = (error) => {
+  const message = (error?.message || '').toString().toLowerCase()
+  return message.includes('transaction numbers are only allowed') ||
+    message.includes('replica set') ||
+    message.includes('illegaloperation') ||
+    message.includes('not supported')
+}
+
+const runWithOptionalTransaction = async (fn) => {
+  const session = await mongoose.startSession()
+  try {
+    let result
+    await session.withTransaction(async () => {
+      result = await fn(session)
+    })
+    return result
+  } catch (error) {
+    if (isTransactionNotSupportedError(error)) {
+      return await fn(null)
+    }
+    throw error
+  } finally {
+    session.endSession()
   }
+}
+
+const isOrderCancelled = (status) => {
+  return status === ORDER_STATUS.CANCELLED
 }
 
 /**
@@ -218,11 +360,21 @@ const createOrder = async (userId, orderData) => {
   // Calculate pricing discounts
   const pricingApplied = await calculatePricingDiscounts(populatedCart.items)
 
-  // Automatically find a branch with available stock (customers do not specify branch)
+  // Prefer branch fulfillment; fallback to main inventory when all branches cannot fulfill.
   const selectedBranch = await findBranchWithStock(populatedCart.items)
+  const useMainInventory = !selectedBranch
+
+  if (useMainInventory) {
+    const canUseMainInventory = await canFulfillFromMainInventory(populatedCart.items)
+    if (!canUseMainInventory) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không đủ số lượng trong hệ thống'])
+    }
+  }
 
   // Calculate totals (include shipping fee)
-  const shippingFee = await calculateShippingFee(shippingAddress, selectedBranch)
+  const shippingFee = selectedBranch
+    ? await calculateShippingFee(shippingAddress, selectedBranch)
+    : SHIPPING_FEE.INTER_PROVINCE
   const { subtotal, totalAmount } = calculateOrderTotals(populatedCart.items, pricingApplied, shippingFee)
 
   // Generate order number
@@ -253,14 +405,22 @@ const createOrder = async (userId, orderData) => {
       status: DELIVERY_STATUS.PENDING
     },
     message,
-    branch: selectedBranch,
+    branch: selectedBranch || null,
     createdBy: userId
   })
+
+  // Create COD payment record (so /api/payments/order/:orderId works for COD)
+  await ensureCodPaymentExists(order, { status: PAYMENT_STATUS.PENDING })
 
   // For COD, confirm order and decrease inventory immediately
   if (paymentMethod === PAYMENT_METHODS.COD) {
     await ORDER_REPOSITORY.updateOrderStatus(order._id, ORDER_STATUS.CONFIRMED, userId)
-    await decreaseInventoryForOrder(selectedBranch, populatedCart.items)
+
+    if (selectedBranch) {
+      await decreaseInventoryForOrder(selectedBranch, populatedCart.items)
+    } else {
+      await decreaseMainInventoryForOrder(populatedCart.items)
+    }
   }
 
   // Clear cart after successful order
@@ -317,7 +477,22 @@ const getOrderByOrderNumber = async (orderNumber, userId, userRole) => {
     throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền xem đơn hàng này'])
   }
 
-  return order
+  // Self-heal inconsistent state: refunded payment implies cancelled order at system level.
+  if (
+    order.paymentMethod === PAYMENT_METHODS.VNPAY &&
+    order.payment?.status === PAYMENT_STATUS.REFUNDED &&
+    !isOrderCancelled(order.orderStatus)
+  ) {
+    await ORDER_REPOSITORY.updateOrderById(order._id, {
+      orderStatus: ORDER_STATUS.CANCELLED,
+      'delivery.status': DELIVERY_STATUS.CANCELLED,
+      updatedAt: new Date()
+    })
+    const updatedOrder = await ORDER_REPOSITORY.getOrderByOrderNumber(orderNumber)
+    return mapOrderProductImages(updatedOrder)
+  }
+
+  return mapOrderProductImages(order)
 }
 
 /**
@@ -375,7 +550,7 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
   }
 
   // Validate status transition
-  if (order.orderStatus === ORDER_STATUS.CANCELED) {
+  if (isOrderCancelled(order.orderStatus)) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể cập nhật đơn hàng đã hủy'])
   }
 
@@ -392,6 +567,11 @@ const updateOrderStatus = async (orderId, status, updatedBy) => {
   }
 
   const updatedOrder = await ORDER_REPOSITORY.updateOrderStatus(orderId, status, updatedBy)
+
+  // COD: mark as paid when delivered successfully
+  if (status === ORDER_STATUS.DELIVERED && updatedOrder.paymentMethod === PAYMENT_METHODS.COD) {
+    await ensureCodPaymentExists(updatedOrder, { status: PAYMENT_STATUS.SUCCESS, paidAt: new Date() })
+  }
 
   // Send email notification (don't fail if email fails)
   try {
@@ -418,7 +598,7 @@ const updateShippingFee = async (orderId, shippingFee, updatedBy) => {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Đơn hàng không tồn tại'])
   }
 
-  if (order.orderStatus === ORDER_STATUS.CANCELED) {
+  if (isOrderCancelled(order.orderStatus)) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể cập nhật phí ship cho đơn hàng đã hủy'])
   }
 
@@ -440,7 +620,7 @@ const updateShippingFee = async (orderId, shippingFee, updatedBy) => {
 /**
  * Cancel order
  */
-const cancelOrder = async (orderId, cancelReason, userId, userRole) => {
+const cancelOrderLegacy = async (orderId, cancelReason, userId, userRole) => {
   const order = await ORDER_REPOSITORY.getOrderById(orderId, { populate: false })
 
   if (!order) {
@@ -452,8 +632,8 @@ const cancelOrder = async (orderId, cancelReason, userId, userRole) => {
     throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền hủy đơn hàng này'])
   }
 
-  // Check if order can be canceled
-  if (order.orderStatus === ORDER_STATUS.CANCELED) {
+  // Check if order can be cancelled
+  if (isOrderCancelled(order.orderStatus)) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Đơn hàng đã được hủy trước đó'])
   }
 
@@ -466,6 +646,16 @@ const cancelOrder = async (orderId, cancelReason, userId, userRole) => {
   }
 
   const canceledOrder = await ORDER_REPOSITORY.cancelOrder(orderId, cancelReason, userId)
+
+  // Cancel payment record for COD (best-effort)
+  if (order.paymentMethod === PAYMENT_METHODS.COD) {
+    const payment = await PAYMENT_REPOSITORY.findByOrderId(orderId, false)
+    if (payment && payment.status === PAYMENT_STATUS.PENDING) {
+      payment.status = PAYMENT_STATUS.CANCELLED
+      payment.failureReason = cancelReason || 'Đơn hàng bị hủy'
+      await PAYMENT_REPOSITORY.savePayment(payment)
+    }
+  }
 
   // Restore inventory if order was confirmed
   if (order.orderStatus !== ORDER_STATUS.PENDING) {
@@ -488,6 +678,142 @@ const cancelOrder = async (orderId, cancelReason, userId, userRole) => {
 }
 
 /**
+ * Cancel order (COD/VNPay rules)
+ * - COD: orderStatus=CANCELLED, paymentStatus=CANCELLED, no refund flow/email
+ * - VNPay: only allow when paymentStatus=SUCCESS; set paymentStatus=REFUNDED and send email
+ */
+const cancelOrder = async (orderId, userOrCancelReason, cancelReasonOrUserId, userIdOrUserRole, userRoleArg) => {
+  // New signature: cancelOrder(orderId, user, cancelReason)
+  // Backward compatible: cancelOrder(orderId, cancelReason, userId, userRole)
+  let cancelReason
+  let userId
+  let userRole
+
+  if (typeof userOrCancelReason === 'string') {
+    cancelReason = userOrCancelReason
+    userId = cancelReasonOrUserId
+    userRole = userIdOrUserRole
+  } else {
+    const user = userOrCancelReason || {}
+    cancelReason = cancelReasonOrUserId
+    userId = user.id || user._id
+    userRole = user.role || userRoleArg
+  }
+
+  if (!userId || !userRole) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Thiếu thông tin người dùng'])
+  }
+
+  const { shouldSendVNPayRefundEmail } = await runWithOptionalTransaction(async (session) => {
+    const order = await ORDER_REPOSITORY.getOrderById(orderId, { populate: false, session })
+
+    if (!order) {
+      throw new ApiError(ERROR_CODES.NOT_FOUND, ['Đơn hàng không tồn tại'])
+    }
+
+    if (userRole === 'customer' && order.user.toString() !== userId.toString()) {
+      throw new ApiError(ERROR_CODES.FORBIDDEN, ['Bạn không có quyền hủy đơn hàng này'])
+    }
+
+    if (isOrderCancelled(order.orderStatus)) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Đơn hàng đã được hủy trước đó'])
+    }
+
+    if (order.orderStatus === ORDER_STATUS.DELIVERED) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể hủy đơn hàng đã hoàn thành'])
+    }
+
+    if (order.orderStatus === ORDER_STATUS.SHIPPED && userRole === 'customer') {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể hủy đơn hàng đang vận chuyển. Vui lòng liên hệ hỗ trợ'])
+    }
+
+    if (order.paymentMethod === PAYMENT_METHODS.COD) {
+      const canceledOrder = await ORDER_REPOSITORY.cancelOrder(orderId, cancelReason, userId, { session })
+      if (!canceledOrder) {
+        throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Đơn hàng đã được hủy trước đó'])
+      }
+
+      const payment = await PAYMENT_REPOSITORY.findByOrderId(orderId, false, { session })
+      if (!payment) {
+        await PAYMENT_REPOSITORY.createPayment({
+          order: order._id,
+          user: order.user,
+          method: PAYMENT_METHODS.COD,
+          provider: PAYMENT_PROVIDERS.COD,
+          amount: order.totalAmount,
+          currency: 'VND',
+          status: PAYMENT_STATUS.CANCELLED,
+          transactionId: generateTransactionId('COD'),
+          paidAt: null,
+          failureReason: cancelReason || 'Đơn hàng bị hủy'
+        }, { session })
+      } else {
+        await PAYMENT_REPOSITORY.updateByOrderId(orderId, {
+          status: PAYMENT_STATUS.CANCELLED,
+          failureReason: cancelReason || 'Đơn hàng bị hủy'
+        }, { session })
+      }
+
+      if (order.orderStatus !== ORDER_STATUS.PENDING) {
+        await restoreInventoryForOrder(order, { session })
+      }
+
+      return { shouldSendVNPayRefundEmail: false }
+    }
+
+    if (order.paymentMethod === PAYMENT_METHODS.VNPAY) {
+      const payment = await PAYMENT_REPOSITORY.findByOrderId(orderId, false, { session })
+      if (!payment) {
+        throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy thông tin thanh toán'])
+      }
+
+      if (payment.status !== PAYMENT_STATUS.SUCCESS) {
+        throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ cho phép hủy đơn VNPay khi đã thanh toán thành công'])
+      }
+
+      const canceledOrder = await ORDER_REPOSITORY.cancelOrder(orderId, cancelReason, userId, { session })
+      if (!canceledOrder) {
+        throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Đơn hàng đã được hủy trước đó'])
+      }
+
+      const refundedPayment = await PAYMENT_REPOSITORY.updateByOrderIdAndStatus(orderId, PAYMENT_STATUS.SUCCESS, {
+        status: PAYMENT_STATUS.REFUNDED,
+        refundedAt: new Date()
+      }, { session })
+
+      if (!refundedPayment) {
+        throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Trạng thái thanh toán không hợp lệ để hoàn tiền'])
+      }
+
+      if (order.orderStatus !== ORDER_STATUS.PENDING) {
+        await restoreInventoryForOrder(order, { session })
+      }
+
+      return { shouldSendVNPayRefundEmail: true }
+    }
+
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Phương thức thanh toán không hợp lệ'])
+  })
+
+  const populatedOrder = await ORDER_REPOSITORY.getOrderById(orderId)
+
+  if (shouldSendVNPayRefundEmail) {
+    try {
+      await EMAIL_SERVICE.sendVNPayCancelRefundEmail(
+        populatedOrder.user.email,
+        populatedOrder.user.fullname,
+        populatedOrder.orderNumber
+      )
+    } catch (emailError) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to send VNPay refund email:', emailError.message)
+    }
+  }
+
+  return mapOrderProductImages(populatedOrder)
+}
+
+/**
  * Update delivery info (Admin/Staff)
  */
 const updateDeliveryInfo = async (orderId, deliveryData, updatedBy) => {
@@ -497,7 +823,7 @@ const updateDeliveryInfo = async (orderId, deliveryData, updatedBy) => {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Đơn hàng không tồn tại'])
   }
 
-  if (order.orderStatus === ORDER_STATUS.CANCELED) {
+  if (isOrderCancelled(order.orderStatus)) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể cập nhật thông tin vận chuyển cho đơn hàng đã hủy'])
   }
 
@@ -509,7 +835,23 @@ const updateDeliveryInfo = async (orderId, deliveryData, updatedBy) => {
     updatedBy
   }
 
+  // If delivery is marked delivered, also mark order delivered (without email side-effects)
+  if (deliveryData?.status === DELIVERY_STATUS.DELIVERED) {
+    updateData.orderStatus = ORDER_STATUS.DELIVERED
+    if (!deliveryData?.deliveredAt) {
+      updateData['delivery.deliveredAt'] = new Date()
+    }
+  }
+
   const updatedOrder = await ORDER_REPOSITORY.updateOrderById(orderId, updateData)
+
+  // COD: mark as paid when delivery is successful (works even if staff only updates delivery.status)
+  if (
+    updatedOrder.paymentMethod === PAYMENT_METHODS.COD &&
+    (deliveryData?.status === DELIVERY_STATUS.DELIVERED || !!deliveryData?.deliveredAt)
+  ) {
+    await ensureCodPaymentExists(updatedOrder, { status: PAYMENT_STATUS.SUCCESS, paidAt: deliveryData?.deliveredAt || new Date() })
+  }
 
   return updatedOrder
 }
@@ -526,7 +868,7 @@ const getOrderStatistics = async (userId = null) => {
     confirmed: 0,
     shipped: 0,
     delivered: 0,
-    canceled: 0
+    cancelled: 0
   }
 
   stats.forEach(stat => {
@@ -642,6 +984,14 @@ const createOfflineOrder = async (staffId, orderData) => {
     branch: branchId,
     createdBy: staffId
   })
+
+  // Create payment record for offline COD orders (paid immediately if no delivery)
+  if (paymentMethod === PAYMENT_METHODS.COD) {
+    await ensureCodPaymentExists(order, {
+      status: hasDelivery ? PAYMENT_STATUS.PENDING : PAYMENT_STATUS.SUCCESS,
+      paidAt: hasDelivery ? null : new Date()
+    })
+  }
 
   // Decrease inventory immediately for offline orders
   await decreaseInventoryForOrder(branchId, populatedItems)

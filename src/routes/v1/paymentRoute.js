@@ -213,7 +213,7 @@ router.post(
  *         name: status
  *         schema:
  *           type: string
- *           enum: [pending, success, failed, refunded, canceled]
+ *           enum: [pending, success, failed, refunded, cancelled]
  *     responses:
  *       200:
  *         description: Payments retrieved successfully

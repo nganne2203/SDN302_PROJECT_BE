@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 import { ORDER_SERVICE } from '#services/orderService.js'
 import { orderModel } from '#models/orderModel.js'
+import { paymentModel } from '#models/paymentModel.js'
 import {
   createTestUser,
   createTestProduct,
@@ -71,6 +72,12 @@ describe('Order Service Tests', () => {
       expect(order.paymentMethod).toBe('cod')
       expect(order.totalAmount).toBeGreaterThan(0)
       expect(order.items).toHaveLength(1)
+
+      const payment = await paymentModel.findOne({ order: order._id }).lean()
+      expect(payment).toBeDefined()
+      expect(payment.method).toBe('cod')
+      expect(payment.provider).toBe('cod')
+      expect(payment.status).toBe('pending')
     })
 
     it('should fail when cart is empty', async () => {
@@ -324,6 +331,30 @@ describe('Order Service Tests', () => {
       expect(updatedOrder.orderStatus).toBe('shipped')
     })
 
+    it('should mark COD payment as success when order is delivered', async () => {
+      const orderData = {
+        shippingAddress: {
+          fullname: 'Test User',
+          phone: '0912345678',
+          addressLine: '123 Test St',
+          city: 'HCM',
+          district: 'District 1',
+          ward: 'Ward 1'
+        },
+        paymentMethod: 'cod'
+      }
+
+      const createdOrder = await ORDER_SERVICE.createOrder(testUser._id, orderData)
+      const admin = await createAdminUser()
+
+      await ORDER_SERVICE.updateOrderStatus(createdOrder._id, 'delivered', admin._id)
+
+      const payment = await paymentModel.findOne({ order: createdOrder._id }).lean()
+      expect(payment).toBeDefined()
+      expect(payment.status).toBe('success')
+      expect(payment.paidAt).toBeTruthy()
+    })
+
     it('should not update canceled order', async () => {
       const orderData = {
         shippingAddress: {
@@ -342,9 +373,8 @@ describe('Order Service Tests', () => {
       // Cancel order first
       await ORDER_SERVICE.cancelOrder(
         createdOrder._id,
-        'Test cancel reason',
-        testUser._id,
-        'customer'
+        { id: testUser._id, role: 'customer' },
+        'Test cancel reason'
       )
 
       const admin = await createAdminUser()
@@ -377,12 +407,11 @@ describe('Order Service Tests', () => {
 
       const canceledOrder = await ORDER_SERVICE.cancelOrder(
         createdOrder._id,
-        'Changed my mind',
-        testUser._id,
-        'customer'
+        { id: testUser._id, role: 'customer' },
+        'Changed my mind'
       )
 
-      expect(canceledOrder.orderStatus).toBe('canceled')
+      expect(canceledOrder.orderStatus).toBe('cancelled')
       expect(canceledOrder.cancelReason).toBe('Changed my mind')
 
       const inventoryAfterCancel = await mongoose.connection.db
@@ -409,17 +438,15 @@ describe('Order Service Tests', () => {
 
       await ORDER_SERVICE.cancelOrder(
         createdOrder._id,
-        'First cancel',
-        testUser._id,
-        'customer'
+        { id: testUser._id, role: 'customer' },
+        'First cancel'
       )
 
       await expect(
         ORDER_SERVICE.cancelOrder(
           createdOrder._id,
-          'Second cancel',
-          testUser._id,
-          'customer'
+          { id: testUser._id, role: 'customer' },
+          'Second cancel'
         )
       ).rejects.toThrow('Đơn hàng đã được hủy trước đó')
     })
@@ -446,11 +473,124 @@ describe('Order Service Tests', () => {
       await expect(
         ORDER_SERVICE.cancelOrder(
           createdOrder._id,
-          'Cancel reason',
-          testUser._id,
-          'customer'
+          { id: testUser._id, role: 'customer' },
+          'Cancel reason'
         )
       ).rejects.toThrow('Không thể hủy đơn hàng đang vận chuyển')
+    })
+
+    it('should cancel VNPay SUCCESS => paymentStatus REFUNDED and send email', async () => {
+      const user = { id: testUser._id, role: 'customer' }
+
+      const orderNumber = `ORD-VNPAY-${Date.now()}`
+
+      // Simulate reserved inventory: quantity already decreased by 2
+      await mongoose.connection.db.collection('storeinventories').updateOne(
+        { branch: testBranch._id, product: testProduct._id },
+        { $set: { quantity: 48 } }
+      )
+
+      const order = await orderModel.create({
+        orderNumber,
+        type: 'online',
+        user: testUser._id,
+        items: [{ product: testProduct._id, quantity: 2, price: testProduct.price, services: [] }],
+        shippingAddress: {
+          fullname: 'Test User',
+          phone: '0912345678',
+          addressLine: '123 Test St',
+          city: 'HCM',
+          ward: 'Ward 1'
+        },
+        orderStatus: 'confirmed',
+        subtotal: testProduct.price * 2,
+        shippingFee: 0,
+        totalAmount: testProduct.price * 2,
+        pricingApplied: [],
+        paymentMethod: 'vnpay',
+        delivery: { status: 'pending' },
+        message: '',
+        branch: testBranch._id,
+        createdBy: testUser._id
+      })
+
+      await paymentModel.create({
+        order: order._id,
+        user: testUser._id,
+        method: 'vnpay',
+        provider: 'vnpay',
+        amount: order.totalAmount,
+        currency: 'VND',
+        status: 'success',
+        transactionId: `TXN-VNPAY-${Date.now()}`,
+        paidAt: new Date()
+      })
+
+      // Pseudo-mock email sender (ESM safe via mutating exported object)
+      const { EMAIL_SERVICE } = await import('#services/emailService.js')
+      const originalEmailFn = EMAIL_SERVICE.sendVNPayCancelRefundEmail
+      let emailSent = false
+      EMAIL_SERVICE.sendVNPayCancelRefundEmail = async () => {
+        emailSent = true
+        return true
+      }
+
+      const canceledOrder = await ORDER_SERVICE.cancelOrder(order._id, user, 'Customer cancel VNPay')
+
+      const updatedPayment = await paymentModel.findOne({ order: order._id }).lean()
+      expect(canceledOrder.orderStatus).toBe('cancelled')
+      expect(updatedPayment.status).toBe('refunded')
+      expect(emailSent).toBe(true)
+
+      const inventoryAfterCancel = await mongoose.connection.db
+        .collection('storeinventories')
+        .findOne({ branch: testBranch._id, product: testProduct._id })
+      expect(inventoryAfterCancel.quantity).toBe(50)
+
+      EMAIL_SERVICE.sendVNPayCancelRefundEmail = originalEmailFn
+    })
+
+    it('should reject VNPay cancel when paymentStatus is not SUCCESS', async () => {
+      const user = { id: testUser._id, role: 'customer' }
+
+      const order = await orderModel.create({
+        orderNumber: `ORD-VNPAY-PENDING-${Date.now()}`,
+        type: 'online',
+        user: testUser._id,
+        items: [{ product: testProduct._id, quantity: 1, price: testProduct.price, services: [] }],
+        shippingAddress: {
+          fullname: 'Test User',
+          phone: '0912345678',
+          addressLine: '123 Test St',
+          city: 'HCM',
+          ward: 'Ward 1'
+        },
+        orderStatus: 'confirmed',
+        subtotal: testProduct.price,
+        shippingFee: 0,
+        totalAmount: testProduct.price,
+        pricingApplied: [],
+        paymentMethod: 'vnpay',
+        delivery: { status: 'pending' },
+        message: '',
+        branch: testBranch._id,
+        createdBy: testUser._id
+      })
+
+      await paymentModel.create({
+        order: order._id,
+        user: testUser._id,
+        method: 'vnpay',
+        provider: 'vnpay',
+        amount: order.totalAmount,
+        currency: 'VND',
+        status: 'pending',
+        transactionId: `TXN-VNPAY-PENDING-${Date.now()}`
+      })
+
+      await expect(
+        ORDER_SERVICE.cancelOrder(order._id, user, 'Try cancel when not paid')
+      ).rejects.toThrow('Chỉ cho phép hủy đơn VNPay khi đã thanh toán thành công')
     })
   })
 
@@ -474,9 +614,8 @@ describe('Order Service Tests', () => {
       // Cancel one order
       await ORDER_SERVICE.cancelOrder(
         order._id,
-        'Test cancel',
-        testUser._id,
-        'customer'
+        { id: testUser._id, role: 'customer' },
+        'Test cancel'
       )
 
       const stats = await ORDER_SERVICE.getOrderStatistics(testUser._id)

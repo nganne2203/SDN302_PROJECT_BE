@@ -1,13 +1,16 @@
 import { orderModel } from '#models/orderModel.js'
-import { ORDER_STATUS } from '#constants/orderConstant.js'
+import { DELIVERY_STATUS, ORDER_STATUS } from '#constants/orderConstant.js'
 
-const createOrder = async (orderData) => {
-  return await orderModel.create(orderData)
+const createOrder = async (orderData, options = {}) => {
+  const { session } = options
+  const order = new orderModel(orderData)
+  return await order.save({ session })
 }
 
 const getOrderById = async (orderId, options = {}) => {
-  const { populate = true } = options
+  const { populate = true, session = null } = options
   let query = orderModel.findById(orderId)
+  if (session) query = query.session(session)
 
   if (populate) {
     query = query
@@ -15,6 +18,7 @@ const getOrderById = async (orderId, options = {}) => {
       .populate('items.product', 'name price images slug category')
       .populate('items.services.service', 'name type price')
       .populate('branch', 'name address phone')
+      .populate('payment', 'status paidAt method provider amount currency')
       .populate('createdBy', 'fullname email')
       .populate('updatedBy', 'fullname email')
   }
@@ -23,8 +27,9 @@ const getOrderById = async (orderId, options = {}) => {
 }
 
 const getOrderByOrderNumber = async (orderNumber, options = {}) => {
-  const { populate = true } = options
+  const { populate = true, session = null } = options
   let query = orderModel.findOne({ orderNumber })
+  if (session) query = query.session(session)
 
   if (populate) {
     query = query
@@ -32,6 +37,7 @@ const getOrderByOrderNumber = async (orderNumber, options = {}) => {
       .populate('items.product', 'name price images slug category')
       .populate('items.services.service', 'name type price')
       .populate('branch', 'name address phone')
+      .populate('payment', 'status paidAt method provider amount currency')
       .populate('createdBy', 'fullname email')
       .populate('updatedBy', 'fullname email')
   }
@@ -51,7 +57,8 @@ const getOrdersByUser = async (userId, filter = {}, options = {}) => {
       { path: 'user', select: 'fullname email phone' },
       { path: 'items.product', select: 'name price images slug category' },
       { path: 'items.services.service', select: 'name type price' },
-      { path: 'branch', select: 'name address phone' }
+      { path: 'branch', select: 'name address phone' },
+      { path: 'payment', select: 'status paidAt method provider amount currency' }
     ]
   })
 }
@@ -68,22 +75,25 @@ const getAllOrders = async (filter = {}, options = {}) => {
       { path: 'items.product', select: 'name price images slug category' },
       { path: 'items.services.service', select: 'name type price' },
       { path: 'branch', select: 'name address phone' },
+      { path: 'payment', select: 'status paidAt method provider amount currency' },
       { path: 'createdBy', select: 'fullname email' },
       { path: 'updatedBy', select: 'fullname email' }
     ]
   })
 }
 
-const updateOrderById = async (orderId, updateData) => {
+const updateOrderById = async (orderId, updateData, options = {}) => {
+  const { session = null } = options
   return await orderModel.findByIdAndUpdate(
     orderId,
     updateData,
-    { new: true, runValidators: true }
+    { new: true, runValidators: true, session }
   )
     .populate('user', 'fullname email phone')
     .populate('items.product', 'name price images slug category')
     .populate('items.services.service', 'name type price')
     .populate('branch', 'name address phone')
+    .populate('payment', 'status paidAt method provider amount currency')
     .populate('createdBy', 'fullname email')
     .populate('updatedBy', 'fullname email')
 }
@@ -93,41 +103,74 @@ const ORDER_STATUS_TO_DELIVERY_STATUS = {
   confirmed: 'pending',
   shipped: 'shipping',
   delivered: 'delivered',
-  canceled: 'cancelled'
+  cancelled: DELIVERY_STATUS.CANCELLED
 }
 
 const updateOrderStatus = async (orderId, status, updatedBy) => {
+  return await updateOrderStatusWithOptions(orderId, status, updatedBy)
+}
+
+const updateOrderStatusIfNotCancelled = async (orderId, status, updatedBy, options = {}) => {
+  const { session = null } = options
   const deliveryStatus = ORDER_STATUS_TO_DELIVERY_STATUS[status]
   const updateFields = { orderStatus: status, updatedBy, updatedAt: new Date() }
   if (deliveryStatus) {
     updateFields['delivery.status'] = deliveryStatus
   }
-  return await orderModel.findByIdAndUpdate(
-    orderId,
+  if (status === ORDER_STATUS.DELIVERED) {
+    updateFields['delivery.deliveredAt'] = new Date()
+  }
+
+  return await orderModel.findOneAndUpdate(
+    { _id: orderId, orderStatus: { $ne: ORDER_STATUS.CANCELLED } },
     updateFields,
-    { new: true, runValidators: true }
+    { new: true, runValidators: true, session }
   )
     .populate('user', 'fullname email phone')
     .populate('items.product', 'name price images slug category')
     .populate('items.services.service', 'name type price')
     .populate('branch', 'name address phone')
+    .populate('payment', 'status paidAt method provider amount currency')
 }
 
-const cancelOrder = async (orderId, cancelReason, updatedBy) => {
-  return await orderModel.findByIdAndUpdate(
-    orderId,
+const updateOrderStatusWithOptions = async (orderId, status, updatedBy, options = {}) => {
+  const { session = null } = options
+  const deliveryStatus = ORDER_STATUS_TO_DELIVERY_STATUS[status]
+  const updateFields = { orderStatus: status, updatedBy, updatedAt: new Date() }
+  if (deliveryStatus) {
+    updateFields['delivery.status'] = deliveryStatus
+  }
+  if (status === ORDER_STATUS.DELIVERED) {
+    updateFields['delivery.deliveredAt'] = new Date()
+  }
+  return await orderModel.findByIdAndUpdate(orderId, updateFields, { new: true, runValidators: true, session })
+    .populate('user', 'fullname email phone')
+    .populate('items.product', 'name price images slug category')
+    .populate('items.services.service', 'name type price')
+    .populate('branch', 'name address phone')
+    .populate('payment', 'status paidAt method provider amount currency')
+}
+
+const cancelOrder = async (orderId, cancelReason, updatedBy, options = {}) => {
+  const { session = null } = options
+  return await orderModel.findOneAndUpdate(
+    { _id: orderId, orderStatus: { $ne: ORDER_STATUS.CANCELLED } },
     {
-      orderStatus: ORDER_STATUS.CANCELED,
-      cancelReason,
-      updatedBy,
-      updatedAt: new Date()
+      $set: {
+        orderStatus: ORDER_STATUS.CANCELLED,
+        cancelReason,
+        updatedBy,
+        updatedAt: new Date(),
+        'delivery.status': DELIVERY_STATUS.CANCELLED
+      }
     },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true, session }
   )
     .populate('user', 'fullname email phone')
     .populate('items.product', 'name price images slug category')
     .populate('items.services.service', 'name type price')
     .populate('branch', 'name address phone')
+    .populate('payment', 'status paidAt method provider amount currency')
 }
 
 /**
@@ -154,6 +197,19 @@ const countOrdersByStatus = async (userId = null) => {
   ])
 }
 
+const hasDeliveredOrderWithProduct = async (userId, productId) => {
+  const query = {
+    user: userId,
+    'items.product': productId,
+    $or: [
+      { orderStatus: ORDER_STATUS.DELIVERED },
+      { 'delivery.status': 'delivered' }
+    ]
+  }
+
+  return await orderModel.exists(query)
+}
+
 export const ORDER_REPOSITORY = {
   createOrder,
   getOrderById,
@@ -162,7 +218,10 @@ export const ORDER_REPOSITORY = {
   getAllOrders,
   updateOrderById,
   updateOrderStatus,
+  updateOrderStatusIfNotCancelled,
+  updateOrderStatusWithOptions,
   cancelOrder,
   countOrdersByStatus,
-  findExpiredPendingVNPayOrders
+  findExpiredPendingVNPayOrders,
+  hasDeliveredOrderWithProduct
 }

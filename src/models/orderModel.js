@@ -59,6 +59,16 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false }
 )
 
+orderSchema.virtual('payment', {
+  ref: 'payments',
+  localField: '_id',
+  foreignField: 'order',
+  justOne: true
+})
+
+orderSchema.set('toObject', { virtuals: true })
+orderSchema.set('toJSON', { virtuals: true })
+
 orderSchema.plugin(mongoosePaginate)
 
 export const orderModel = mongoose.model('orders', orderSchema)

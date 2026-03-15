@@ -15,6 +15,10 @@ export const LOGIN_NO_CAPTCHA_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
   AUTH_VALIDATION.loginUserNoCaptcha
 )
 
+export const LOGIN_GOOGLE_MOBILE_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
+  AUTH_VALIDATION.loginGoogleMobile
+)
+
 export const REGISTER_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
   AUTH_VALIDATION.registerUser
 )
@@ -24,6 +28,10 @@ export const REQUIRE_FIELD_REGISTER = GENERATE_UTILS.extractRequiredFieldsFromJo
 )
 
 export const REGISTER_NO_CAPTCHA_FIELDS = GENERATE_UTILS.extractFieldsFromJoi(
+  AUTH_VALIDATION.registerUserNoCaptcha
+)
+
+export const REQUIRE_FIELD_REGISTER_NO_CAPTCHA = GENERATE_UTILS.extractRequiredFieldsFromJoi(
   AUTH_VALIDATION.registerUserNoCaptcha
 )
 

@@ -48,27 +48,30 @@ const updateStoreInventory = async (inventoryId, data) => {
   return storeInventoryModel.findByIdAndUpdate(inventoryId, data, { new: true, runValidators: true, timestamps: true })
 }
 
-const updateQuantity = async (branchId, productId, quantityChange, updatedBy = null) => {
+const updateQuantity = async (branchId, productId, quantityChange, updatedBy = null, options = {}) => {
+  const { session = null } = options
   return storeInventoryModel.findOneAndUpdate(
     { branch: branchId, product: productId, isDeleted: false },
     { $set: { quantity: quantityChange, updatedBy: updatedBy } },
-    { new: true, runValidators: true, timestamps: true }
+    { new: true, runValidators: true, timestamps: true, session }
   )
 }
 
-const decreaseQuantity = async (branchId, productId, quantity) => {
+const decreaseQuantity = async (branchId, productId, quantity, options = {}) => {
+  const { session = null } = options
   return storeInventoryModel.findOneAndUpdate(
     { branch: branchId, product: productId, quantity: { $gte: quantity }, isDeleted: false },
     { $inc: { quantity: -quantity } },
-    { new: true, runValidators: true, timestamps: true }
+    { new: true, runValidators: true, timestamps: true, session }
   )
 }
 
-const increaseQuantity = async (branchId, productId, quantity) => {
+const increaseQuantity = async (branchId, productId, quantity, options = {}) => {
+  const { session = null } = options
   return storeInventoryModel.findOneAndUpdate(
     { branch: branchId, product: productId, isDeleted: false },
     { $inc: { quantity: quantity } },
-    { new: true, runValidators: true, timestamps: true }
+    { new: true, runValidators: true, timestamps: true, session }
   )
 }
 
@@ -169,7 +172,7 @@ const updateThresholds = async (branchId, productId, minThreshold, maxThreshold,
     { branch: branchId, product: productId, isDeleted: false },
     { $set: updateData },
     { new: true, runValidators: true, timestamps: true }
-  )
+  ).populate(['branch', 'product'])
 }
 
 const deleteStoreInventory = async (inventoryId, updatedBy = null) => {

@@ -377,7 +377,7 @@ const sendOrderStatusUpdate = async (to, fullName, order) => {
     confirmed: 'Đã xác nhận',
     shipped: 'Đang vận chuyển',
     delivered: 'Đã giao hàng',
-    canceled: 'Đã hủy'
+    cancelled: 'Đã hủy'
   }
 
   const statusColors = {
@@ -385,8 +385,10 @@ const sendOrderStatusUpdate = async (to, fullName, order) => {
     confirmed: '#28a745',
     shipped: '#17a2b8',
     delivered: '#28a745',
-    canceled: '#dc3545'
+    cancelled: '#dc3545'
   }
+
+  const normalizedOrderStatus = order?.orderStatus
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -396,10 +398,10 @@ const sendOrderStatusUpdate = async (to, fullName, order) => {
       <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: ${statusColors[order.orderStatus]}; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .header { background: ${statusColors[normalizedOrderStatus]}; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
         .order-info { background: #fff; border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 8px; }
-        .status-badge { background: ${statusColors[order.orderStatus]}; color: white; padding: 8px 20px; border-radius: 20px; display: inline-block; margin: 10px 0; font-size: 16px; }
+        .status-badge { background: ${statusColors[normalizedOrderStatus]}; color: white; padding: 8px 20px; border-radius: 20px; display: inline-block; margin: 10px 0; font-size: 16px; }
       </style>
     </head>
     <body>
@@ -413,7 +415,7 @@ const sendOrderStatusUpdate = async (to, fullName, order) => {
           <p>Đơn hàng của bạn đã được cập nhật trạng thái mới:</p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <span class="status-badge">${statusMessages[order.orderStatus]}</span>
+            <span class="status-badge">${statusMessages[normalizedOrderStatus]}</span>
           </div>
 
           ${order.delivery?.trackingCode ? `
@@ -435,7 +437,7 @@ const sendOrderStatusUpdate = async (to, fullName, order) => {
   const mailOptions = {
     from: `"${env.AUTHOR || 'Phone Accessories'}" <${env.EMAIL_USER}>`,
     to,
-    subject: `Đơn Hàng #${order.orderNumber} - ${statusMessages[order.orderStatus]}`,
+    subject: `Đơn Hàng #${order.orderNumber} - ${statusMessages[normalizedOrderStatus]}`,
     html: htmlContent
   }
 
@@ -495,6 +497,61 @@ const sendOrderCancellation = async (to, fullName, order) => {
   return await transporter.sendMail(mailOptions)
 }
 
+const sendVNPayCancelRefundEmail = async (to, fullName, orderNumber) => {
+  const refundMessage = `Bạn đã hủy đơn hàng ${orderNumber}, tiền sẽ được hoàn trả từ 1-2 ngày. Nếu có thắc mắc hoặc vấn đề gì vui lòng liên hệ với chúng tôi.`
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #dc3545; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .box { background: #fff; border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 8px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Hủy đơn hàng thành công</h1>
+          <p style="font-size: 18px;">Mã: ${orderNumber}</p>
+        </div>
+        <div class="content">
+          <p>Xin chào <strong>${fullName}</strong>,</p>
+          <div class="box">
+            <p>${refundMessage}</p>
+          </div>
+          <p>Trân trọng,</p>
+          <p>${env.AUTHOR || 'Phone Accessories'}</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+
+  const textContent = `
+Xin chào ${fullName},
+
+${refundMessage}
+
+Trân trọng,
+${env.AUTHOR || 'Phone Accessories'}
+  `.trim()
+
+  const mailOptions = {
+    from: `"${env.AUTHOR || 'Phone Accessories'}" <${env.EMAIL_USER}>`,
+    to,
+    subject: `Bạn đã hủy đơn hàng ${orderNumber} - Hoàn tiền VNPay`,
+    text: textContent,
+    html: htmlContent
+  }
+
+  return await transporter.sendMail(mailOptions)
+}
+
 export const EMAIL_SERVICE = {
   sendVerificationCode,
   sendPasswordResetNotification,
@@ -502,5 +559,6 @@ export const EMAIL_SERVICE = {
   wellcomeEmail,
   sendOrderConfirmation,
   sendOrderStatusUpdate,
-  sendOrderCancellation
+  sendOrderCancellation,
+  sendVNPayCancelRefundEmail
 }

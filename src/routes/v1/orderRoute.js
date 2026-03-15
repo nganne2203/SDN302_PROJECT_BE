@@ -205,7 +205,7 @@ router.post(
  *         name: status
  *         schema:
  *           type: string
- *           enum: [pending, confirmed, shipped, delivered, canceled]
+ *           enum: [pending, confirmed, shipped, delivered, cancelled]
  *       - in: query
  *         name: sortBy
  *         schema:
@@ -277,7 +277,7 @@ router.get(
  *         name: status
  *         schema:
  *           type: string
- *           enum: [pending, confirmed, shipped, delivered, canceled]
+ *           enum: [pending, confirmed, shipped, delivered, cancelled]
  *       - in: query
  *         name: sortBy
  *         schema:
@@ -399,7 +399,7 @@ router.get(
  *             properties:
  *               status:
  *                 type: string
- *                 enum: [pending, confirmed, shipped, delivered, canceled]
+ *                 enum: [pending, confirmed, shipped, delivered, cancelled]
  *                 example: shipped
  *     responses:
  *       200:
@@ -506,7 +506,7 @@ router.patch(
  *                 example: Changed my mind about the purchase
  *     responses:
  *       200:
- *         description: Order canceled successfully
+ *         description: Order cancelled successfully
  *       400:
  *         description: Bad request
  *       401:

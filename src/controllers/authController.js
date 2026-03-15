@@ -1,6 +1,10 @@
 import { AUTH_SERVICE } from '#services/authService.js'
 import { responseSuccess } from '#utils/responseUtil.js'
 import { StatusCodes } from 'http-status-codes'
+import { OAuth2Client } from 'google-auth-library'
+import { env } from '#configs/environment.js'
+
+const client = new OAuth2Client(env.GOOGLE_MOBILE_CLIENT_IDS)
 
 const register = async (req, res, next) => {
   try {
@@ -44,6 +48,34 @@ const googleCallback = async (req, res, next) => {
     const errorUrl = AUTH_SERVICE.buildGoogleAuthErrorUrl(error)
     res.redirect(errorUrl)
   }
+}
+
+const loginGoogleMobile = async (req, res, next) => {
+  try {
+    const { idToken } = req.body
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: env.GOOGLE_CLIENT_ID
+    })
+    const payload = ticket.getPayload()
+
+    const googleUser = {
+      googleId: payload.sub,
+      email: payload.email,
+      fullname: payload.name,
+      avatar: payload.picture
+    }
+
+    const result = await AUTH_SERVICE.loginGoogleMobile(googleUser, {
+      ipAddress: req.ip || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent'] || ''
+    })
+
+    res.status(StatusCodes.OK).json(responseSuccess({
+      data: result,
+      message: 'Đăng nhập Google trên mobile thành công'
+    }))
+  } catch (error) { next(error) }
 }
 
 const verifyOtp = async (req, res, next) => {
@@ -135,5 +167,6 @@ export const AUTH_CONTROLLER = {
   resendVerificationCode,
   refreshToken,
   logout,
-  logoutAll
+  logoutAll,
+  loginGoogleMobile
 }

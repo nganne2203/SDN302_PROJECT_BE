@@ -5,8 +5,9 @@ export const ORDER_STATUS = {
   PENDING: 'pending',
   CONFIRMED: 'confirmed',
   SHIPPED: 'shipped',
+  SHIPPING: 'shipped',
   DELIVERED: 'delivered',
-  CANCELED: 'canceled'
+  CANCELLED: 'cancelled'
 }
 
 export const DELIVERY_STATUS = {

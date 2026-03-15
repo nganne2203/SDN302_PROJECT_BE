@@ -158,7 +158,7 @@ export const ORDER_VALIDATION = {
   }),
 
   updateOrderStatus: joi.object({
-    status: joi.string().valid('pending', 'confirmed', 'shipped', 'delivered', 'canceled').required().messages({
+    status: joi.string().valid('pending', 'confirmed', 'shipped', 'delivered', 'cancelled').required().messages({
       'string.empty': 'Trạng thái đơn hàng không được để trống',
       'any.only': 'Trạng thái không hợp lệ',
       'any.required': 'Trạng thái đơn hàng là bắt buộc'
@@ -194,7 +194,7 @@ export const ORDER_VALIDATION = {
   getOrders: joi.object({
     page: joi.number().integer().min(1).optional().default(1),
     limit: joi.number().integer().min(1).max(100).optional().default(10),
-    status: joi.string().valid('pending', 'confirmed', 'shipped', 'delivered', 'canceled').optional(),
+    status: joi.string().valid('pending', 'confirmed', 'shipped', 'delivered', 'cancelled').optional(),
     sortBy: joi.string().valid('createdAt', 'totalAmount', 'orderNumber').optional().default('createdAt'),
     sortOrder: joi.string().valid('asc', 'desc').optional().default('desc')
   })

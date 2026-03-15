@@ -6,6 +6,7 @@ import { ERROR_CODES } from '#constants/errorCode.js'
 import { USER_REPOSITORY } from '#repositories/userRepository.js'
 import { RoleEnum } from '#constants/roleConstant.js'
 import { REFRESHTOKEN_REPOSITORY } from '#repositories/refreshTokenRepository.js'
+import { STORE_INVENTORY_SERVICE } from '#services/storeInventoryService.js'
 
 const enrichBranchesWithManagers = async (branches = []) => {
   if (!branches.length) return []
@@ -191,6 +192,9 @@ const deleteBranch = async (branchId, updatedBy = null) => {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Chỉ có thể xóa chi nhánh không hoạt động'])
   }
 
+  if ((await STORE_INVENTORY_SERVICE.getStoreInventoriesByBranch(branchId)).data.length > 0) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể xóa chi nhánh có tồn kho sản phẩm'])
+  }
   const currentManager = await getCurrentManagerByBranch(branchId)
   if (currentManager) {
     await USER_REPOSITORY.updateUserById(currentManager._id, { branch: null })

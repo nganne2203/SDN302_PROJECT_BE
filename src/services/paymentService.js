@@ -220,6 +220,7 @@ const createVNPayPayment = async (userId, paymentData, ipAddress) => {
 
   payment.paymentUrl = paymentUrl
   await PAYMENT_REPOSITORY.savePayment(payment)
+  return payment
 
   return {
     paymentUrl,
@@ -274,19 +275,29 @@ const processVNPayReturn = async (vnpParams) => {
     payment.paidAt = new Date()
     await PAYMENT_REPOSITORY.savePayment(payment)
 
-    await ORDER_REPOSITORY.updateOrderStatus(order._id, ORDER_STATUS.CONFIRMED, order.user)
+    const updatedOrder = await ORDER_REPOSITORY.updateOrderStatusIfNotCancelled(order._id, ORDER_STATUS.CONFIRMED, order.user)
+
+    // If order was cancelled in-between (race), don't resurrect it or touch inventory/cart.
+    if (!updatedOrder) {
+      return {
+        success: true,
+        message: 'Thanh toán thành công nhưng đơn hàng đã bị hủy trước đó',
+        payment,
+        orderNumber: vnp_TxnRef
+      }
+    }
 
     await decreaseInventoryForOrder(order.branch, order.items)
 
     await CART_SERVICE.clearCart(order.user)
 
-    const updatedOrder = await ORDER_REPOSITORY.getOrderById(order._id)
+    const populatedOrder = await ORDER_REPOSITORY.getOrderById(order._id)
 
     try {
       await EMAIL_SERVICE.sendOrderConfirmation(
-        updatedOrder.user.email,
-        updatedOrder.user.fullname,
-        updatedOrder
+        populatedOrder.user.email,
+        populatedOrder.user.fullname,
+        populatedOrder
       )
     } catch {
       // Silently fail email sending
@@ -296,7 +307,7 @@ const processVNPayReturn = async (vnpParams) => {
       success: true,
       message: 'Thanh toán thành công',
       payment,
-      order: updatedOrder,
+      order: populatedOrder,
       orderNumber: vnp_TxnRef
     }
   } else {
@@ -357,7 +368,10 @@ const processVNPayIPN = async (vnpParams) => {
     payment.paidAt = new Date()
     await PAYMENT_REPOSITORY.savePayment(payment)
 
-    await ORDER_REPOSITORY.updateOrderStatus(order._id, ORDER_STATUS.CONFIRMED, order.user)
+    const updatedOrder = await ORDER_REPOSITORY.updateOrderStatusIfNotCancelled(order._id, ORDER_STATUS.CONFIRMED, order.user)
+    if (!updatedOrder) {
+      return { RspCode: '02', Message: 'Order was cancelled' }
+    }
 
     await decreaseInventoryForOrder(order.branch, order.items)
 
@@ -382,6 +396,40 @@ const processVNPayIPN = async (vnpParams) => {
  */
 const getPaymentByOrderId = async (orderId) => {
   const payment = await PAYMENT_REPOSITORY.findByOrderId(orderId)
+
+  // Backfill consistency: refunded VNPay payments should imply cancelled order at system level.
+  if (
+    payment &&
+    payment.status === PAYMENT_STATUS.REFUNDED &&
+    payment.order &&
+    payment.order.orderStatus !== ORDER_STATUS.CANCELLED
+  ) {
+    await ORDER_REPOSITORY.updateOrderById(payment.order._id || payment.order, {
+      orderStatus: ORDER_STATUS.CANCELLED,
+      'delivery.status': DELIVERY_STATUS.CANCELLED,
+      updatedAt: new Date()
+    })
+
+    return await PAYMENT_REPOSITORY.findByOrderId(orderId)
+  }
+
+  // Backfill for COD: if order is already delivered, mark payment as paid.
+  // This covers orders delivered before COD auto-mark logic existed.
+  if (
+    payment &&
+    payment.method === PAYMENT_METHODS.COD &&
+    payment.status === PAYMENT_STATUS.PENDING &&
+    payment.order?.orderStatus === ORDER_STATUS.DELIVERED
+  ) {
+    payment.status = PAYMENT_STATUS.SUCCESS
+    payment.paidAt = payment.paidAt || new Date()
+    payment.failureReason = ''
+    await PAYMENT_REPOSITORY.savePayment(payment)
+
+    // Re-fetch with populate to return consistent data
+    return await PAYMENT_REPOSITORY.findByOrderId(orderId)
+  }
+
   return payment
 }
 
@@ -392,6 +440,22 @@ const getPaymentByOrderId = async (orderId) => {
  */
 const getPaymentByOrderNumber = async (orderNumber) => {
   const payment = await PAYMENT_REPOSITORY.findByTxnRef(orderNumber)
+
+  if (
+    payment &&
+    payment.status === PAYMENT_STATUS.REFUNDED &&
+    payment.order &&
+    payment.order.orderStatus !== ORDER_STATUS.CANCELLED
+  ) {
+    await ORDER_REPOSITORY.updateOrderById(payment.order._id || payment.order, {
+      orderStatus: ORDER_STATUS.CANCELLED,
+      'delivery.status': DELIVERY_STATUS.CANCELLED,
+      updatedAt: new Date()
+    })
+
+    return await PAYMENT_REPOSITORY.findByTxnRef(orderNumber)
+  }
+
   return payment
 }
 
@@ -415,9 +479,12 @@ const getUserPayments = async (userId, query = {}) => {
   const { page = 1, limit = 10, status } = query
 
   const result = await PAYMENT_REPOSITORY.findByUserWithPagination(userId, { page, limit, status })
+  const normalizedPayments = (result.payments || []).map((p) => {
+    return p
+  })
 
   return {
-    data: result.payments,
+    data: normalizedPayments,
     pagination: {
       page,
       limit,
@@ -476,8 +543,10 @@ const cancelPayment = async (orderId, userId) => {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không thể hủy thanh toán đã xử lý'])
   }
 
-  payment.status = PAYMENT_STATUS.CANCELED
+  payment.status = PAYMENT_STATUS.CANCELLED
+  payment.failureReason = payment.failureReason || 'Customer cancelled payment'
   await PAYMENT_REPOSITORY.savePayment(payment)
+  return payment
 
   // Cancel the order
   await ORDER_REPOSITORY.cancelOrder(orderId, 'Khách hàng hủy thanh toán', userId)
