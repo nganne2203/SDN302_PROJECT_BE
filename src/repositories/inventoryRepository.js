@@ -1,7 +1,8 @@
 import { inventoryModel } from '#models/inventoryModel.js'
 
-const getInventoryByProductId = async (productId) => {
-  return inventoryModel.findOne({ product: productId, isDeleted: false }).populate('product')
+const getInventoryByProductId = async (productId, options = {}) => {
+  const { session = null } = options
+  return inventoryModel.findOne({ product: productId, isDeleted: false }).session(session).populate('product')
 }
 
 const getAllInventories = async (filter = {}, options = {}) => {
@@ -31,11 +32,12 @@ const updateQuantity = async (productId, quantityChange) => {
   )
 }
 
-const decreaseQuantity = async (productId, quantity) => {
+const decreaseQuantity = async (productId, quantity, options = {}) => {
+  const { session = null } = options
   return inventoryModel.findOneAndUpdate(
-    { product: productId, quantity: { $gte: quantity } },
+    { product: productId, quantity: { $gte: quantity }, isDeleted: false },
     { $inc: { quantity: -quantity } },
-    { new: true, runValidators: true, timestamps: true }
+    { new: true, runValidators: true, timestamps: true, session }
   )
 }
 
