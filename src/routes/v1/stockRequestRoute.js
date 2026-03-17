@@ -80,6 +80,11 @@ router.post('/',
  *       - BearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Từ khóa tìm kiếm
+ *       - in: query
  *         name: page
  *         schema:
  *           type: integer
@@ -110,6 +115,16 @@ router.post('/',
  *           type: string
  *           enum: [asc, desc]
  *         description: Thứ tự sắp xếp
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *         description: Lọc theo ID chi nhánh
+ *       - in: query
+ *         name: productId
+ *         schema:
+ *           type: string
+ *         description: Lọc theo ID sản phẩm
  *     responses:
  *       200:
  *         description: Lấy danh sách yêu cầu thành công

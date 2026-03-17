@@ -3,9 +3,10 @@ import { PRODUCT_REPOSITORY } from '#repositories/productRepository.js'
 import ApiError from '#utils/ApiError.js'
 import { ERROR_CODES } from '#constants/errorCode.js'
 import { PRODUCT_SERVICE } from '#services/productService.js'
+import { escapeRegex } from '#utils/formatterUtil.js'
 
 const getAllPricings = async (query = {}) => {
-  const { page = 1, limit = 10, productId, isActive } = query
+  const { page = 1, limit = 10, productId, isActive, search } = query
 
   const filter = {}
   if (productId) {
@@ -13,6 +14,27 @@ const getAllPricings = async (query = {}) => {
   }
   if (isActive !== undefined) {
     filter.isActive = isActive === 'true' || isActive === true
+  }
+
+  if (search) {
+    const escapedSearch = escapeRegex(search)
+    const matchedProducts = await PRODUCT_REPOSITORY.getAllProductsWithoutPagination({
+      $or: [
+        { name: { $regex: escapedSearch, $options: 'i' } },
+        { sku: { $regex: escapedSearch, $options: 'i' } }
+      ]
+    }, { createdAt: -1 })
+
+    const matchedProductIds = matchedProducts.map((product) => product._id)
+    const searchConditions = [
+      { description: { $regex: escapedSearch, $options: 'i' } }
+    ]
+
+    if (matchedProductIds.length > 0) {
+      searchConditions.push({ product: { $in: matchedProductIds } })
+    }
+
+    filter.$or = searchConditions
   }
 
   const result = await PRICING_REPOSITORY.getPricingsWithPagination(filter, { page, limit })
