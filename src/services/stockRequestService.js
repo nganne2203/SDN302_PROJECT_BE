@@ -84,10 +84,22 @@ const getPendingStockRequests = async (query = {}) => {
  * Lấy tất cả stock requests
  */
 const getAllStockRequests = async (query = {}) => {
-  const { page, limit, sortBy, sortOrder, status } = query
+  const { page, limit, search, sortBy, sortOrder, status, branchId, productId } = query
   const filter = {}
   if (status) {
     filter.status = status
+  }
+  if (search) {
+    filter.$or = [
+      { reason: { $regex: search, $options: 'i' } },
+      { note: { $regex: search, $options: 'i' } }
+    ]
+  }
+  if (branchId) {
+    filter.branch = branchId
+  }
+  if (productId) {
+    filter.product = productId
   }
   const sortField = sortBy || 'createdAt'
   const sortDirection = sortOrder === 'asc' ? 1 : -1

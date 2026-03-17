@@ -64,6 +64,9 @@ export const STOCK_REQUEST_VALIDATION = {
       'number.integer': 'Số trang phải là số nguyên',
       'number.min': 'Số trang phải lớn hơn hoặc bằng 1'
     }),
+    search: joi.string().max(100).optional().messages({
+      'string.max': 'Từ khóa tìm kiếm không được vượt quá 100 ký tự'
+    }).trim(),
     limit: joi.number().integer().min(1).max(100).optional().messages({
       'number.base': 'Giới hạn phải là một số',
       'number.integer': 'Giới hạn phải là số nguyên',
@@ -78,6 +81,14 @@ export const STOCK_REQUEST_VALIDATION = {
     }).trim(),
     status: joi.string().valid('pending', 'approved', 'partially_approved', 'rejected').optional().messages({
       'any.only': 'Trạng thái phải là một trong các giá trị: pending, approved, partially_approved, rejected'
+    }).trim(),
+    branchId: joi.string().hex().length(24).optional().messages({
+      'string.hex': 'ID chi nhánh không hợp lệ',
+      'string.length': 'ID chi nhánh không hợp lệ'
+    }).trim(),
+    productId: joi.string().hex().length(24).optional().messages({
+      'string.hex': 'ID sản phẩm không hợp lệ',
+      'string.length': 'ID sản phẩm không hợp lệ'
     }).trim()
   })
 }
