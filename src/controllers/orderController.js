@@ -19,10 +19,8 @@ const createOrder = async (req, res, next) => {
 
 const getOrderById = async (req, res, next) => {
   try {
-    const userId = req.user.id
-    const userRole = req.user.role
     const { orderId } = req.params
-    const order = await ORDER_SERVICE.getOrderById(orderId, userId, userRole)
+    const order = await ORDER_SERVICE.getOrderById(orderId, req.user)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: order,
@@ -36,10 +34,8 @@ const getOrderById = async (req, res, next) => {
 
 const getOrderByOrderNumber = async (req, res, next) => {
   try {
-    const userId = req.user.id
-    const userRole = req.user.role
     const { orderNumber } = req.params
-    const order = await ORDER_SERVICE.getOrderByOrderNumber(orderNumber, userId, userRole)
+    const order = await ORDER_SERVICE.getOrderByOrderNumber(orderNumber, req.user)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: order,
@@ -69,7 +65,7 @@ const getMyOrders = async (req, res, next) => {
 
 const getAllOrders = async (req, res, next) => {
   try {
-    const result = await ORDER_SERVICE.getAllOrders(req.validated.query)
+    const result = await ORDER_SERVICE.getAllOrders(req.validated.query, req.user)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: result.data,
@@ -84,10 +80,9 @@ const getAllOrders = async (req, res, next) => {
 
 const updateOrderStatus = async (req, res, next) => {
   try {
-    const updatedBy = req.user.id
     const { orderId } = req.params
     const { status } = req.body
-    const order = await ORDER_SERVICE.updateOrderStatus(orderId, status, updatedBy)
+    const order = await ORDER_SERVICE.updateOrderStatus(orderId, status, req.user)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: order,
@@ -118,8 +113,6 @@ const updateShippingFee = async (req, res, next) => {
 
 const cancelOrder = async (req, res, next) => {
   try {
-    const userId = req.user.id
-    const userRole = req.user.role
     const { orderId } = req.params
     const { cancelReason } = req.body
     const order = await ORDER_SERVICE.cancelOrder(orderId, req.user, cancelReason)
@@ -136,9 +129,8 @@ const cancelOrder = async (req, res, next) => {
 
 const updateDeliveryInfo = async (req, res, next) => {
   try {
-    const updatedBy = req.user.id
     const { orderId } = req.params
-    const order = await ORDER_SERVICE.updateDeliveryInfo(orderId, req.body, updatedBy)
+    const order = await ORDER_SERVICE.updateDeliveryInfo(orderId, req.body, req.user)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: order,
