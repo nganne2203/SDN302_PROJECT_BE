@@ -121,10 +121,6 @@ const approveStockRequest = async (requestId, approvedQuantity, adminId, note = 
 
       const { branch, product, quantity } = stockRequest
 
-      if (approvedQuantity > quantity) {
-        throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Số lượng duyệt không được lớn hơn số lượng yêu cầu'])
-      }
-
       const inventory = await INVENTORY_REPOSITORY.getInventoryByProductId(product, { session })
       const availableStock = inventory?.quantity || 0
       if (approvedQuantity > availableStock) {

@@ -272,7 +272,7 @@ router.get('/manager',
  */
 router.get('/customers',
   apiRateLimiter,
-  requireRoles(RoleEnum.STAFF),
+  requireRoles(RoleEnum.STAFF, RoleEnum.MANAGER, RoleEnum.ADMIN),
   validationHandlingMiddleware({ query: USER_VALIDATION.query }),
   USER_CONTROLLER.getAllCustomersForStaff
 )
