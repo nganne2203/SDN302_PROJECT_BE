@@ -124,6 +124,7 @@ const getAllPricings = {
   query: Joi.object({
     page: Joi.number().integer().min(1).optional(),
     limit: Joi.number().integer().min(1).max(100).optional(),
+    search: Joi.string().trim().max(255).optional(),
     productId: Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE).optional(),
     isActive: Joi.boolean().optional()
   })

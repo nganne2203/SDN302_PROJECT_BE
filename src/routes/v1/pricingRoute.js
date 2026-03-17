@@ -38,6 +38,11 @@ const router = express.Router()
  *           default: 10
  *         description: Items per page
  *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by pricing description or product name/SKU
+ *       - in: query
  *         name: productId
  *         schema:
  *           type: string
