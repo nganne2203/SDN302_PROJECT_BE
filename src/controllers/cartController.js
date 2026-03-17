@@ -57,7 +57,8 @@ const updateCartItemServices = async (req, res, next) => {
 const removeCartItem = async (req, res, next) => {
   try {
     const userId = req.user.id
-    const cart = await CART_SERVICE.removeCartItem(userId, req.body)
+    const data = req.validated?.query || req.query
+    const cart = await CART_SERVICE.removeCartItem(userId, data)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: cart,

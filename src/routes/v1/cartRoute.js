@@ -151,8 +151,7 @@ router.delete(
   '/item',
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
-  sanitizeRequest(CART_CONSTANT.REMOVE_CART_ITEM_FIELDS, CART_CONSTANT.REMOVE_CART_ITEM_FIELDS),
-  validationHandlingMiddleware({ body: CART_VALIDATION.removeCartItem }),
+  validationHandlingMiddleware({ query: CART_VALIDATION.removeCartItem }),
   CART_CONTROLLER.removeCartItem
 )
 
@@ -228,7 +227,7 @@ router.put(
   '/item/services',
   apiRateLimiter,
   requireRoles(RoleEnum.CUSTOMER),
-  sanitizeRequest(CART_CONSTANT.UPDATE_CART_SERVICES_FIELDS, CART_CONSTANT.UPDATE_CART_SERVICES_FIELDS),
+  sanitizeRequest(CART_CONSTANT.UPDATE_CART_SERVICES_FIELDS, CART_CONSTANT.UPDATE_CART_SERVICES_REQUIRED_FIELDS),
   validationHandlingMiddleware({ body: CART_VALIDATION.updateCartServices }),
   CART_CONTROLLER.updateCartItemServices
 )
