@@ -1,7 +1,8 @@
 import { stockRequestModel } from '#models/stockRequestModel.js'
 
-const getStockRequestById = async (requestId) => {
-  return stockRequestModel.findById(requestId, { isDeleted: false }).populate(['branch', 'product', 'requester', 'admin'])
+const getStockRequestById = async (requestId, options = {}) => {
+  const { session = null } = options
+  return stockRequestModel.findById(requestId, { isDeleted: false }).session(session).populate(['branch', 'product', 'requester', 'admin'])
 }
 const getAllStockRequests = async (filter = {}, options = {}) => {
   const { page = 1, limit = 10, sort = { createdAt: -1 } } = options
@@ -16,8 +17,13 @@ const getAllStockRequests = async (filter = {}, options = {}) => {
 const createStockRequest = async (data) => {
   return stockRequestModel.create(data)
 }
-const updateStockRequestById = async (requestId, data) => {
-  return stockRequestModel.findByIdAndUpdate(requestId, data, { new: true, runValidators: true, timestamps: true }).populate(['branch', 'product', 'requester', 'admin'])
+const updateStockRequestById = async (requestId, data, options = {}) => {
+  const { session = null } = options
+  return stockRequestModel.findByIdAndUpdate(
+    requestId,
+    data,
+    { new: true, runValidators: true, timestamps: true, session }
+  ).populate(['branch', 'product', 'requester', 'admin'])
 }
 
 const getStockRequestByBranch = async (branchId, filter = {}, options = {}) => {

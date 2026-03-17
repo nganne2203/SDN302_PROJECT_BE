@@ -18,7 +18,12 @@ import { USER_VALIDATION } from '#validations/userValidation.js'
 import { validationHandlingMiddleware } from '#middlewares/validationHandlingMiddleware.js'
 
 const router = express.Router()
-router.use(authorizationMiddleware)
+const PUBLIC_POST_ROUTES = new Set(['/reset-password', '/confirm-reset-password'])
+
+router.use((req, res, next) => {
+  if (req.method === 'POST' && PUBLIC_POST_ROUTES.has(req.path)) return next()
+  return authorizationMiddleware(req, res, next)
+})
 
 /**
  * @swagger
@@ -267,7 +272,7 @@ router.get('/manager',
  */
 router.get('/customers',
   apiRateLimiter,
-  requireRoles(RoleEnum.STAFF),
+  requireRoles(RoleEnum.STAFF, RoleEnum.MANAGER, RoleEnum.ADMIN),
   validationHandlingMiddleware({ query: USER_VALIDATION.query }),
   USER_CONTROLLER.getAllCustomersForStaff
 )
@@ -325,7 +330,6 @@ router.get('/customers',
  */
 router.get('/staff',
   apiRateLimiter,
-  authorizationMiddleware,
   requireRoles(RoleEnum.ADMIN),
   validationHandlingMiddleware({ query: USER_VALIDATION.query }),
   USER_CONTROLLER.getAllStaffForAdmin
@@ -427,7 +431,6 @@ router.put('/me',
  */
 router.post('/change-password',
   authRateLimiter,
-  authorizationMiddleware,
   sanitizeRequest(CHANGE_PASSWORD_FIELDS, CHANGE_PASSWORD_FIELDS),
   validationHandlingMiddleware({ body: USER_VALIDATION.changePassword }),
   USER_CONTROLLER.changePassword
@@ -545,7 +548,6 @@ router.post('/confirm-reset-password',
  */
 router.get('/profile',
   authRateLimiter,
-  authorizationMiddleware,
   USER_CONTROLLER.getCurrentUser
 )
 

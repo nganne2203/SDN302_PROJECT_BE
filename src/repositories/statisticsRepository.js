@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import { orderModel } from '#models/orderModel.js'
 import { paymentModel } from '#models/paymentModel.js'
 import { productModel } from '#models/productModel.js'
@@ -14,7 +15,7 @@ import { RoleEnum } from '#constants/roleConstant.js'
 const buildMatchStage = (branchId, startDate, endDate, additionalFilters = {}) => {
   const matchStage = { ...additionalFilters }
   if (branchId) {
-    matchStage.branch = branchId
+    matchStage.branch = mongoose.isValidObjectId(branchId) ? new mongoose.Types.ObjectId(branchId) : branchId
   }
   if (startDate && endDate) {
     matchStage.createdAt = { $gte: startDate, $lte: endDate }

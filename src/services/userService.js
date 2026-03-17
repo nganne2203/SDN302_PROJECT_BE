@@ -118,6 +118,13 @@ const assertEmailNotExists = async (email) => {
   return user
 }
 
+const normalizeEmail = (email = '') => email.trim().toLowerCase()
+
+const hasEmailChanged = (currentEmail, nextEmail) => {
+  if (!nextEmail) return false
+  return normalizeEmail(currentEmail) !== normalizeEmail(nextEmail)
+}
+
 const canCreateUser = (creator, targetRole, targetBranch) => {
   switch (creator.role) {
   case RoleEnum.ADMIN:
@@ -284,13 +291,15 @@ const updateUser = async (userId, updateData, updatedBy = null) => {
     )
   }
 
-  if (email && email !== user.email) {
+  const emailChanged = hasEmailChanged(user.email, email)
+
+  if (emailChanged) {
     await assertEmailNotExists(email)
   }
 
   const updatedUserData = { updatedBy }
 
-  if (email) {
+  if (emailChanged) {
     updatedUserData.email = email
     updatedUserData.isEmailVerified = false
     updatedUserData.emailVerifiedAt = null
@@ -410,12 +419,14 @@ const updateCurrentUser = async (userId, updateData) => {
     avatar
   } = updateData
 
-  if (email && email !== user.email) {
+  const emailChanged = hasEmailChanged(user.email, email)
+
+  if (emailChanged) {
     await assertEmailNotExists(email)
   }
 
   const updatedUserData = { updatedBy: userId }
-  if (email) {
+  if (emailChanged) {
     updatedUserData.email = email
     updatedUserData.isEmailVerified = false
     updatedUserData.emailVerifiedAt = null
@@ -500,12 +511,7 @@ const getAllUsersForManager = async (managerId, query = {}) => {
 }
 
 const getAllCustomersForStaff = async (staffId, query = {}) => {
-  const staff = await getUserById(staffId)
   const { page, limit, search, isActive, sortBy, sortOrder } = query
-
-  if (staff.role !== RoleEnum.STAFF) {
-    throw new ApiError(ERROR_CODES.FORBIDDEN, ['Người dùng không có quyền truy cập'])
-  }
 
   // Staff can only see customers
   const filter = { role: RoleEnum.CUSTOMER }

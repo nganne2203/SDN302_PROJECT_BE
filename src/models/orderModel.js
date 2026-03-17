@@ -22,11 +22,36 @@ const orderSchema = new mongoose.Schema(
       }
     ],
     shippingAddress: {
-      fullname: { type: String, required: true },
-      phone: { type: String, required: true },
-      addressLine: { type: String, required: true },
-      city: { type: String, required: true },
-      ward: { type: String, required: true }
+      fullname: {
+        type: String,
+        required: function () {
+          return this.type === ORDER_TYPE.ONLINE
+        }
+      },
+      phone: {
+        type: String,
+        required: function () {
+          return this.type === ORDER_TYPE.ONLINE
+        }
+      },
+      addressLine: {
+        type: String,
+        required: function () {
+          return this.type === ORDER_TYPE.ONLINE
+        }
+      },
+      city: {
+        type: String,
+        required: function () {
+          return this.type === ORDER_TYPE.ONLINE
+        }
+      },
+      ward: {
+        type: String,
+        required: function () {
+          return this.type === ORDER_TYPE.ONLINE
+        }
+      }
     },
     orderStatus: { type: String, enum: Object.values(ORDER_STATUS), default: ORDER_STATUS.PENDING },
     subtotal: { type: Number, required: true },
