@@ -41,6 +41,12 @@ export const STOCK_REQUEST_VALIDATION = {
     }).trim()
   }),
   approveStockRequest: joi.object({
+    approvedQuantity: joi.number().integer().min(0).required().messages({
+      'number.base': 'Số lượng duyệt phải là một số',
+      'number.integer': 'Số lượng duyệt phải là số nguyên',
+      'number.min': 'Số lượng duyệt phải lớn hơn hoặc bằng 0',
+      'any.required': 'Số lượng duyệt là bắt buộc'
+    }),
     note: joi.string().max(500).optional().messages({
       'string.max': 'Ghi chú không được vượt quá 500 ký tự'
     }).trim()
@@ -70,8 +76,8 @@ export const STOCK_REQUEST_VALIDATION = {
     sortOrder: joi.string().valid('asc', 'desc').optional().messages({
       'any.only': 'Thứ tự sắp xếp không hợp lệ'
     }).trim(),
-    status: joi.string().valid('pending', 'approved', 'rejected').optional().messages({
-      'any.only': 'Trạng thái phải là một trong các giá trị: pending, approved, rejected'
+    status: joi.string().valid('pending', 'approved', 'partially_approved', 'rejected').optional().messages({
+      'any.only': 'Trạng thái phải là một trong các giá trị: pending, approved, partially_approved, rejected'
     }).trim()
   })
 }

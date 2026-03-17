@@ -96,15 +96,15 @@ export const getStockRequestDetail = async (req, res, next) => {
 }
 
 /**
- * PATCH /stock-request/:requestId/approve - Phê duyệt yêu cầu nhập hàng
+ * PUT|PATCH /stock-request/:requestId/approve - Phê duyệt yêu cầu nhập hàng
  */
 export const approveStockRequest = async (req, res, next) => {
   try {
     const { requestId } = req.params
     const adminId = req.user.id
-    const { note = '' } = req.body
+    const { approvedQuantity, note = '' } = req.body
 
-    const updatedRequest = await STOCK_REQUEST_SERVICE.approveStockRequest(requestId, adminId, note)
+    const updatedRequest = await STOCK_REQUEST_SERVICE.approveStockRequest(requestId, approvedQuantity, adminId, note)
     res.status(StatusCodes.OK).json(
       responseSuccess({
         data: updatedRequest,

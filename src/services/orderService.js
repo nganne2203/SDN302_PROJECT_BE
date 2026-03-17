@@ -1001,6 +1001,8 @@ const createOfflineOrder = async (staffId, orderData) => {
 
   // Generate order number
   const orderNumber = generateOrderNumber()
+  const isCounterPickup = !hasDelivery
+  const deliveredAt = isCounterPickup ? new Date() : null
 
   // Determine the user for the order (customer or staff if no customer)
   const orderUserId = customerId || staffId
@@ -1012,18 +1014,17 @@ const createOfflineOrder = async (staffId, orderData) => {
     user: orderUserId,
     items: populatedItems,
     shippingAddress: hasDelivery && shippingAddress ? shippingAddress : null,
-    orderStatus: ORDER_STATUS.CONFIRMED, // Offline orders are confirmed immediately
+    orderStatus: isCounterPickup ? ORDER_STATUS.DELIVERED : ORDER_STATUS.CONFIRMED,
     subtotal,
     shippingFee,
     totalAmount,
     pricingApplied,
     paymentMethod,
-    delivery: hasDelivery
-      ? {
-        status: DELIVERY_STATUS.PENDING,
-        recipientName: shippingAddress?.fullname || ''
-      }
-      : null,
+    delivery: {
+      status: isCounterPickup ? DELIVERY_STATUS.DELIVERED : DELIVERY_STATUS.PENDING,
+      deliveredAt,
+      recipientName: shippingAddress?.fullname || ''
+    },
     message,
     branch: branchId,
     createdBy: staffId
