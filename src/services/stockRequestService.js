@@ -8,6 +8,7 @@ import { ERROR_CODES } from '#constants/errorCode.js'
 import { PRODUCT_SERVICE } from '#services/productService.js'
 import { BRANCH_SERVICE } from '#services/branchService.js'
 import { RoleEnum } from '#constants/roleConstant.js'
+import mongoose from 'mongoose'
 
 const assertManagerBranchAccess = (currentUser, branchId) => {
   if (!currentUser || currentUser.role !== RoleEnum.MANAGER) {
@@ -27,11 +28,10 @@ const createStockRequest = async (branchId, productId, quantity, reason, request
 
   await BRANCH_SERVICE.getBranchById(branchId)
   await PRODUCT_SERVICE.getProductById(productId)
-  const inventory = await INVENTORY_REPOSITORY.getInventoryByProductId(productId)
-  if (!inventory || inventory.quantity < quantity) {
-    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Kho tổng không đủ hàng để cấp cho chi nhánh'])
-  }
-
+  // const inventory = await INVENTORY_REPOSITORY.getInventoryByProductId(productId)
+  // if (!inventory || inventory.quantity < quantity) {
+  //   throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Kho tổng không đủ hàng để cấp cho chi nhánh'])
+  // }
   const stockRequestData = {
     branch: branchId,
     product: productId,
@@ -103,33 +103,58 @@ const getAllStockRequests = async (query = {}) => {
 /**
  * Phê duyệt yêu cầu nhập hàng
  */
-const approveStockRequest = async (requestId, adminId, note = '') => {
-  const stockRequest = await STOCK_REQUEST_REPOSITORY.getStockRequestById(requestId)
-  if (!stockRequest) {
-    throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy yêu cầu nhập hàng'])
+const approveStockRequest = async (requestId, approvedQuantity, adminId, note = '') => {
+  const session = await mongoose.startSession()
+
+  try {
+    let updatedRequest = null
+
+    await session.withTransaction(async () => {
+      const stockRequest = await STOCK_REQUEST_REPOSITORY.getStockRequestById(requestId, { session })
+      if (!stockRequest) {
+        throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy yêu cầu nhập hàng'])
+      }
+
+      if (stockRequest.status !== STOCK_REQUEST_STATUS.PENDING) {
+        throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Yêu cầu này đã được xử lý trước đó'])
+      }
+
+      const { branch, product, quantity } = stockRequest
+
+      const inventory = await INVENTORY_REPOSITORY.getInventoryByProductId(product, { session })
+      const availableStock = inventory?.quantity || 0
+      if (approvedQuantity > availableStock) {
+        throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Số lượng duyệt vượt quá tồn kho khả dụng'])
+      }
+
+      let status = STOCK_REQUEST_STATUS.REJECTED
+      if (approvedQuantity === quantity) {
+        status = STOCK_REQUEST_STATUS.APPROVED
+      } else if (approvedQuantity > 0) {
+        status = STOCK_REQUEST_STATUS.PARTIALLY_APPROVED
+      }
+
+      if (approvedQuantity > 0) {
+        const decreasedInventory = await INVENTORY_REPOSITORY.decreaseQuantity(product, approvedQuantity, { session })
+        if (!decreasedInventory) {
+          throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Kho tổng không còn đủ hàng'])
+        }
+
+        await STORE_INVENTORY_REPOSITORY.increaseQuantity(branch, product, approvedQuantity, { session })
+      }
+
+      updatedRequest = await STOCK_REQUEST_REPOSITORY.updateStockRequestById(requestId, {
+        approvedQuantity,
+        status,
+        admin: adminId,
+        note
+      }, { session })
+    })
+
+    return updatedRequest
+  } finally {
+    session.endSession()
   }
-
-  if (stockRequest.status !== STOCK_REQUEST_STATUS.PENDING) {
-    throw new ApiError(ERROR_CODES.BAD_REQUEST, [`Yêu cầu này đã được ${stockRequest.status}`])
-  }
-
-  const { branch, product, quantity } = stockRequest
-
-  const inventory = await INVENTORY_REPOSITORY.getInventoryByProductId(product)
-  if (!inventory || inventory.quantity < quantity) {
-    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Kho tổng không còn đủ hàng'])
-  }
-
-  await INVENTORY_REPOSITORY.decreaseQuantity(product, quantity)
-  await STORE_INVENTORY_REPOSITORY.increaseQuantity(branch, product, quantity)
-
-  const updatedRequest = await STOCK_REQUEST_REPOSITORY.updateStockRequestById(requestId, {
-    status: STOCK_REQUEST_STATUS.APPROVED,
-    admin: adminId,
-    note: note
-  })
-
-  return updatedRequest
 }
 
 /**

@@ -511,12 +511,7 @@ const getAllUsersForManager = async (managerId, query = {}) => {
 }
 
 const getAllCustomersForStaff = async (staffId, query = {}) => {
-  const staff = await getUserById(staffId)
   const { page, limit, search, isActive, sortBy, sortOrder } = query
-
-  if (staff.role !== RoleEnum.STAFF) {
-    throw new ApiError(ERROR_CODES.FORBIDDEN, ['Người dùng không có quyền truy cập'])
-  }
 
   // Staff can only see customers
   const filter = { role: RoleEnum.CUSTOMER }

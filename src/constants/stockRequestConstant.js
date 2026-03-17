@@ -4,6 +4,7 @@ import { STOCK_REQUEST_VALIDATION } from '#validations/stockRequestValidation.js
 export const STOCK_REQUEST_STATUS = {
   PENDING: 'pending',
   APPROVED: 'approved',
+  PARTIALLY_APPROVED: 'partially_approved',
   REJECTED: 'rejected'
 }
 
@@ -19,9 +20,14 @@ const REJECT_STOCK_REQUEST = GENERATE_UTILS.extractFieldsFromJoi(
   STOCK_REQUEST_VALIDATION.rejectStockRequest
 )
 
+const APPROVE_STOCK_REQUEST = GENERATE_UTILS.extractFieldsFromJoi(
+  STOCK_REQUEST_VALIDATION.approveStockRequest
+)
+
 export const STOCK_REQUEST_CONSTANT = {
   STOCK_REQUEST_STATUS,
   CREATE_STOCK_REQUEST,
   CREATE_STOCK_REQUEST_REQUIRED,
+  APPROVE_STOCK_REQUEST,
   REJECT_STOCK_REQUEST
 }

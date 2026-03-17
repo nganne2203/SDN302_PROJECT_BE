@@ -283,9 +283,9 @@ router.get('/:requestId',
 /**
  * @swagger
  * /api/v1/stock-requests/{requestId}/approve:
- *   patch:
+ *   put:
  *     summary: Phê duyệt yêu cầu nhập hàng (Admin only)
- *     description: Phê duyệt một yêu cầu nhập hàng và cập nhật trạng thái thành approved
+ *     description: Phê duyệt một yêu cầu nhập hàng theo số lượng được duyệt
  *     tags: [Stock Request]
  *     security:
  *       - BearerAuth: []
@@ -301,7 +301,14 @@ router.get('/:requestId',
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - approvedQuantity
  *             properties:
+ *               approvedQuantity:
+ *                 type: integer
+ *                 minimum: 0
+ *                 example: 50
+ *                 description: Số lượng được duyệt
  *               note:
  *                 type: string
  *                 maxLength: 500
@@ -321,10 +328,21 @@ router.get('/:requestId',
  *       409:
  *         description: Yêu cầu không ở trạng thái chờ xử lý
  */
-// PATCH - Phê duyệt yêu cầu
+// PUT - Phê duyệt yêu cầu
+router.put('/:requestId/approve',
+  requireRoles(RoleEnum.ADMIN),
+  sanitizeRequest(STOCK_REQUEST_CONSTANT.APPROVE_STOCK_REQUEST),
+  validationHandlingMiddleware({
+    params: STOCK_REQUEST_VALIDATION.requestIdParam,
+    body: STOCK_REQUEST_VALIDATION.approveStockRequest
+  }),
+  STOCK_REQUEST_CONTROLLER.approveStockRequest
+)
+
+// PATCH - Backward compatibility for existing clients
 router.patch('/:requestId/approve',
   requireRoles(RoleEnum.ADMIN),
-  sanitizeRequest(STOCK_REQUEST_CONSTANT.REJECT_STOCK_REQUEST),
+  sanitizeRequest(STOCK_REQUEST_CONSTANT.APPROVE_STOCK_REQUEST),
   validationHandlingMiddleware({
     params: STOCK_REQUEST_VALIDATION.requestIdParam,
     body: STOCK_REQUEST_VALIDATION.approveStockRequest

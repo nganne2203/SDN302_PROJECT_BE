@@ -7,6 +7,7 @@ const stockRequestSchema = new mongoose.Schema(
     branch: { type: mongoose.Schema.Types.ObjectId, ref: 'branches', required: true },
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'products', required: true },
     quantity: { type: Number, required: true },
+    approvedQuantity: { type: Number, default: null },
     requester: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
     reason: { type: String, default: '' },
     isDeleted: { type: Boolean, default: false },
