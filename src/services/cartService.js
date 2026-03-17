@@ -293,12 +293,7 @@ const updateCartItemQuantity = async (userId, data) => {
 }
 
 const updateCartItemServices = async (userId, data) => {
-  const { productId, services = [] } = data
-
-  await PRODUCT_SERVICE.getProductById(productId)
-
-  const validatedServices =
-    services.length > 0 ? await validateServiceItems(productId, services) : []
+  const { itemId, productId, services = [] } = data
 
   const cart = await CART_REPOSITORY.getCartByUserId(userId, {
     populate: false
@@ -308,15 +303,21 @@ const updateCartItemServices = async (userId, data) => {
     throw new ApiError(ERROR_CODES.NOT_FOUND, ['Giỏ hàng không tồn tại'])
   }
 
-  const index = cart.items.findIndex(
-    (item) => item.product.toString() === productId.toString()
-  )
+  const index = itemId
+    ? cart.items.findIndex((item) => item._id.toString() === itemId.toString())
+    : cart.items.findIndex((item) => item.product.toString() === productId.toString())
 
   if (index === -1) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, [
       'Sản phẩm không tồn tại trong giỏ'
     ])
   }
+
+  const resolvedProductId = cart.items[index].product
+  await PRODUCT_SERVICE.getProductById(resolvedProductId)
+
+  const validatedServices =
+    services.length > 0 ? await validateServiceItems(resolvedProductId, services) : []
 
   cart.items[index].services = validatedServices
 
@@ -339,7 +340,7 @@ const updateCartItemServices = async (userId, data) => {
 }
 
 const removeCartItem = async (userId, data) => {
-  const { productId } = data
+  const { itemId, productId } = data
 
   const cart = await CART_REPOSITORY.getCartByUserId(userId, {
     populate: false
@@ -351,9 +352,9 @@ const removeCartItem = async (userId, data) => {
 
   const initialLength = cart.items.length
 
-  cart.items = cart.items.filter(
-    (item) => item.product.toString() !== productId.toString()
-  )
+  cart.items = itemId
+    ? cart.items.filter((item) => item._id.toString() !== itemId.toString())
+    : cart.items.filter((item) => item.product.toString() !== productId.toString())
 
   if (cart.items.length === initialLength) {
     throw new ApiError(ERROR_CODES.NOT_FOUND, [
