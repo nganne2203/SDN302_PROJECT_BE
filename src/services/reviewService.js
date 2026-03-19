@@ -66,10 +66,27 @@ const mapReviewImages = (imagePublicIds = []) => {
   }))
 }
 
+const mapProductImagesToUrls = (product = null) => {
+  if (!product) return product
+
+  const productObj = product.toObject ? product.toObject() : { ...product }
+  if (!Array.isArray(productObj.images) || productObj.images.length === 0) {
+    productObj.images = []
+    return productObj
+  }
+
+  productObj.images = productObj.images
+    .map((publicId) => UPLOAD_SERVICE.buildImageUrl(publicId))
+    .filter(Boolean)
+
+  return productObj
+}
+
 const mapReviewWithImages = (review) => {
   if (!review) return review
   const reviewObj = review.toObject ? review.toObject() : { ...review }
   reviewObj.images = mapReviewImages(reviewObj.images)
+  reviewObj.product = mapProductImagesToUrls(reviewObj.product)
   return reviewObj
 }
 
