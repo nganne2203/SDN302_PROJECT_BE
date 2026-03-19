@@ -45,11 +45,32 @@ const mapOrderProductImages = (order) => {
     deliveryStatus &&
     (deliveryStatus === DELIVERY_STATUS.PENDING || deliveryStatus === DELIVERY_STATUS.SHIPPING)
 
+  const existingShippingAddress = orderObj?.shippingAddress
+  const hasShippingFullname = Boolean(existingShippingAddress?.fullname?.trim?.())
+  const hasShippingPhone = Boolean(existingShippingAddress?.phone?.trim?.())
+  const shouldBackfillOfflineShippingAddress = orderObj?.type === 'offline' && (!hasShippingFullname || !hasShippingPhone)
+
+  // Offline orders may not have address object. Backfill customer display info for FE.
+  const mappedShippingAddress = shouldBackfillOfflineShippingAddress
+    ? {
+      fullname: hasShippingFullname
+        ? existingShippingAddress.fullname
+        : (orderObj?.user?.fullname || orderObj?.createdBy?.fullname || ''),
+      phone: hasShippingPhone
+        ? existingShippingAddress.phone
+        : (orderObj?.user?.phone || orderObj?.createdBy?.phone || ''),
+      addressLine: existingShippingAddress?.addressLine || '',
+      city: existingShippingAddress?.city || '',
+      ward: existingShippingAddress?.ward || ''
+    }
+    : existingShippingAddress
+
   return {
     ...orderObj,
     orderStatus,
     items: mappedItems,
     paymentStatus,
+    shippingAddress: mappedShippingAddress,
     delivery: orderObj?.delivery
       ? {
         ...orderObj.delivery,
