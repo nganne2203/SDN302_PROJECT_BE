@@ -78,7 +78,7 @@ export const createRateLimiter = (options = {}) => {
 
 export const authRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 100,
   message: 'Quá nhiều yêu cầu, vui lòng thử lại sau 15 phút',
   keyGenerator: (req) => `auth:${req.ip || 'unknown'}`
 })
@@ -97,7 +97,7 @@ export const readRateLimiter = createRateLimiter({
 
 export const sensitiveRateLimiter = createRateLimiter({
   windowMs: 60 * 60 * 1000,
-  max: 3,
+  max: 100,
   message: 'Quá nhiều yêu cầu, vui lòng thử lại sau một giờ',
   keyGenerator: (req) => `sensitive:${req.ip || 'unknown'}:${req.user?.userId || 'anon'}`
 })
@@ -111,7 +111,7 @@ export const userRateLimiter = createRateLimiter({
 
 export const guestRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 50,
+  max: 100,
   message: 'Quá nhiều yêu cầu, vui lòng thử lại sau',
   keyGenerator: (req) => `guest:${req.ip || 'unknown'}`
 })
