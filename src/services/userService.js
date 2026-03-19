@@ -147,6 +147,24 @@ const canCreateUser = (creator, targetRole, targetBranch) => {
   }
 }
 
+const assertNoPeerRoleAction = (actor, targetUser, actionLabel) => {
+  if (!actor || !targetUser) return
+
+  const actorId = actor._id?.toString?.() || actor.id?.toString?.()
+  const targetId = targetUser._id?.toString?.() || targetUser.id?.toString?.()
+
+  if (actorId && targetId && actorId === targetId) {
+    return
+  }
+
+  if (actor.role === targetUser.role) {
+    throw new ApiError(
+      ERROR_CODES.FORBIDDEN,
+      [`Khong the ${actionLabel} nguoi dung co vai tro ngang hang`]
+    )
+  }
+}
+
 const getManagerByBranch = async (branchId) => {
   const manager = await USER_REPOSITORY.getUserByBranch(branchId, RoleEnum.MANAGER)
   return manager
@@ -253,6 +271,7 @@ const createUser = async (userData, createdBy = null) => {
 const updateUser = async (userId, updateData, updatedBy = null) => {
   const updater = await getUserById(updatedBy)
   const user = await getUserById(userId)
+  assertNoPeerRoleAction(updater, user, 'cap nhat')
 
   if (updater.role === RoleEnum.STAFF) {
     throw new ApiError(ERROR_CODES.FORBIDDEN, ['STAFF không có quyền cập nhật người dùng'])
@@ -373,6 +392,7 @@ const updateEmailVerificationStatus = async (id, isEmailVerified, updatedBy = nu
 const updateUserStatus = async (id, isActive, updatedBy = null) => {
   const updater = await getUserById(updatedBy)
   const user = await getUserById(id)
+  assertNoPeerRoleAction(updater, user, 'thay doi trang thai')
 
   if (updater.role === RoleEnum.STAFF) {
     throw new ApiError(ERROR_CODES.FORBIDDEN, [
