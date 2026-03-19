@@ -91,6 +91,32 @@ router.post(
  *           default: 10
  *           maximum: 100
  *         description: Number of reviews per page
+*       - in: query
+ *         name: productId
+ *         schema:
+ *           type: string
+ *         description: Filter by product ID
+ *       - in: query
+ *         name: rating
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 5
+ *         description: Filter by rating
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [createdAt, rating]
+ *           default: createdAt
+ *         description: Sort by field
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
  *     responses:
  *       200:
  *         description: Reviews retrieved successfully
