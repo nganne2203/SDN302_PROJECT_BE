@@ -19,8 +19,8 @@ const getOrderById = async (orderId, options = {}) => {
       .populate('items.services.service', 'name type price')
       .populate('branch', 'name address phone')
       .populate('payment', 'status paidAt method provider amount currency')
-      .populate('createdBy', 'fullname email')
-      .populate('updatedBy', 'fullname email')
+      .populate('createdBy', 'fullname email phone')
+      .populate('updatedBy', 'fullname email phone')
   }
 
   return await query.exec()
@@ -38,8 +38,8 @@ const getOrderByOrderNumber = async (orderNumber, options = {}) => {
       .populate('items.services.service', 'name type price')
       .populate('branch', 'name address phone')
       .populate('payment', 'status paidAt method provider amount currency')
-      .populate('createdBy', 'fullname email')
-      .populate('updatedBy', 'fullname email')
+      .populate('createdBy', 'fullname email phone')
+      .populate('updatedBy', 'fullname email phone')
   }
 
   return await query.exec()
@@ -76,8 +76,8 @@ const getAllOrders = async (filter = {}, options = {}) => {
       { path: 'items.services.service', select: 'name type price' },
       { path: 'branch', select: 'name address phone' },
       { path: 'payment', select: 'status paidAt method provider amount currency' },
-      { path: 'createdBy', select: 'fullname email' },
-      { path: 'updatedBy', select: 'fullname email' }
+      { path: 'createdBy', select: 'fullname email phone' },
+      { path: 'updatedBy', select: 'fullname email phone' }
     ]
   })
 }
@@ -94,8 +94,8 @@ const updateOrderById = async (orderId, updateData, options = {}) => {
     .populate('items.services.service', 'name type price')
     .populate('branch', 'name address phone')
     .populate('payment', 'status paidAt method provider amount currency')
-    .populate('createdBy', 'fullname email')
-    .populate('updatedBy', 'fullname email')
+    .populate('createdBy', 'fullname email phone')
+    .populate('updatedBy', 'fullname email phone')
 }
 
 const ORDER_STATUS_TO_DELIVERY_STATUS = {
