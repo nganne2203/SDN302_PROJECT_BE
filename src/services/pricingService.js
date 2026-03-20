@@ -5,6 +5,12 @@ import { ERROR_CODES } from '#constants/errorCode.js'
 import { PRODUCT_SERVICE } from '#services/productService.js'
 import { escapeRegex } from '#utils/formatterUtil.js'
 
+const ensurePriceNotHigherThanBasePrice = (pricePerUnit, basePrice) => {
+  if (pricePerUnit > basePrice) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Giá theo bảng giá không được cao hơn giá gốc của sản phẩm'])
+  }
+}
+
 const getAllPricings = async (query = {}) => {
   const { page = 1, limit = 10, productId, isActive, search } = query
 
@@ -91,6 +97,8 @@ const createPricing = async (pricingData, userId) => {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Số lượng tối thiểu phải nhỏ hơn hoặc bằng số lượng tối đa'])
   }
 
+  ensurePriceNotHigherThanBasePrice(pricePerUnit, product.price)
+
   const effectiveMaxQuantity = maxQuantity ?? Number.MAX_SAFE_INTEGER
   const overlapping = await PRICING_REPOSITORY.findOverlappingPricing(productId, minQuantity, effectiveMaxQuantity)
 
@@ -126,6 +134,15 @@ const createBulkPricings = async (productId, tiers, userId) => {
 
   // Sort tiers by minQuantity
   const sortedTiers = [...tiers].sort((a, b) => a.minQuantity - b.minQuantity)
+
+  sortedTiers.forEach((tier, index) => {
+    ensurePriceNotHigherThanBasePrice(tier.pricePerUnit, product.price)
+    if (tier.maxQuantity !== null && tier.maxQuantity !== undefined && tier.minQuantity > tier.maxQuantity) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, [
+        `Mức giá ${index + 1} có số lượng tối thiểu lớn hơn số lượng tối đa`
+      ])
+    }
+  })
 
   // Validate no overlapping ranges
   for (let i = 0; i < sortedTiers.length - 1; i++) {
@@ -174,6 +191,17 @@ const updatePricing = async (pricingId, updateData, userId) => {
 
   if (newMaxQuantity !== null && newMinQuantity > newMaxQuantity) {
     throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Số lượng tối thiểu phải nhỏ hơn hoặc bằng số lượng tối đa'])
+  }
+
+  if (pricePerUnit !== undefined) {
+    const productId = pricing.product?._id || pricing.product
+    const product = await PRODUCT_REPOSITORY.getProductById(productId)
+
+    if (!product) {
+      throw new ApiError(ERROR_CODES.NOT_FOUND, ['Không tìm thấy sản phẩm'])
+    }
+
+    ensurePriceNotHigherThanBasePrice(pricePerUnit, product.price)
   }
 
   if (minQuantity !== undefined || maxQuantity !== undefined) {
