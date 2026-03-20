@@ -157,6 +157,46 @@ export const ORDER_VALIDATION = {
     hasDelivery: joi.boolean().optional().default(false)
   }),
 
+  checkoutPreview: joi.object({
+    shippingAddress: joi.object({
+      fullname: joi.string().trim().optional().allow(''),
+      phone: joi.string().trim().pattern(/^[0-9]{10,11}$/).optional().allow('').messages({
+        'string.pattern.base': 'Số điện thoại không hợp lệ (10-11 chữ số)'
+      }),
+      addressLine: joi.string().trim().optional().allow(''),
+      city: joi.string().trim().required().messages({
+        'string.empty': 'Thành phố không được để trống',
+        'any.required': 'Thành phố là bắt buộc'
+      }),
+      ward: joi.string().trim().optional().allow(''),
+      provinceCode: joi.string().trim().optional().allow('', null),
+      wardCode: joi.string().trim().optional().allow('', null)
+    }).required().messages({
+      'any.required': 'Địa chỉ giao hàng là bắt buộc'
+    }),
+    items: joi.array().items(
+      joi.object({
+        product: joi.string().hex().length(24).required().messages({
+          'string.empty': 'Product ID không được để trống',
+          'string.hex': 'Product ID không hợp lệ',
+          'string.length': 'Product ID không hợp lệ',
+          'any.required': 'Product ID là bắt buộc'
+        }),
+        quantity: joi.number().integer().min(1).required().messages({
+          'number.base': 'Số lượng phải là số',
+          'number.min': 'Số lượng phải lớn hơn 0',
+          'any.required': 'Số lượng là bắt buộc'
+        }),
+        services: joi.array().items(
+          joi.string().hex().length(24).messages({
+            'string.hex': 'Service ID không hợp lệ',
+            'string.length': 'Service ID không hợp lệ'
+          })
+        ).optional()
+      })
+    ).optional()
+  }),
+
   updateOrderStatus: joi.object({
     status: joi.string().valid('pending', 'confirmed', 'shipped', 'delivered', 'cancelled').required().messages({
       'string.empty': 'Trạng thái đơn hàng không được để trống',
