@@ -481,6 +481,101 @@ const createOrder = async (userId, orderData) => {
   return populatedOrder
 }
 
+const buildCheckoutItemsFromRequest = async (items) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Danh sách sản phẩm không hợp lệ'])
+  }
+
+  const populatedItems = []
+
+  for (const item of items) {
+    const product = await PRODUCT_SERVICE.getProductById(item.product)
+
+    if (!product) {
+      throw new ApiError(ERROR_CODES.NOT_FOUND, ['Sản phẩm không tồn tại'])
+    }
+
+    const itemData = {
+      product,
+      quantity: item.quantity,
+      price: product.price,
+      services: []
+    }
+
+    if (Array.isArray(item.services) && item.services.length > 0) {
+      for (const serviceId of item.services) {
+        const service = await SERVICE_ITEM_SERVICE.getServiceById(serviceId)
+        if (service) {
+          itemData.services.push({
+            service: service._id,
+            price: service.price
+          })
+        }
+      }
+    }
+
+    populatedItems.push(itemData)
+  }
+
+  return populatedItems
+}
+
+const getCheckoutItems = async (userId, requestedItems = []) => {
+  if (Array.isArray(requestedItems) && requestedItems.length > 0) {
+    return buildCheckoutItemsFromRequest(requestedItems)
+  }
+
+  const cart = await CART_SERVICE.validateCartBeforeCheckout(userId)
+
+  if (!cart || cart.items.length === 0) {
+    throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Giỏ hàng đang trống'])
+  }
+
+  const populatedCart = await CART_SERVICE.getCart(userId)
+  return populatedCart.items
+}
+
+const previewCheckout = async (userId, payload) => {
+  const { shippingAddress, items = [] } = payload
+
+  const checkoutItems = await getCheckoutItems(userId, items)
+  const pricingApplied = await calculatePricingDiscounts(checkoutItems)
+
+  const selectedBranch = await findBranchWithStock(checkoutItems)
+  const useMainInventory = !selectedBranch
+
+  if (useMainInventory) {
+    const canUseMainInventory = await canFulfillFromMainInventory(checkoutItems)
+    if (!canUseMainInventory) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, ['Không đủ số lượng trong hệ thống'])
+    }
+  }
+
+  const shippingFee = selectedBranch
+    ? await calculateShippingFee(shippingAddress, selectedBranch)
+    : SHIPPING_FEE.INTER_PROVINCE
+
+  const { subtotal, totalAmount } = calculateOrderTotals(
+    checkoutItems,
+    pricingApplied,
+    shippingFee
+  )
+
+  const totalDiscount = pricingApplied.reduce(
+    (sum, pricing) => sum + (pricing.discountAmount || 0),
+    0
+  )
+
+  return {
+    subtotal,
+    shippingFee,
+    totalDiscount,
+    totalAmount,
+    branchId: selectedBranch?.toString?.() || selectedBranch || null,
+    fulfillmentSource: selectedBranch ? 'branch' : 'main_inventory'
+  }
+}
+
 /**
  * Get order by ID
  */
@@ -1070,6 +1165,7 @@ const createOfflineOrder = async (staffId, orderData) => {
 
 export const ORDER_SERVICE = {
   createOrder,
+  previewCheckout,
   getOrderById,
   getOrderByOrderNumber,
   getMyOrders,

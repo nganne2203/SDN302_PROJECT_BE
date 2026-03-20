@@ -81,6 +81,18 @@ router.post(
   ORDER_CONTROLLER.createOrder
 )
 
+router.post(
+  '/checkout-preview',
+  apiRateLimiter,
+  requireRoles(RoleEnum.CUSTOMER),
+  sanitizeRequest(
+    ORDER_CONSTANT.CHECKOUT_PREVIEW_FIELDS,
+    ORDER_CONSTANT.CHECKOUT_PREVIEW_REQUIRED_FIELDS
+  ),
+  validationHandlingMiddleware({ body: ORDER_VALIDATION.checkoutPreview }),
+  ORDER_CONTROLLER.previewCheckout
+)
+
 /**
  * @swagger
  * /api/v1/orders/offline:
