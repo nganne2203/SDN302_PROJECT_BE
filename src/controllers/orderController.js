@@ -17,6 +17,21 @@ const createOrder = async (req, res, next) => {
   }
 }
 
+const previewCheckout = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const preview = await ORDER_SERVICE.previewCheckout(userId, req.body)
+    res.status(StatusCodes.OK).json(
+      responseSuccess({
+        data: preview,
+        message: 'Lấy thông tin đơn hàng thành công'
+      })
+    )
+  } catch (error) {
+    next(error)
+  }
+}
+
 const getOrderById = async (req, res, next) => {
   try {
     const { orderId } = req.params
@@ -174,6 +189,7 @@ const createOfflineOrder = async (req, res, next) => {
 
 export const ORDER_CONTROLLER = {
   createOrder,
+  previewCheckout,
   getOrderById,
   getOrderByOrderNumber,
   getMyOrders,
